@@ -20,7 +20,7 @@ from data_bootstrap import ensure_required_data
 # Page config
 # ─────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Real-Time Energy Dashboard — NEM Emissions",
+    page_title="Real-Time Energy Dashboard, NEM Emissions",
     layout="wide",
 )
 
@@ -35,12 +35,12 @@ st.markdown("""
     /* Typography */
     --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --text-xs: 0.98rem;
-    --text-sm: 1.09rem;
-    --text-base: 1.22rem;
-    --text-lg: 1.52rem;
-    --text-xl: 2.04rem;
-    --text-2xl: 2.78rem;
+    --text-xs: 0.59rem;
+    --text-sm: 0.65rem;
+    --text-base: 0.73rem;
+    --text-lg: 0.91rem;
+    --text-xl: 1.22rem;
+    --text-2xl: 1.67rem;
 
     /* Colors — base */
     --background: #25241f;
@@ -162,7 +162,7 @@ st.markdown("""
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1.25rem 1.35rem;
+    padding: 0.875rem 0.945rem;
     text-align: center;
   }
   .hero-card--accent {
@@ -198,10 +198,10 @@ st.markdown("""
     background: var(--accent-light);
     border: 1px solid var(--bg-green-border);
     border-radius: var(--radius);
-    padding: 1rem 1.5rem;
-    margin-bottom: 1.5rem;
+    padding: 0.7rem 1.05rem;
+    margin-bottom: 1.05rem;
     font-family: var(--font-display);
-    font-size: var(--text-lg);
+    font-size: var(--text-sm);
     font-weight: 500;
     color: #2e5e11;
     text-align: center;
@@ -242,9 +242,9 @@ st.markdown("""
   }
   .timing-card {
     border-radius: var(--radius);
-    padding: 1.55rem 1.65rem;
+    padding: 0.775rem 0.825rem;
     text-align: left;
-    min-height: 205px;
+    min-height: 100px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -265,30 +265,30 @@ st.markdown("""
   }
   .timing-label {
     font-family: var(--font-body);
-    font-size: var(--text-lg);
+    font-size: var(--text-xs);
     color: var(--muted-foreground);
-    margin-bottom: 0.45rem;
+    margin-bottom: 0.2rem;
     font-weight: 600;
   }
   .timing-value {
     font-family: var(--font-display);
-    font-size: var(--text-2xl);
+    font-size: var(--text-lg);
     font-weight: 700;
     color: var(--foreground);
     line-height: 1.1;
   }
   .timing-hours {
     font-family: var(--font-body);
-    font-size: var(--text-base);
+    font-size: var(--text-xs);
     color: var(--muted-foreground);
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
   }
   .timing-intensity {
     font-family: var(--font-body);
-    font-size: var(--text-lg);
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--foreground);
-    margin-top: 0.8rem;
+    margin-top: 0.35rem;
   }
   .timing-card--green .timing-label,
   .timing-card--green .timing-hours,
@@ -373,7 +373,7 @@ st.markdown("""
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1rem 1.2rem;
+    padding: 0.5rem 0.65rem;
     text-align: center;
   }
   .estimator-card--saving {
@@ -382,13 +382,13 @@ st.markdown("""
   }
   .estimator-label {
     font-family: var(--font-body);
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     color: var(--muted-foreground);
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.1rem;
   }
   .estimator-value {
     font-family: var(--font-display);
-    font-size: var(--text-lg);
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--foreground);
   }
@@ -396,7 +396,7 @@ st.markdown("""
     font-family: var(--font-body);
     font-size: var(--text-xs);
     color: var(--muted-foreground);
-    margin-top: 0.15rem;
+    margin-top: 0.1rem;
   }
 
   /* ── Metric cards (KPI) ── */
@@ -556,11 +556,11 @@ st.markdown("""
   .chart-insight {
     background: #e7f1d5;
     border-left: 3px solid var(--accent);
-    padding: 1.15rem 1.45rem;
-    margin-top: 0.5rem;
-    margin-bottom: 1.5rem;
+    padding: 0.6rem 0.9rem;
+    margin-top: 0.4rem;
+    margin-bottom: 1rem;
     font-family: var(--font-body);
-    font-size: var(--text-lg);
+    font-size: var(--text-xs);
     color: #2f431d;
     line-height: 1.55;
   }
@@ -581,9 +581,9 @@ st.markdown("""
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1.45rem 1.6rem;
-    margin-top: 1.2rem;
-    margin-bottom: 1rem;
+    padding: 0.75rem 0.9rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.6rem;
   }
   .info-panel .section-heading {
     margin-bottom: 0.6rem;
@@ -751,7 +751,7 @@ st.markdown("""
     .insight-callout { font-size: var(--text-base); padding: 0.85rem 1rem; }
   }
   @media (min-width: 1800px) {
-    :root { --text-xs: 0.98rem; --text-sm: 1.09rem; --text-base: 1.22rem; --text-lg: 1.52rem; --text-xl: 2.04rem; --text-2xl: 2.78rem; }
+    :root { --text-xs: 0.59rem; --text-sm: 0.65rem; --text-base: 0.73rem; --text-lg: 0.91rem; --text-xl: 1.22rem; --text-2xl: 1.67rem; }
     .block-container { max-width: 1080px !important; }
   }
 
@@ -1016,13 +1016,13 @@ st.markdown("""
 <div class="header-band">
   <div class="page-header">Real-Time Energy Dashboard</div>
   <div class='page-deck'>NEM grid emissions intensity, updated from AEMO 5-minute dispatch data.
-  Personal project by Tanjim Islam — for demonstration purposes only.</div>
+  Personal project by Tanjim Islam, for demonstration purposes only.</div>
 </div>
 """, unsafe_allow_html=True)
 
 # ── D.2  Hero Row ───────────────────────────────────────────
 clean_window_label = (
-    f"{clean_window_start.strftime('%H:%M')} – {(clean_window_end + pd.Timedelta(minutes=5)).strftime('%H:%M')}"
+    f"{clean_window_start.strftime('%H:%M')}, {(clean_window_end + pd.Timedelta(minutes=5)).strftime('%H:%M')}"
     if clean_window_start is not None and clean_window_end is not None
     else "Calculating..."
 )
@@ -1124,10 +1124,11 @@ combo_fig.update_layout(
         tickvals=chart_tickvals,
         ticktext=[str(ts.hour) for ts in chart_tickvals],
         tickangle=0,
+        tickfont=dict(size=13),
     ),
     plot_bgcolor="#302f2a",
     paper_bgcolor="#302f2a",
-    font=dict(color="#f2efe8", family="Inter, sans-serif"),
+    font=dict(color="#f2efe8", family="Inter, sans-serif", size=13),
     legend=dict(
         bgcolor="#35342f",
         bordercolor="#47453d",
@@ -1136,6 +1137,7 @@ combo_fig.update_layout(
         y=-0.08,
         xanchor="center",
         x=0.5,
+        font=dict(size=13),
     ),
     margin=dict(l=0, r=0, t=8, b=42),
     hovermode="x unified",
@@ -1147,6 +1149,7 @@ combo_fig.update_yaxes(
     gridcolor="#47453d",
     zeroline=False,
     color="#b7b1a6",
+    tickfont=dict(size=13),
     automargin=True,
     secondary_y=False,
 )
@@ -1156,6 +1159,7 @@ combo_fig.update_yaxes(
     zeroline=False,
     range=[0, int(((1600 * interval_minutes / 15) + 99) // 100) * 100],
     color="#b7b1a6",
+    tickfont=dict(size=13),
     automargin=True,
     secondary_y=True,
 )
@@ -1206,7 +1210,7 @@ if clean_window_start is not None and avg_intensity > 0:
     if pct_cleaner > 0:
         insight_text = (
             f"The cleanest 4-hour window today is <strong>{pct_cleaner:.0f}% less carbon-intensive</strong> "
-            f"than the daily average — shift flexible load to {clean_window_label} to reduce Scope 2."
+            f"than the daily average, shift flexible load to {clean_window_label} to reduce Scope 2."
         )
     else:
         insight_text = (
@@ -1268,7 +1272,7 @@ with charts_left:
 
 with charts_right:
     st.markdown("<h2 class='section-heading'>Emissions Intensity Across the Day</h2>", unsafe_allow_html=True)
-    st.markdown("<p class='section-sub'>The duck curve — when the grid is clean vs dirty, by hour</p>",
+    st.markdown("<p class='section-sub'>The duck curve, when the grid is clean vs dirty, by hour</p>",
                 unsafe_allow_html=True)
 
     if not hourly_agg.empty and hourly_agg["intensity"].notna().any():
@@ -1387,24 +1391,24 @@ if not hourly_agg.empty and len(hourly_agg) > 6:
       <div class="timing-card timing-card--green">
         <div class="timing-label">Best Morning</div>
         <div class="timing-value">{bm_hour:02d}:00</div>
-        <div class="timing-hours">05:00 – 09:00 range</div>
+        <div class="timing-hours">05:00, 09:00 range</div>
         <div class="timing-intensity">{bm_int:.3f} t CO&#8322;-e/MWh</div>
       </div>
       <div class="timing-card timing-card--green">
         <div class="timing-label">Best Midday</div>
         <div class="timing-value">{bd_hour:02d}:00</div>
-        <div class="timing-hours">10:00 – 15:00 range</div>
+        <div class="timing-hours">10:00, 15:00 range</div>
         <div class="timing-intensity">{bd_int:.3f} t CO&#8322;-e/MWh</div>
       </div>
       <div class="timing-card timing-card--red">
         <div class="timing-label">Avoid: Evening Peak</div>
         <div class="timing-value">{we_hour:02d}:00</div>
-        <div class="timing-hours">16:00 – 21:00 range</div>
+        <div class="timing-hours">16:00, 21:00 range</div>
         <div class="timing-intensity">{we_int:.3f} t CO&#8322;-e/MWh</div>
       </div>
       <div class="timing-card timing-card--neutral">
         <div class="timing-label">Overnight Avg</div>
-        <div class="timing-value">22–04</div>
+        <div class="timing-value">22, 04</div>
         <div class="timing-hours">baseload period</div>
         <div class="timing-intensity">{on_int:.3f} t CO&#8322;-e/MWh</div>
       </div>
@@ -1416,7 +1420,7 @@ else:
 
 # ── D.7  Sector Cards ──────────────────────────────────────
 st.markdown("<h2 class='section-heading'>Industry Impact Profiles</h2>", unsafe_allow_html=True)
-st.markdown("<p class='section-sub'>Illustrative daily emissions for typical operations — and what shifting to the cleanest window could save</p>",
+st.markdown("<p class='section-sub'>Illustrative daily emissions for typical operations, and what shifting to the cleanest window could save</p>",
             unsafe_allow_html=True)
 
 clean_4h_intensity = window_metrics.get("Cheapest 4 hours", {}).get("avg_intensity", avg_intensity)
@@ -1424,11 +1428,11 @@ clean_4h_intensity = window_metrics.get("Cheapest 4 hours", {}).get("avg_intensi
 sector_profiles = [
     {"name": "Aluminium Smelter", "hours": "24/7 baseload", "mwh": 500,
      "window": "Standard hours", "note": "Potlines run continuously, limited flexibility"},
-    {"name": "Food Manufacturing", "hours": "06:00 – 15:00", "mwh": 20,
+    {"name": "Food Manufacturing", "hours": "06:00, 15:00", "mwh": 20,
      "window": "Food operations", "note": "Batch cooking, CIP cleaning, pasteurisation"},
     {"name": "Data Centre", "hours": "24/7, flex batch", "mwh": 50,
      "window": "Standard hours", "note": "Batch compute and cooling can shift to clean windows"},
-    {"name": "Commercial Office", "hours": "08:00 – 18:00", "mwh": 5,
+    {"name": "Commercial Office", "hours": "08:00, 18:00", "mwh": 5,
      "window": "Small site operations", "note": "HVAC pre-cooling, EV charging flexibility"},
 ]
 
