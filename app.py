@@ -891,13 +891,8 @@ plotly_config = {
 # ─────────────────────────────────────────────────────────────
 # State & filtering
 # ─────────────────────────────────────────────────────────────
-date_min = df["SETTLEMENTDATE"].dt.date.min()
-date_max = df["SETTLEMENTDATE"].dt.date.max()
-regions = sorted(df["Region"].dropna().unique().tolist())
-default_selected_date = date_max
-
 if "selected_date" not in st.session_state:
-    st.session_state.selected_date = default_selected_date
+    st.session_state.selected_date = date_max
 if "resolution_label" not in st.session_state:
     st.session_state.resolution_label = "1 hour"
 if "scope_choice" not in st.session_state:
@@ -912,12 +907,18 @@ interval_minutes = INTERVAL_MINUTES[resolution_label]
 scope_choice = st.session_state.scope_choice
 sel_regions = st.session_state.sel_regions
 
-# Filter to selected day and regions
-mask_day = (
-    (df["SETTLEMENTDATE"].dt.date == selected_date) &
-    (df["Region"].isin(sel_regions))
-)
-dff = df[mask_day].copy()
+# Load data for the selected date and filter to chosen regions
+_day_df = load_scada_for_date(str(DATA_DIR), selected_date)
+dff = _day_df[_day_df["Region"].isin(sel_regions)].copy() if sel_regions else _day_df.iloc[0:0].copy()
+
+# ── Auto-refresh every 5 minutes when viewing today's live data ──
+import time as _time
+_now = _time.monotonic()
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = _now
+elif selected_date == datetime.date.today() and (_now - st.session_state.last_refresh) >= 300:
+    st.session_state.last_refresh = _now
+    st.rerun()
 
 emission_col = "tco2e_scope1" if scope_choice == "Scope 1 only" else "tco2e_total"
 
