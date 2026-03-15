@@ -35,12 +35,12 @@ st.markdown("""
     /* Typography */
     --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --text-xs: 0.75rem;
-    --text-sm: 0.8125rem;
-    --text-base: 0.9375rem;
-    --text-lg: 1.125rem;
-    --text-xl: 1.5rem;
-    --text-2xl: 2rem;
+    --text-xs: 1.02rem;
+    --text-sm: 1.16rem;
+    --text-base: 1.32rem;
+    --text-lg: 1.68rem;
+    --text-xl: 2.22rem;
+    --text-2xl: 3rem;
 
     /* Colors — base */
     --background: #25241f;
@@ -68,7 +68,7 @@ st.markdown("""
   }
 
   /* ── Base ── */
-  html { font-size: 16px; }
+  html { font-size: 17px; }
   .stApp { background-color: var(--background) !important; }
   html, body, [class*="css"] {
     font-family: var(--font-body);
@@ -104,7 +104,7 @@ st.markdown("""
 
   /* ── Container ── */
   .block-container {
-    max-width: 840px !important;
+    max-width: 1080px !important;
     padding-top: 2rem !important;
     padding-left: 2.5rem !important;
     padding-right: 2.5rem !important;
@@ -236,53 +236,79 @@ st.markdown("""
   /* ── Timing cards ── */
   .timing-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
     margin-bottom: 1.5rem;
   }
   .timing-card {
     border-radius: var(--radius);
-    padding: 1.1rem 1.2rem;
-    text-align: center;
+    padding: 1.55rem 1.65rem;
+    text-align: left;
+    min-height: 205px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   .timing-card--green {
-    background: var(--bg-green);
+    background: #e7f1d5;
     border: 1px solid var(--bg-green-border);
-    color: #2e5e11;
+    color: #274c12;
   }
   .timing-card--red {
-    background: var(--bg-red);
+    background: #f3dfdd;
     border: 1px solid var(--bg-red-border);
-    color: #8c2d2d;
+    color: #7b2424;
   }
   .timing-card--neutral {
-    background: var(--bg-neutral);
+    background: #302f2a;
     border: 1px solid var(--border);
   }
   .timing-label {
     font-family: var(--font-body);
-    font-size: var(--text-sm);
+    font-size: var(--text-lg);
     color: var(--muted-foreground);
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.45rem;
+    font-weight: 600;
   }
   .timing-value {
     font-family: var(--font-display);
-    font-size: var(--text-lg);
-    font-weight: 600;
+    font-size: var(--text-2xl);
+    font-weight: 700;
     color: var(--foreground);
+    line-height: 1.1;
   }
   .timing-hours {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
-    margin-top: 0.15rem;
+    margin-top: 0.5rem;
   }
   .timing-intensity {
     font-family: var(--font-body);
-    font-size: var(--text-sm);
-    font-weight: 500;
+    font-size: var(--text-lg);
+    font-weight: 600;
     color: var(--foreground);
-    margin-top: 0.35rem;
+    margin-top: 0.8rem;
+  }
+  .timing-card--green .timing-label,
+  .timing-card--green .timing-hours,
+  .timing-card--green .timing-intensity,
+  .timing-card--green .timing-value {
+    color: #2e5e11;
+  }
+  .timing-card--red .timing-label,
+  .timing-card--red .timing-hours,
+  .timing-card--red .timing-intensity,
+  .timing-card--red .timing-value {
+    color: #8c2d2d;
+  }
+  .timing-card--neutral .timing-label,
+  .timing-card--neutral .timing-hours {
+    color: #d2ccbf;
+  }
+  .timing-card--neutral .timing-intensity,
+  .timing-card--neutral .timing-value {
+    color: #f2efe8;
   }
 
   /* ── Sector cards ── */
@@ -528,17 +554,17 @@ st.markdown("""
     font-family: var(--font-body);
   }
   .chart-insight {
-    background: var(--accent-light);
+    background: #e7f1d5;
     border-left: 3px solid var(--accent);
-    padding: 1rem 1.3rem;
+    padding: 1.15rem 1.45rem;
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
     font-family: var(--font-body);
-    font-size: var(--text-base);
-    color: var(--foreground);
-    line-height: 1.5;
+    font-size: var(--text-lg);
+    color: #2f431d;
+    line-height: 1.55;
   }
-  .chart-insight strong { color: var(--foreground); }
+  .chart-insight strong { color: #203015; }
 
   /* ── Section text ── */
   .section-text {
@@ -546,11 +572,28 @@ st.markdown("""
     font-size: var(--text-base);
     color: var(--foreground);
     margin: 0 auto 24px auto;
-    max-width: 860px;
+    max-width: 960px;
     font-family: var(--font-body);
   }
   .section-text a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); }
   .section-text a:hover { border-bottom-color: var(--accent); }
+  .info-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.45rem 1.6rem;
+    margin-top: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  .info-panel .section-heading {
+    margin-bottom: 0.6rem;
+  }
+  .info-panel p,
+  .info-panel div,
+  .info-panel li {
+    font-size: var(--text-base);
+    line-height: 1.6;
+  }
 
   /* ── Methodology / intro blocks ── */
   .intro-hero {
@@ -660,7 +703,7 @@ st.markdown("""
 
   /* ── Responsive ── */
   @media (max-width: 1200px) {
-    .hero-grid, .timing-grid, .sector-grid, .estimator-results {
+    .hero-grid, .sector-grid, .estimator-results {
       grid-template-columns: repeat(2, 1fr);
     }
   }
@@ -708,8 +751,8 @@ st.markdown("""
     .insight-callout { font-size: var(--text-base); padding: 0.85rem 1rem; }
   }
   @media (min-width: 1800px) {
-    :root { --text-sm: 0.78rem; --text-base: 0.89rem; --text-lg: 1.05rem; --text-xl: 1.35rem; --text-2xl: 1.75rem; }
-    .block-container { max-width: 840px !important; }
+    :root { --text-xs: 1.02rem; --text-sm: 1.16rem; --text-base: 1.32rem; --text-lg: 1.68rem; --text-xl: 2.22rem; --text-2xl: 3rem; }
+    .block-container { max-width: 1080px !important; }
   }
 
   footer { visibility: hidden; }
@@ -977,29 +1020,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Controls ────────────────────────────────────────────────
-c1, c2, c3, c4 = st.columns([1.15, 1.1, 1.35, 2.4], gap="medium")
-with c1:
-    st.date_input("Date", min_value=date_min, max_value=date_max,
-                  key="selected_date", format="DD/MM/YYYY")
-with c2:
-    st.selectbox("Interval", list(RESOLUTIONS.keys()), key="resolution_label")
-with c3:
-    st.radio("Emissions scope", ["Scope 1 only", "Scope 1 + 3 (combined)"],
-             key="scope_choice",
-             help="Scope 1 = direct combustion. Scope 3 = upstream fuel extraction (coal only in NGA 2025).",
-             horizontal=True)
-with c4:
-    st.multiselect("Regions", regions, key="sel_regions")
-
-st.markdown(
-    f"<div class='meta-line'>AEMO NEM  &middot;  {selected_date.strftime('%d %B %Y')}  &middot;  "
-    f"{', '.join(sel_regions) if sel_regions else 'No region selected'}  &middot;  "
-    f"{scope_choice}  &middot;  {resolution_label} intervals</div>",
-    unsafe_allow_html=True
-)
-
-
 # ── D.2  Hero Row ───────────────────────────────────────────
 clean_window_label = (
     f"{clean_window_start.strftime('%H:%M')} – {(clean_window_end + pd.Timedelta(minutes=5)).strftime('%H:%M')}"
@@ -1033,6 +1053,146 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
+st.markdown("<h2 class='section-heading'>Generation Mix and Emissions Profile</h2>", unsafe_allow_html=True)
+st.markdown("<p class='section-sub'>Stacked generation by technology with total emissions over the selected day</p>",
+            unsafe_allow_html=True)
+
+dff["period"] = dff["SETTLEMENTDATE"].dt.floor(resolution)
+agg = (
+    dff.groupby("period")
+    .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
+    .reset_index()
+)
+mix = dff.groupby(["period", "Technology Type"]).agg(mwh=("mwh", "sum")).reset_index()
+tech_order = [t for t in TECH_COLORS if t in mix["Technology Type"].unique()]
+
+if not interval_agg.empty and period_low > 0:
+    ratio = period_high / period_low
+    best_t = interval_agg["intensity"].idxmin()
+    worst_t = interval_agg["intensity"].idxmax()
+    chart_title = f"Grid ran {ratio:.1f}x cleaner at {best_t.strftime('%H:%M')} than at {worst_t.strftime('%H:%M')} today"
+else:
+    chart_title = "Generation mix and total emissions"
+
+chart_tickvals = pd.date_range(
+    start=pd.Timestamp(selected_date),
+    end=pd.Timestamp(selected_date) + pd.Timedelta(hours=22),
+    freq="2h",
+)
+
+combo_fig = make_subplots(specs=[[{"secondary_y": True}]])
+for tech in tech_order:
+    subset = mix[mix["Technology Type"] == tech]
+    combo_fig.add_trace(go.Bar(
+        x=subset["period"],
+        y=subset["mwh"],
+        name=tech,
+        marker=dict(color=TECH_COLORS.get(tech, "#555"), line=dict(color="#25241f", width=0.35)),
+        hovertemplate=f"{tech}<br>%{{x|%H:%M}}<br><b>%{{y:,.0f}}</b> MWh<extra></extra>",
+    ), secondary_y=False)
+
+combo_fig.add_trace(go.Scatter(
+    x=agg["period"],
+    y=agg["tco2e"],
+    name="Emissions (t CO\u2082-e)",
+    mode="lines",
+    line=dict(color="#000000", width=3),
+    hovertemplate="%{x|%H:%M}<br><b>%{y:,.0f}</b> t CO\u2082-e<extra></extra>",
+), secondary_y=True)
+
+if clean_window_start is not None and clean_window_end is not None:
+    combo_fig.add_vrect(
+        x0=clean_window_start,
+        x1=clean_window_end + pd.Timedelta(minutes=5),
+        fillcolor="#bbf7d0",
+        opacity=0.22,
+        layer="below",
+        line_width=0,
+        annotation_text="Cleanest 4 hours",
+        annotation_position="top left",
+        annotation_font=dict(color="#166534", family="Inter, sans-serif", size=11),
+    )
+
+combo_fig.update_layout(
+    barmode="stack",
+    bargap=0,
+    bargroupgap=0,
+    xaxis=dict(
+        showgrid=False,
+        color="#b7b1a6",
+        tickmode="array",
+        tickvals=chart_tickvals,
+        ticktext=[str(ts.hour) for ts in chart_tickvals],
+        tickangle=0,
+    ),
+    plot_bgcolor="#302f2a",
+    paper_bgcolor="#302f2a",
+    font=dict(color="#f2efe8", family="Inter, sans-serif"),
+    legend=dict(
+        bgcolor="#35342f",
+        bordercolor="#47453d",
+        orientation="h",
+        yanchor="top",
+        y=-0.08,
+        xanchor="center",
+        x=0.5,
+    ),
+    margin=dict(l=0, r=0, t=8, b=42),
+    hovermode="x unified",
+    height=520,
+)
+combo_fig.update_yaxes(
+    title_text="",
+    showgrid=True,
+    gridcolor="#47453d",
+    zeroline=False,
+    color="#b7b1a6",
+    automargin=True,
+    secondary_y=False,
+)
+combo_fig.update_yaxes(
+    title_text="",
+    showgrid=False,
+    zeroline=False,
+    range=[0, int(((1600 * interval_minutes / 15) + 99) // 100) * 100],
+    color="#b7b1a6",
+    automargin=True,
+    secondary_y=True,
+)
+combo_fig.update_xaxes(fixedrange=True)
+combo_fig.update_yaxes(fixedrange=True)
+
+st.markdown(f"<div class='chart-title'>{chart_title}</div>", unsafe_allow_html=True)
+st.markdown(
+    "<div class='chart-axis-notes'><span>Left, MWh</span><span>Right, t CO&#8322;-e</span></div>",
+    unsafe_allow_html=True,
+)
+st.plotly_chart(combo_fig, use_container_width=True, config=plotly_config)
+
+
+# ── Controls ────────────────────────────────────────────────
+c1, c2, c3, c4 = st.columns([1.15, 1.1, 1.35, 2.4], gap="medium")
+with c1:
+    st.date_input("Date", min_value=date_min, max_value=date_max,
+                  key="selected_date", format="DD/MM/YYYY")
+with c2:
+    st.selectbox("Interval", list(RESOLUTIONS.keys()), key="resolution_label")
+with c3:
+    st.radio("Emissions scope", ["Scope 1 only", "Scope 1 + 3 (combined)"],
+             key="scope_choice",
+             help="Scope 1 = direct combustion. Scope 3 = upstream fuel extraction (coal only in NGA 2025).",
+             horizontal=True)
+with c4:
+    st.multiselect("Regions", regions, key="sel_regions")
+
+st.markdown(
+    f"<div class='meta-line'>AEMO NEM  &middot;  {selected_date.strftime('%d %B %Y')}  &middot;  "
+    f"{', '.join(sel_regions) if sel_regions else 'No region selected'}  &middot;  "
+    f"{scope_choice}  &middot;  {resolution_label} intervals</div>",
+    unsafe_allow_html=True
+)
+
+
 # ── D.3  Insight Callout ────────────────────────────────────
 if clean_window_start is not None and avg_intensity > 0:
     clean_mask = (
@@ -1059,139 +1219,139 @@ else:
 st.markdown(f'<div class="insight-callout">{insight_text}</div>', unsafe_allow_html=True)
 
 
-# ── D.4  Fuel Mix Panel ────────────────────────────────────
-st.markdown("<h2 class='section-heading'>Fuel Mix by Region</h2>", unsafe_allow_html=True)
-st.markdown("<p class='section-sub'>Current-day generation breakdown by technology type</p>",
-            unsafe_allow_html=True)
+charts_left, charts_right = st.columns(2, gap="large")
 
-fuel_region = st.radio("Region", ["All"] + [r.replace("1", "") for r in regions],
-                       horizontal=True, key="fuel_region_tab", label_visibility="collapsed")
+with charts_left:
+    st.markdown("<h2 class='section-heading'>Fuel Mix by Region</h2>", unsafe_allow_html=True)
+    st.markdown("<p class='section-sub'>Current-day generation breakdown by technology type</p>",
+                unsafe_allow_html=True)
 
-if fuel_region == "All":
-    fuel_df = dff.copy()
-else:
-    fuel_df = dff[dff["Region"] == f"{fuel_region}1"].copy()
+    fuel_region = st.radio("Region", ["All"] + [r.replace("1", "") for r in regions],
+                           horizontal=True, key="fuel_region_tab", label_visibility="collapsed")
 
-fuel_mix = (
-    fuel_df.groupby("Technology Type")
-    .agg(total_mwh=("mwh", "sum"))
-    .reset_index()
-    .sort_values("total_mwh", ascending=True)
-)
-fuel_mix["pct"] = 100 * fuel_mix["total_mwh"] / fuel_mix["total_mwh"].sum() if fuel_mix["total_mwh"].sum() > 0 else 0
+    if fuel_region == "All":
+        fuel_df = dff.copy()
+    else:
+        fuel_df = dff[dff["Region"] == f"{fuel_region}1"].copy()
 
-fuel_fig = go.Figure(go.Bar(
-    y=fuel_mix["Technology Type"],
-    x=fuel_mix["total_mwh"],
-    orientation="h",
-    marker=dict(
-        color=[TECH_COLORS.get(t, "#6B7280") for t in fuel_mix["Technology Type"]],
-        line=dict(color="#25241f", width=0.5),
-    ),
-    customdata=fuel_mix[["pct"]],
-    hovertemplate="<b>%{y}</b><br>%{x:,.0f} MWh (%{customdata[0]:.1f}%)<extra></extra>",
-))
-fuel_fig.update_layout(
-    plot_bgcolor="#302f2a", paper_bgcolor="#302f2a",
-    font=dict(color="#f2efe8", family="Inter, sans-serif"),
-    margin=dict(l=0, r=20, t=8, b=8),
-    height=max(200, len(fuel_mix) * 38),
-    showlegend=False,
-    xaxis=dict(showgrid=True, gridcolor="#47453d", title_text="MWh", color="#b7b1a6"),
-    yaxis=dict(showgrid=False, color="#f2efe8", automargin=True),
-)
-fuel_fig.update_xaxes(fixedrange=True)
-fuel_fig.update_yaxes(fixedrange=True)
-st.plotly_chart(fuel_fig, use_container_width=True, config=plotly_config)
+    fuel_mix = (
+        fuel_df.groupby("Technology Type")
+        .agg(total_mwh=("mwh", "sum"))
+        .reset_index()
+        .sort_values("total_mwh", ascending=True)
+    )
+    fuel_mix["pct"] = 100 * fuel_mix["total_mwh"] / fuel_mix["total_mwh"].sum() if fuel_mix["total_mwh"].sum() > 0 else 0
 
-
-# ── D.5  Duck Curve ─────────────────────────────────────────
-st.markdown("<h2 class='section-heading'>Emissions Intensity Across the Day</h2>", unsafe_allow_html=True)
-st.markdown("<p class='section-sub'>The duck curve — when the grid is clean vs dirty, by hour</p>",
-            unsafe_allow_html=True)
-
-if not hourly_agg.empty and hourly_agg["intensity"].notna().any():
-    median_i = hourly_agg["intensity"].median()
-    p75_i = hourly_agg["intensity"].quantile(0.75)
-
-    # Use absolute thresholds as fallback for extreme days
-    green_threshold = min(median_i, 0.3) if median_i < 0.15 else median_i
-    red_threshold = max(p75_i, 0.6) if p75_i > 0.8 else p75_i
-
-    def duck_color(val):
-        if pd.isna(val):
-            return "#9CA3AF"
-        if val <= green_threshold:
-            return "#4A8C6F"
-        elif val >= red_threshold:
-            return "#8B3A3A"
-        else:
-            return "#D4A855"
-
-    duck_colors = hourly_agg["intensity"].apply(duck_color).tolist()
-
-    duck_fig = go.Figure(go.Bar(
-        x=hourly_agg["hour"],
-        y=hourly_agg["intensity"],
-        marker=dict(color=duck_colors, line=dict(color="#25241f", width=0.5)),
-        hovertemplate="Hour %{x}:00<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
+    fuel_fig = go.Figure(go.Bar(
+        y=fuel_mix["Technology Type"],
+        x=fuel_mix["total_mwh"],
+        orientation="h",
+        marker=dict(
+            color=[TECH_COLORS.get(t, "#6B7280") for t in fuel_mix["Technology Type"]],
+            line=dict(color="#25241f", width=0.5),
+        ),
+        customdata=fuel_mix[["pct"]],
+        hovertemplate="<b>%{y}</b><br>%{x:,.0f} MWh (%{customdata[0]:.1f}%)<extra></extra>",
     ))
-    duck_fig.update_layout(
+    fuel_fig.update_layout(
         plot_bgcolor="#302f2a", paper_bgcolor="#302f2a",
         font=dict(color="#f2efe8", family="Inter, sans-serif"),
-        margin=dict(l=10, r=10, t=8, b=8),
-        height=320,
+        margin=dict(l=0, r=20, t=8, b=8),
+        height=max(280, len(fuel_mix) * 40),
         showlegend=False,
-        xaxis=dict(
-            showgrid=False, color="#b7b1a6",
-            tickmode="array",
-            tickvals=list(range(0, 24, 2)),
-            ticktext=[f"{h}:00" for h in range(0, 24, 2)],
-            title_text="Hour of Day",
-        ),
-        yaxis=dict(
-            showgrid=True, gridcolor="#47453d", color="#b7b1a6",
-            title_text="t CO₂-e / MWh", rangemode="tozero",
-        ),
+        xaxis=dict(showgrid=True, gridcolor="#47453d", title_text="MWh", color="#b7b1a6"),
+        yaxis=dict(showgrid=False, color="#f2efe8", automargin=True),
     )
-    duck_fig.update_xaxes(fixedrange=True)
-    duck_fig.update_yaxes(fixedrange=True)
+    fuel_fig.update_xaxes(fixedrange=True)
+    fuel_fig.update_yaxes(fixedrange=True)
+    st.plotly_chart(fuel_fig, use_container_width=True, config=plotly_config)
 
-    # Add annotations for context
-    if len(hourly_agg) > 12:
-        solar_hours = hourly_agg[(hourly_agg["hour"] >= 10) & (hourly_agg["hour"] <= 14)]
-        evening_hours = hourly_agg[(hourly_agg["hour"] >= 17) & (hourly_agg["hour"] <= 20)]
-        if not solar_hours.empty and not evening_hours.empty:
-            solar_min = solar_hours.loc[solar_hours["intensity"].idxmin()]
-            evening_max = evening_hours.loc[evening_hours["intensity"].idxmax()]
-            duck_fig.add_annotation(
-                x=solar_min["hour"], y=solar_min["intensity"],
-                text="Solar peak", showarrow=True, arrowhead=0,
-                font=dict(size=11, color="#4A8C6F"), ax=0, ay=-30,
-            )
-            duck_fig.add_annotation(
-                x=evening_max["hour"], y=evening_max["intensity"],
-                text="Evening ramp", showarrow=True, arrowhead=0,
-                font=dict(size=11, color="#8B3A3A"), ax=0, ay=-30,
-            )
+with charts_right:
+    st.markdown("<h2 class='section-heading'>Emissions Intensity Across the Day</h2>", unsafe_allow_html=True)
+    st.markdown("<p class='section-sub'>The duck curve — when the grid is clean vs dirty, by hour</p>",
+                unsafe_allow_html=True)
 
-    st.plotly_chart(duck_fig, use_container_width=True, config=plotly_config)
+    if not hourly_agg.empty and hourly_agg["intensity"].notna().any():
+        median_i = hourly_agg["intensity"].median()
+        p75_i = hourly_agg["intensity"].quantile(0.75)
 
-    st.markdown("""
-    <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1rem;">
-      <span style="font-size: 0.8rem; color: #b7b1a6;">
-        <span style="display:inline-block;width:12px;height:12px;background:#4A8C6F;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Clean (below median)
-      </span>
-      <span style="font-size: 0.8rem; color: #b7b1a6;">
-        <span style="display:inline-block;width:12px;height:12px;background:#D4A855;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Moderate
-      </span>
-      <span style="font-size: 0.8rem; color: #b7b1a6;">
-        <span style="display:inline-block;width:12px;height:12px;background:#8B3A3A;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Dirty (above 75th percentile)
-      </span>
-    </div>
-    """, unsafe_allow_html=True)
-else:
-    st.info("No hourly data available for this date/region selection.")
+        # Use absolute thresholds as fallback for extreme days
+        green_threshold = min(median_i, 0.3) if median_i < 0.15 else median_i
+        red_threshold = max(p75_i, 0.6) if p75_i > 0.8 else p75_i
+
+        def duck_color(val):
+            if pd.isna(val):
+                return "#9CA3AF"
+            if val <= green_threshold:
+                return "#4A8C6F"
+            elif val >= red_threshold:
+                return "#8B3A3A"
+            else:
+                return "#D4A855"
+
+        duck_colors = hourly_agg["intensity"].apply(duck_color).tolist()
+
+        duck_fig = go.Figure(go.Bar(
+            x=hourly_agg["hour"],
+            y=hourly_agg["intensity"],
+            marker=dict(color=duck_colors, line=dict(color="#25241f", width=0.5)),
+            hovertemplate="Hour %{x}:00<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
+        ))
+        duck_fig.update_layout(
+            plot_bgcolor="#302f2a", paper_bgcolor="#302f2a",
+            font=dict(color="#f2efe8", family="Inter, sans-serif"),
+            margin=dict(l=10, r=10, t=8, b=8),
+            height=320,
+            showlegend=False,
+            xaxis=dict(
+                showgrid=False, color="#b7b1a6",
+                tickmode="array",
+                tickvals=list(range(0, 24, 2)),
+                ticktext=[f"{h}:00" for h in range(0, 24, 2)],
+                title_text="Hour of Day",
+            ),
+            yaxis=dict(
+                showgrid=True, gridcolor="#47453d", color="#b7b1a6",
+                title_text="t CO₂-e / MWh", rangemode="tozero",
+            ),
+        )
+        duck_fig.update_xaxes(fixedrange=True)
+        duck_fig.update_yaxes(fixedrange=True)
+
+        if len(hourly_agg) > 12:
+            solar_hours = hourly_agg[(hourly_agg["hour"] >= 10) & (hourly_agg["hour"] <= 14)]
+            evening_hours = hourly_agg[(hourly_agg["hour"] >= 17) & (hourly_agg["hour"] <= 20)]
+            if not solar_hours.empty and not evening_hours.empty:
+                solar_min = solar_hours.loc[solar_hours["intensity"].idxmin()]
+                evening_max = evening_hours.loc[evening_hours["intensity"].idxmax()]
+                duck_fig.add_annotation(
+                    x=solar_min["hour"], y=solar_min["intensity"],
+                    text="Solar peak", showarrow=True, arrowhead=0,
+                    font=dict(size=11, color="#4A8C6F"), ax=0, ay=-30,
+                )
+                duck_fig.add_annotation(
+                    x=evening_max["hour"], y=evening_max["intensity"],
+                    text="Evening ramp", showarrow=True, arrowhead=0,
+                    font=dict(size=11, color="#8B3A3A"), ax=0, ay=-30,
+                )
+
+        st.plotly_chart(duck_fig, use_container_width=True, config=plotly_config)
+
+        st.markdown("""
+        <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1rem;">
+          <span style="font-size: 0.95rem; color: #b7b1a6;">
+            <span style="display:inline-block;width:12px;height:12px;background:#4A8C6F;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Clean
+          </span>
+          <span style="font-size: 0.95rem; color: #b7b1a6;">
+            <span style="display:inline-block;width:12px;height:12px;background:#D4A855;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Moderate
+          </span>
+          <span style="font-size: 0.95rem; color: #b7b1a6;">
+            <span style="display:inline-block;width:12px;height:12px;background:#8B3A3A;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Dirty
+          </span>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.info("No hourly data available for this date/region selection.")
 
 
 # ── D.6  Timing Cards ──────────────────────────────────────
@@ -1360,147 +1520,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<h2 class='section-heading'>Generation Mix and Emissions Profile</h2>", unsafe_allow_html=True)
-st.markdown("<p class='section-sub'>Stacked generation by technology with total emissions over the selected day</p>",
-            unsafe_allow_html=True)
-
-dff["period"] = dff["SETTLEMENTDATE"].dt.floor(resolution)
-agg = (
-    dff.groupby("period")
-    .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
-    .reset_index()
-)
-mix = dff.groupby(["period", "Technology Type"]).agg(mwh=("mwh", "sum")).reset_index()
-tech_order = [t for t in TECH_COLORS if t in mix["Technology Type"].unique()]
-
-if not interval_agg.empty and period_low > 0:
-    ratio = period_high / period_low
-    best_t = interval_agg["intensity"].idxmin()
-    worst_t = interval_agg["intensity"].idxmax()
-    chart_title = f"Grid ran {ratio:.1f}x cleaner at {best_t.strftime('%H:%M')} than at {worst_t.strftime('%H:%M')} today"
-else:
-    chart_title = "Generation mix and total emissions"
-
-chart_tickvals = pd.date_range(
-    start=pd.Timestamp(selected_date),
-    end=pd.Timestamp(selected_date) + pd.Timedelta(hours=22),
-    freq="2h",
-)
-
-combo_fig = make_subplots(specs=[[{"secondary_y": True}]])
-for tech in tech_order:
-    subset = mix[mix["Technology Type"] == tech]
-    combo_fig.add_trace(go.Bar(
-        x=subset["period"],
-        y=subset["mwh"],
-        name=tech,
-        marker=dict(color=TECH_COLORS.get(tech, "#555"), line=dict(color="#25241f", width=0.35)),
-        hovertemplate=f"{tech}<br>%{{x|%H:%M}}<br><b>%{{y:,.0f}}</b> MWh<extra></extra>",
-    ), secondary_y=False)
-
-combo_fig.add_trace(go.Scatter(
-    x=agg["period"],
-    y=agg["tco2e"],
-    name="Emissions (t CO\u2082-e)",
-    mode="lines",
-    line=dict(color="#000000", width=3),
-    hovertemplate="%{x|%H:%M}<br><b>%{y:,.0f}</b> t CO\u2082-e<extra></extra>",
-), secondary_y=True)
-
-if clean_window_start is not None and clean_window_end is not None:
-    combo_fig.add_vrect(
-        x0=clean_window_start,
-        x1=clean_window_end + pd.Timedelta(minutes=5),
-        fillcolor="#bbf7d0",
-        opacity=0.22,
-        layer="below",
-        line_width=0,
-        annotation_text="Cleanest 4 hours",
-        annotation_position="top left",
-        annotation_font=dict(color="#166534", family="Inter, sans-serif", size=11),
-    )
-
-combo_fig.update_layout(
-    barmode="stack",
-    bargap=0,
-    bargroupgap=0,
-    xaxis=dict(
-        showgrid=False,
-        color="#b7b1a6",
-        tickmode="array",
-        tickvals=chart_tickvals,
-        ticktext=[str(ts.hour) for ts in chart_tickvals],
-        tickangle=0,
-    ),
-    plot_bgcolor="#302f2a",
-    paper_bgcolor="#302f2a",
-    font=dict(color="#f2efe8", family="Inter, sans-serif"),
-    legend=dict(
-        bgcolor="#35342f",
-        bordercolor="#47453d",
-        orientation="h",
-        yanchor="top",
-        y=-0.08,
-        xanchor="center",
-        x=0.5,
-    ),
-    margin=dict(l=0, r=0, t=8, b=42),
-    hovermode="x unified",
-    height=520,
-)
-combo_fig.update_yaxes(
-    title_text="",
-    showgrid=True,
-    gridcolor="#47453d",
-    zeroline=False,
-    color="#b7b1a6",
-    automargin=True,
-    secondary_y=False,
-)
-combo_fig.update_yaxes(
-    title_text="",
-    showgrid=False,
-    zeroline=False,
-    range=[0, int(((1600 * interval_minutes / 15) + 99) // 100) * 100],
-    color="#b7b1a6",
-    automargin=True,
-    secondary_y=True,
-)
-combo_fig.update_xaxes(fixedrange=True)
-combo_fig.update_yaxes(fixedrange=True)
-
-st.markdown(f"<div class='chart-title'>{chart_title}</div>", unsafe_allow_html=True)
-st.markdown(
-    "<div class='chart-axis-notes'><span>Left, MWh</span><span>Right, t CO&#8322;-e</span></div>",
-    unsafe_allow_html=True,
-)
-st.plotly_chart(combo_fig, use_container_width=True, config=plotly_config)
-
-with st.expander("How this dashboard should be used"):
-    st.markdown("""
-    <div class="section-text">
-    This dashboard is a <strong>5-minute near-real-time reference layer</strong> for NEM grid emissions intensity.
-    It shows how clean or dirty the grid is by time of day and region, using AEMO dispatch data joined to emissions factors.
-    It does <strong>not</strong> calculate a company's official disclosure by itself. Disclosure-grade Scope 2 reporting still requires the company's own interval consumption data.
-    </div>
-    """, unsafe_allow_html=True)
-
-with st.expander("Data lineage, methodology, and sources"):
-    st.markdown("""
-    <div class="section-text">
-    <b>Coverage</b>: NEM regions only (QLD, NSW, VIC, SA, TAS). Excludes WEM, NT grids, and rooftop solar.<br><br>
-    <b>Lineage</b>: <code>dispatch_scada.csv</code> provides 5-minute generator dispatch by DUID, <code>duid_lookup.csv</code> maps DUIDs to technology and region, and <code>emissions_factors.csv</code> provides technology-level emissions factors.<br><br>
-    <b>Transform</b>: Python joins those three datasets, filters to positive dispatch, converts dispatch MW into interval MWh with <code>mwh = SCADAVALUE * (5 / 60)</code>, and aggregates by time window and technology.<br><br>
-    <b>Sources</b><br>
-    &bull; AEMO Dispatch SCADA:
-    <a href="https://nemweb.com.au/Reports/Current/Dispatch_SCADA/">nemweb.com.au</a><br>
-    &bull; AEMO Generation Information:
-    <a href="https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/nem-forecasting-and-planning/forecasting-and-planning-data/generation-information">aemo.com.au</a><br>
-    &bull; National Greenhouse Accounts Factors 2025:
-    <a href="https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors">dcceew.gov.au</a>
-    </div>
-    """, unsafe_allow_html=True)
-
 with st.expander("Raw interval data"):
     raw_interval_df = (
         dff.groupby(dff["SETTLEMENTDATE"].dt.floor(resolution))
@@ -1525,6 +1544,31 @@ with st.expander("Emissions factors reference (NGA 2025)"):
         "Source: National Greenhouse Accounts Factors 2025, DCCEEW. "
         "Converted with kg CO\u2082-e/GJ \u00d7 3.6 GJ/MWh \u00f7 1000."
     )
+
+st.markdown("""
+<div class="info-panel section-text">
+<h3 class="section-heading">How this dashboard should be used</h3>
+This dashboard is a <strong>5-minute near-real-time reference layer</strong> for NEM grid emissions intensity.
+It shows how clean or dirty the grid is by time of day and region, using AEMO dispatch data joined to emissions factors.
+It does <strong>not</strong> calculate a company's official disclosure by itself. Disclosure-grade Scope 2 reporting still requires the company's own interval consumption data.
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="info-panel section-text">
+<h3 class="section-heading">Data lineage, methodology, and sources</h3>
+<b>Coverage</b>: NEM regions only (QLD, NSW, VIC, SA, TAS). Excludes WEM, NT grids, and rooftop solar.<br><br>
+<b>Lineage</b>: <code>dispatch_scada.csv</code> provides 5-minute generator dispatch by DUID, <code>duid_lookup.csv</code> maps DUIDs to technology and region, and <code>emissions_factors.csv</code> provides technology-level emissions factors.<br><br>
+<b>Transform</b>: Python joins those three datasets, filters to positive dispatch, converts dispatch MW into interval MWh with <code>mwh = SCADAVALUE * (5 / 60)</code>, and aggregates by time window and technology.<br><br>
+<b>Sources</b><br>
+&bull; AEMO Dispatch SCADA:
+<a href="https://nemweb.com.au/Reports/Current/Dispatch_SCADA/">nemweb.com.au</a><br>
+&bull; AEMO Generation Information:
+<a href="https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/nem-forecasting-and-planning/forecasting-and-planning-data/generation-information">aemo.com.au</a><br>
+&bull; National Greenhouse Accounts Factors 2025:
+<a href="https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors">dcceew.gov.au</a>
+</div>
+""", unsafe_allow_html=True)
 
 
 # ── Footer ───────────────────────────────────────────────────
