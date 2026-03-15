@@ -11,6 +11,7 @@ Data flow:
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from pathlib import Path
 
 from data_bootstrap import ensure_required_data
@@ -42,28 +43,28 @@ st.markdown("""
     --text-2xl: 2rem;
 
     /* Colors — base */
-    --background: #fafaf8;
-    --foreground: #171717;
-    --card: #ffffff;
-    --muted: #ececf0;
-    --muted-foreground: #717182;
-    --accent: #1B6B4A;
-    --accent-light: #E8F5E9;
-    --border: rgba(0, 0, 0, 0.08);
+    --background: #25241f;
+    --foreground: #f2efe8;
+    --card: #302f2a;
+    --muted: #383730;
+    --muted-foreground: #b7b1a6;
+    --accent: #87b61f;
+    --accent-light: #e4efd2;
+    --border: rgba(243, 239, 232, 0.10);
     --radius: 0.625rem;
 
     /* Semantic — timing */
-    --bg-green: #E8F5E9;
-    --bg-green-border: #A5D6A7;
-    --bg-red: #FDECEA;
-    --bg-red-border: #EF9A9A;
-    --bg-neutral: #F3F4F6;
+    --bg-green: #dfeacc;
+    --bg-green-border: #95b36b;
+    --bg-red: #f0d8d6;
+    --bg-red-border: #d18f88;
+    --bg-neutral: #35342f;
 
     /* Warm bands */
-    --header-bg: #f6efe5;
-    --header-border: #e7ddcf;
-    --footer-bg: #ece8df;
-    --footer-border: #d5cec2;
+    --header-bg: #25241f;
+    --header-border: rgba(243, 239, 232, 0.12);
+    --footer-bg: #25241f;
+    --footer-border: rgba(243, 239, 232, 0.12);
   }
 
   /* ── Base ── */
@@ -103,7 +104,7 @@ st.markdown("""
 
   /* ── Container ── */
   .block-container {
-    max-width: 1200px !important;
+    max-width: 840px !important;
     padding-top: 2rem !important;
     padding-left: 2.5rem !important;
     padding-right: 2.5rem !important;
@@ -165,13 +166,13 @@ st.markdown("""
     text-align: center;
   }
   .hero-card--accent {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #ffffff;
+    background: var(--accent-light);
+    border-color: var(--bg-green-border);
+    color: #2e5e11;
   }
-  .hero-card--accent .hero-label { color: rgba(255,255,255,0.8); }
-  .hero-card--accent .hero-value { color: #ffffff; }
-  .hero-card--accent .hero-sub { color: rgba(255,255,255,0.7); }
+  .hero-card--accent .hero-label { color: rgba(46, 94, 17, 0.72); }
+  .hero-card--accent .hero-value { color: #2e5e11; }
+  .hero-card--accent .hero-sub { color: rgba(46, 94, 17, 0.72); }
   .hero-label {
     font-family: var(--font-body);
     font-size: var(--text-sm);
@@ -202,7 +203,7 @@ st.markdown("""
     font-family: var(--font-display);
     font-size: var(--text-lg);
     font-weight: 500;
-    color: #1B5E20;
+    color: #2e5e11;
     text-align: center;
     line-height: 1.5;
   }
@@ -247,10 +248,12 @@ st.markdown("""
   .timing-card--green {
     background: var(--bg-green);
     border: 1px solid var(--bg-green-border);
+    color: #2e5e11;
   }
   .timing-card--red {
     background: var(--bg-red);
     border: 1px solid var(--bg-red-border);
+    color: #8c2d2d;
   }
   .timing-card--neutral {
     background: var(--bg-neutral);
@@ -456,7 +459,7 @@ st.markdown("""
 
   /* ── Comparison panel ── */
   .comparison-panel {
-    background: #f2f3f5;
+    background: #35342f;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 1rem 1.15rem;
@@ -642,6 +645,19 @@ st.markdown("""
   .linkedin-link:hover { color: var(--accent); }
   .linkedin-icon { width: 18px; height: 18px; fill: #374151; }
 
+  details[data-testid="stExpander"] {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  details[data-testid="stExpander"] summary {
+    color: var(--foreground);
+  }
+  div[data-testid="stDataFrame"] {
+    background: var(--card);
+    border-radius: var(--radius);
+  }
+
   /* ── Responsive ── */
   @media (max-width: 1200px) {
     .hero-grid, .timing-grid, .sector-grid, .estimator-results {
@@ -693,7 +709,7 @@ st.markdown("""
   }
   @media (min-width: 1800px) {
     :root { --text-sm: 0.78rem; --text-base: 0.89rem; --text-lg: 1.05rem; --text-xl: 1.35rem; --text-2xl: 1.75rem; }
-    .block-container { max-width: 1280px !important; }
+    .block-container { max-width: 840px !important; }
   }
 
   footer { visibility: hidden; }
@@ -930,6 +946,14 @@ avg_intensity = total_tco2e / total_mwh if total_mwh > 0 else 0
 renewable_mwh = dff[dff["Technology Type"].isin(ZERO_EMISSION)]["mwh"].sum()
 re_share      = 100 * renewable_mwh / total_mwh if total_mwh > 0 else 0
 
+interval_agg = (
+    dff.groupby(dff["SETTLEMENTDATE"].dt.floor(resolution))
+    .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
+    .assign(intensity=lambda x: x["tco2e"] / x["mwh"])
+)
+period_low  = interval_agg["intensity"].min() if not interval_agg.empty else 0
+period_high = interval_agg["intensity"].max() if not interval_agg.empty else 0
+
 # Hourly aggregation for duck curve
 hourly_agg = (
     dff.groupby(dff["SETTLEMENTDATE"].dt.hour)
@@ -1062,19 +1086,19 @@ fuel_fig = go.Figure(go.Bar(
     orientation="h",
     marker=dict(
         color=[TECH_COLORS.get(t, "#6B7280") for t in fuel_mix["Technology Type"]],
-        line=dict(color="#FAFAF8", width=0.5),
+        line=dict(color="#25241f", width=0.5),
     ),
     customdata=fuel_mix[["pct"]],
     hovertemplate="<b>%{y}</b><br>%{x:,.0f} MWh (%{customdata[0]:.1f}%)<extra></extra>",
 ))
 fuel_fig.update_layout(
-    plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF",
-    font=dict(color="#374151", family="Inter, sans-serif"),
+    plot_bgcolor="#302f2a", paper_bgcolor="#302f2a",
+    font=dict(color="#f2efe8", family="Inter, sans-serif"),
     margin=dict(l=0, r=20, t=8, b=8),
     height=max(200, len(fuel_mix) * 38),
     showlegend=False,
-    xaxis=dict(showgrid=True, gridcolor="#F3F4F6", title_text="MWh", color="#6B7280"),
-    yaxis=dict(showgrid=False, color="#374151", automargin=True),
+    xaxis=dict(showgrid=True, gridcolor="#47453d", title_text="MWh", color="#b7b1a6"),
+    yaxis=dict(showgrid=False, color="#f2efe8", automargin=True),
 )
 fuel_fig.update_xaxes(fixedrange=True)
 fuel_fig.update_yaxes(fixedrange=True)
@@ -1109,24 +1133,24 @@ if not hourly_agg.empty and hourly_agg["intensity"].notna().any():
     duck_fig = go.Figure(go.Bar(
         x=hourly_agg["hour"],
         y=hourly_agg["intensity"],
-        marker=dict(color=duck_colors, line=dict(color="#FFFFFF", width=0.5)),
+        marker=dict(color=duck_colors, line=dict(color="#25241f", width=0.5)),
         hovertemplate="Hour %{x}:00<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
     ))
     duck_fig.update_layout(
-        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF",
-        font=dict(color="#374151", family="Inter, sans-serif"),
+        plot_bgcolor="#302f2a", paper_bgcolor="#302f2a",
+        font=dict(color="#f2efe8", family="Inter, sans-serif"),
         margin=dict(l=10, r=10, t=8, b=8),
         height=320,
         showlegend=False,
         xaxis=dict(
-            showgrid=False, color="#6B7280",
+            showgrid=False, color="#b7b1a6",
             tickmode="array",
             tickvals=list(range(0, 24, 2)),
             ticktext=[f"{h}:00" for h in range(0, 24, 2)],
             title_text="Hour of Day",
         ),
         yaxis=dict(
-            showgrid=True, gridcolor="#F3F4F6", color="#6B7280",
+            showgrid=True, gridcolor="#47453d", color="#b7b1a6",
             title_text="t CO₂-e / MWh", rangemode="tozero",
         ),
     )
@@ -1155,13 +1179,13 @@ if not hourly_agg.empty and hourly_agg["intensity"].notna().any():
 
     st.markdown("""
     <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1rem;">
-      <span style="font-size: 0.8rem; color: #717182;">
+      <span style="font-size: 0.8rem; color: #b7b1a6;">
         <span style="display:inline-block;width:12px;height:12px;background:#4A8C6F;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Clean (below median)
       </span>
-      <span style="font-size: 0.8rem; color: #717182;">
+      <span style="font-size: 0.8rem; color: #b7b1a6;">
         <span style="display:inline-block;width:12px;height:12px;background:#D4A855;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Moderate
       </span>
-      <span style="font-size: 0.8rem; color: #717182;">
+      <span style="font-size: 0.8rem; color: #b7b1a6;">
         <span style="display:inline-block;width:12px;height:12px;background:#8B3A3A;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Dirty (above 75th percentile)
       </span>
     </div>
@@ -1336,6 +1360,122 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+st.markdown("<h2 class='section-heading'>Generation Mix and Emissions Profile</h2>", unsafe_allow_html=True)
+st.markdown("<p class='section-sub'>Stacked generation by technology with total emissions over the selected day</p>",
+            unsafe_allow_html=True)
+
+dff["period"] = dff["SETTLEMENTDATE"].dt.floor(resolution)
+agg = (
+    dff.groupby("period")
+    .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
+    .reset_index()
+)
+mix = dff.groupby(["period", "Technology Type"]).agg(mwh=("mwh", "sum")).reset_index()
+tech_order = [t for t in TECH_COLORS if t in mix["Technology Type"].unique()]
+
+if not interval_agg.empty and period_low > 0:
+    ratio = period_high / period_low
+    best_t = interval_agg["intensity"].idxmin()
+    worst_t = interval_agg["intensity"].idxmax()
+    chart_title = f"Grid ran {ratio:.1f}x cleaner at {best_t.strftime('%H:%M')} than at {worst_t.strftime('%H:%M')} today"
+else:
+    chart_title = "Generation mix and total emissions"
+
+chart_tickvals = pd.date_range(
+    start=pd.Timestamp(selected_date),
+    end=pd.Timestamp(selected_date) + pd.Timedelta(hours=22),
+    freq="2h",
+)
+
+combo_fig = make_subplots(specs=[[{"secondary_y": True}]])
+for tech in tech_order:
+    subset = mix[mix["Technology Type"] == tech]
+    combo_fig.add_trace(go.Bar(
+        x=subset["period"],
+        y=subset["mwh"],
+        name=tech,
+        marker=dict(color=TECH_COLORS.get(tech, "#555"), line=dict(color="#25241f", width=0.35)),
+        hovertemplate=f"{tech}<br>%{{x|%H:%M}}<br><b>%{{y:,.0f}}</b> MWh<extra></extra>",
+    ), secondary_y=False)
+
+combo_fig.add_trace(go.Scatter(
+    x=agg["period"],
+    y=agg["tco2e"],
+    name="Emissions (t CO\u2082-e)",
+    mode="lines",
+    line=dict(color="#000000", width=3),
+    hovertemplate="%{x|%H:%M}<br><b>%{y:,.0f}</b> t CO\u2082-e<extra></extra>",
+), secondary_y=True)
+
+if clean_window_start is not None and clean_window_end is not None:
+    combo_fig.add_vrect(
+        x0=clean_window_start,
+        x1=clean_window_end + pd.Timedelta(minutes=5),
+        fillcolor="#bbf7d0",
+        opacity=0.22,
+        layer="below",
+        line_width=0,
+        annotation_text="Cleanest 4 hours",
+        annotation_position="top left",
+        annotation_font=dict(color="#166534", family="Inter, sans-serif", size=11),
+    )
+
+combo_fig.update_layout(
+    barmode="stack",
+    bargap=0,
+    bargroupgap=0,
+    xaxis=dict(
+        showgrid=False,
+        color="#b7b1a6",
+        tickmode="array",
+        tickvals=chart_tickvals,
+        ticktext=[str(ts.hour) for ts in chart_tickvals],
+        tickangle=0,
+    ),
+    plot_bgcolor="#302f2a",
+    paper_bgcolor="#302f2a",
+    font=dict(color="#f2efe8", family="Inter, sans-serif"),
+    legend=dict(
+        bgcolor="#35342f",
+        bordercolor="#47453d",
+        orientation="h",
+        yanchor="top",
+        y=-0.08,
+        xanchor="center",
+        x=0.5,
+    ),
+    margin=dict(l=0, r=0, t=8, b=42),
+    hovermode="x unified",
+    height=520,
+)
+combo_fig.update_yaxes(
+    title_text="",
+    showgrid=True,
+    gridcolor="#47453d",
+    zeroline=False,
+    color="#b7b1a6",
+    automargin=True,
+    secondary_y=False,
+)
+combo_fig.update_yaxes(
+    title_text="",
+    showgrid=False,
+    zeroline=False,
+    range=[0, int(((1600 * interval_minutes / 15) + 99) // 100) * 100],
+    color="#b7b1a6",
+    automargin=True,
+    secondary_y=True,
+)
+combo_fig.update_xaxes(fixedrange=True)
+combo_fig.update_yaxes(fixedrange=True)
+
+st.markdown(f"<div class='chart-title'>{chart_title}</div>", unsafe_allow_html=True)
+st.markdown(
+    "<div class='chart-axis-notes'><span>Left, MWh</span><span>Right, t CO&#8322;-e</span></div>",
+    unsafe_allow_html=True,
+)
+st.plotly_chart(combo_fig, use_container_width=True, config=plotly_config)
+
 with st.expander("How this dashboard should be used"):
     st.markdown("""
     <div class="section-text">
@@ -1345,11 +1485,12 @@ with st.expander("How this dashboard should be used"):
     </div>
     """, unsafe_allow_html=True)
 
-with st.expander("Methodology and sources"):
+with st.expander("Data lineage, methodology, and sources"):
     st.markdown("""
     <div class="section-text">
     <b>Coverage</b>: NEM regions only (QLD, NSW, VIC, SA, TAS). Excludes WEM, NT grids, and rooftop solar.<br><br>
-    <b>Transform</b>: Python joins <code>dispatch_scada.csv</code>, <code>duid_lookup.csv</code>, and <code>emissions_factors.csv</code>. Dispatch MW is converted to interval MWh with <code>mwh = SCADAVALUE * (5 / 60)</code>.<br><br>
+    <b>Lineage</b>: <code>dispatch_scada.csv</code> provides 5-minute generator dispatch by DUID, <code>duid_lookup.csv</code> maps DUIDs to technology and region, and <code>emissions_factors.csv</code> provides technology-level emissions factors.<br><br>
+    <b>Transform</b>: Python joins those three datasets, filters to positive dispatch, converts dispatch MW into interval MWh with <code>mwh = SCADAVALUE * (5 / 60)</code>, and aggregates by time window and technology.<br><br>
     <b>Sources</b><br>
     &bull; AEMO Dispatch SCADA:
     <a href="https://nemweb.com.au/Reports/Current/Dispatch_SCADA/">nemweb.com.au</a><br>
