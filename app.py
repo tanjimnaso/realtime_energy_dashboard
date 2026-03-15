@@ -35,12 +35,12 @@ st.markdown("""
     /* Typography */
     --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --text-xs: 0.59rem;
-    --text-sm: 0.65rem;
-    --text-base: 0.73rem;
-    --text-lg: 0.91rem;
-    --text-xl: 1.22rem;
-    --text-2xl: 1.67rem;
+    --text-xs: 0.69rem;
+    --text-sm: 0.75rem;
+    --text-base: 0.82rem;
+    --text-lg: 0.94rem;
+    --text-xl: 1.15rem;
+    --text-2xl: 1.5rem;
 
     /* Colors — base */
     --background: #25241f;
@@ -236,15 +236,14 @@ st.markdown("""
   /* ── Timing cards ── */
   .timing-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
   }
   .timing-card {
     border-radius: var(--radius);
-    padding: 0.775rem 0.825rem;
+    padding: 0.7rem 0.8rem;
     text-align: left;
-    min-height: 100px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -717,8 +716,11 @@ st.markdown("""
     .header-band { padding: 1.1rem 0 1rem 0; }
     .header-band .page-header { font-size: var(--text-xl); padding: 0 0.9rem; }
     .header-band .page-deck { padding: 0 0.9rem; }
-    .hero-grid, .timing-grid, .sector-grid, .estimator-results {
+    .hero-grid, .sector-grid, .estimator-results {
       grid-template-columns: repeat(2, 1fr);
+    }
+    .timing-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .kpi-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -751,7 +753,7 @@ st.markdown("""
     .insight-callout { font-size: var(--text-base); padding: 0.85rem 1rem; }
   }
   @media (min-width: 1800px) {
-    :root { --text-xs: 0.59rem; --text-sm: 0.65rem; --text-base: 0.73rem; --text-lg: 0.91rem; --text-xl: 1.22rem; --text-2xl: 1.67rem; }
+    :root { --text-xs: 0.69rem; --text-sm: 0.75rem; --text-base: 0.82rem; --text-lg: 0.94rem; --text-xl: 1.15rem; --text-2xl: 1.5rem; }
     .block-container { max-width: 1080px !important; }
   }
 
