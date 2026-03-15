@@ -35,8 +35,6 @@ st.markdown("""
     /* Typography */
     --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --text-xs: 0.69rem;
-    --text-sm: 0.75rem;
     --text-base: 0.82rem;
     --text-lg: 0.94rem;
     --text-xl: 1.15rem;
@@ -146,7 +144,7 @@ st.markdown("""
   }
   .meta-line {
     font-family: var(--font-body);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-bottom: 1rem;
   }
@@ -175,7 +173,7 @@ st.markdown("""
   .hero-card--accent .hero-sub { color: rgba(46, 94, 17, 0.72); }
   .hero-label {
     font-family: var(--font-body);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-bottom: 0.25rem;
   }
@@ -188,7 +186,7 @@ st.markdown("""
   }
   .hero-sub {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-top: 0.15rem;
   }
@@ -201,7 +199,7 @@ st.markdown("""
     padding: 0.7rem 1.05rem;
     margin-bottom: 1.05rem;
     font-family: var(--font-display);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 500;
     color: #2e5e11;
     text-align: center;
@@ -220,13 +218,13 @@ st.markdown("""
   }
   .section-sub {
     font-family: var(--font-body);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin: -0.5rem 0 1rem 0;
   }
   .eyebrow {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -264,7 +262,7 @@ st.markdown("""
   }
   .timing-label {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-bottom: 0.2rem;
     font-weight: 600;
@@ -278,13 +276,13 @@ st.markdown("""
   }
   .timing-hours {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-top: 0.25rem;
   }
   .timing-intensity {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     font-weight: 600;
     color: var(--foreground);
     margin-top: 0.35rem;
@@ -332,7 +330,7 @@ st.markdown("""
   }
   .sector-profile {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-bottom: 0.75rem;
     line-height: 1.4;
@@ -346,7 +344,7 @@ st.markdown("""
   }
   .sector-metric-label {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
   }
   .sector-metric-value {
@@ -381,19 +379,19 @@ st.markdown("""
   }
   .estimator-label {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-bottom: 0.1rem;
   }
   .estimator-value {
     font-family: var(--font-display);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 600;
     color: var(--foreground);
   }
   .estimator-sub {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-top: 0.1rem;
   }
@@ -420,7 +418,7 @@ st.markdown("""
     border-color: var(--bg-green-border);
   }
   .metric-label {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     font-weight: 400;
     font-family: var(--font-body);
@@ -433,7 +431,7 @@ st.markdown("""
     letter-spacing: -0.02em;
   }
   .metric-sub {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     font-family: var(--font-body);
     min-height: 2em;
@@ -456,7 +454,7 @@ st.markdown("""
   }
   .asrs-card .asrs-tag {
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -471,7 +469,7 @@ st.markdown("""
   }
   .asrs-card .asrs-date {
     font-family: var(--font-body);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-bottom: 0.7rem;
   }
@@ -491,7 +489,7 @@ st.markdown("""
     height: 100%;
   }
   .comparison-label {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-bottom: 0.4rem;
     font-family: var(--font-body);
@@ -516,7 +514,7 @@ st.markdown("""
     margin-top: 0.9rem;
   }
   .comparison-item-label {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin-bottom: 0.25rem;
     font-family: var(--font-body);
@@ -547,7 +545,7 @@ st.markdown("""
   .chart-axis-notes {
     display: flex;
     justify-content: space-between;
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     margin: 0 0 0.4rem 0;
     font-family: var(--font-body);
@@ -559,7 +557,7 @@ st.markdown("""
     margin-top: 0.4rem;
     margin-bottom: 1rem;
     font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: #2f431d;
     line-height: 1.55;
   }
@@ -642,7 +640,7 @@ st.markdown("""
 
   /* ── Controls ── */
   .controls-note {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     color: var(--muted-foreground);
     line-height: 1.5;
     margin-top: 0.65rem;
@@ -660,7 +658,7 @@ st.markdown("""
     background: var(--footer-bg);
     padding: 0.9rem 2rem;
     color: var(--muted-foreground);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-family: var(--font-body);
     display: flex;
     align-items: center;
@@ -753,7 +751,7 @@ st.markdown("""
     .insight-callout { font-size: var(--text-base); padding: 0.85rem 1rem; }
   }
   @media (min-width: 1800px) {
-    :root { --text-xs: 0.69rem; --text-sm: 0.75rem; --text-base: 0.82rem; --text-lg: 0.94rem; --text-xl: 1.15rem; --text-2xl: 1.5rem; }
+    :root { --text-base: 0.82rem; --text-lg: 0.94rem; --text-xl: 1.15rem; --text-2xl: 1.5rem; }
     .block-container { max-width: 1080px !important; }
   }
 
@@ -1345,13 +1343,13 @@ with charts_right:
 
         st.markdown("""
         <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1rem;">
-          <span style="font-size: 0.95rem; color: #b7b1a6;">
+          <span style="font-size: var(--text-base); color: #b7b1a6;">
             <span style="display:inline-block;width:12px;height:12px;background:#4A8C6F;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Clean
           </span>
-          <span style="font-size: 0.95rem; color: #b7b1a6;">
+          <span style="font-size: var(--text-base); color: #b7b1a6;">
             <span style="display:inline-block;width:12px;height:12px;background:#D4A855;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Moderate
           </span>
-          <span style="font-size: 0.95rem; color: #b7b1a6;">
+          <span style="font-size: var(--text-base); color: #b7b1a6;">
             <span style="display:inline-block;width:12px;height:12px;background:#8B3A3A;border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Dirty
           </span>
         </div>
