@@ -35,12 +35,12 @@ st.markdown("""
     /* Typography */
     --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --text-xs: 1.02rem;
-    --text-sm: 1.16rem;
-    --text-base: 1.32rem;
-    --text-lg: 1.68rem;
-    --text-xl: 2.22rem;
-    --text-2xl: 3rem;
+    --text-xs: 0.98rem;
+    --text-sm: 1.09rem;
+    --text-base: 1.22rem;
+    --text-lg: 1.52rem;
+    --text-xl: 2.04rem;
+    --text-2xl: 2.78rem;
 
     /* Colors — base */
     --background: #25241f;
@@ -68,7 +68,7 @@ st.markdown("""
   }
 
   /* ── Base ── */
-  html { font-size: 17px; }
+  html { font-size: 16px; }
   .stApp { background-color: var(--background) !important; }
   html, body, [class*="css"] {
     font-family: var(--font-body);
@@ -751,7 +751,7 @@ st.markdown("""
     .insight-callout { font-size: var(--text-base); padding: 0.85rem 1rem; }
   }
   @media (min-width: 1800px) {
-    :root { --text-xs: 1.02rem; --text-sm: 1.16rem; --text-base: 1.32rem; --text-lg: 1.68rem; --text-xl: 2.22rem; --text-2xl: 3rem; }
+    :root { --text-xs: 0.98rem; --text-sm: 1.09rem; --text-base: 1.22rem; --text-lg: 1.52rem; --text-xl: 2.04rem; --text-2xl: 2.78rem; }
     .block-container { max-width: 1080px !important; }
   }
 
