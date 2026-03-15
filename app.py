@@ -3,16 +3,17 @@ app.py — Real-Time Energy Dashboard
 by Tanjim Islam
 ======================================================
 Data flow:
-  data/dispatch_scada.csv    → 5-min SCADA generation (MW) per DUID, ingested nightly
-  data/duid_lookup.csv       → DUID → Technology Type, Region (AEMO Gen Info Jan 2026)
-  data/emissions_factors.csv → Technology Type → t CO₂-e/MWh (NGA Factors 2025)
+  dispatch_scada.csv    → 5-min SCADA generation (MW) per DUID
+  duid_lookup.csv       → DUID → Technology Type, Region
+  emissions_factors.csv → Technology Type → t CO₂-e/MWh (NGA Factors 2025)
 """
 
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from pathlib import Path
+
+from data_bootstrap import ensure_required_data
 
 # ─────────────────────────────────────────────────────────────
 # Page config
@@ -704,47 +705,21 @@ st.markdown("""
 # Load & join all three tables
 # ─────────────────────────────────────────────────────────────
 @st.cache_data(ttl=3600)
-def load_data():
-    base = Path(__file__).parent
-
-    required = {
-        "SCADA data":         base / "data" / "dispatch_scada.csv",
-        "DUID lookup":        base / "data" / "duid_lookup.csv",
-        "Emissions factors":  base / "data" / "emissions_factors.csv",
-    }
-    missing = []
-    empty   = []
-    for label, path in required.items():
-        if not path.exists():
-            missing.append(f"`{path.relative_to(base)}` ({label})")
-        elif path.stat().st_size == 0:
-            empty.append(f"`{path.relative_to(base)}` ({label})")
-
-    if missing or empty:
-        msg = []
-        if missing:
-            msg.append("**Missing files:**\n" + "\n".join(f"- {f}" for f in missing))
-        if empty:
-            msg.append("**Empty files (GitHub Actions may not have run yet):**\n" + "\n".join(f"- {f}" for f in empty))
-        msg.append(
-            "\n**To fix:** ensure all three CSVs are committed to the `data/` folder in your repo "
-            "and that `.gitignore` does not exclude `*.csv` or `data/`."
-        )
-        raise FileNotFoundError("\n\n".join(msg))
-
+def load_data(data_dir_str: str):
+    data_dir = Path(data_dir_str)
     scada = pd.read_csv(
-        base / "data" / "dispatch_scada.csv",
+        data_dir / "dispatch_scada.csv",
         parse_dates=["SETTLEMENTDATE"]
     )
     scada = scada[scada["SCADAVALUE"] > 0].copy()
 
     lookup = (
-        pd.read_csv(base / "data" / "duid_lookup.csv")
+        pd.read_csv(data_dir / "duid_lookup.csv")
         [["DUID", "Unit Name", "Technology Type", "Region"]]
         .drop_duplicates("DUID")
     )
 
-    ef_raw = pd.read_csv(base / "data" / "emissions_factors.csv")
+    ef_raw = pd.read_csv(data_dir / "emissions_factors.csv")
     ef_s1 = (
         ef_raw[ef_raw["scope"] == "scope_1"]
         [["technology_type", "emission_factor_tCO2e_MWh"]]
@@ -778,7 +753,9 @@ def load_data():
 
 
 try:
-    df = load_data()
+    APP_DIR = Path(__file__).resolve().parent
+    DATA_DIR = ensure_required_data(APP_DIR)
+    df = load_data(str(DATA_DIR))
 except FileNotFoundError as e:
     st.error("### Data files not found")
     st.markdown(str(e))
@@ -826,11 +803,7 @@ plotly_config = {
 date_min = df["SETTLEMENTDATE"].dt.date.min()
 date_max = df["SETTLEMENTDATE"].dt.date.max()
 regions = sorted(df["Region"].dropna().unique().tolist())
-default_selected_date = pd.Timestamp("2026-02-23").date()
-if default_selected_date < date_min:
-    default_selected_date = date_min
-elif default_selected_date > date_max:
-    default_selected_date = date_max
+default_selected_date = date_max
 
 if "selected_date" not in st.session_state:
     st.session_state.selected_date = default_selected_date
@@ -854,9 +827,6 @@ mask_day = (
     (df["Region"].isin(sel_regions))
 )
 dff = df[mask_day].copy()
-
-mask_all = df["Region"].isin(sel_regions)
-dff_all = df[mask_all].copy()
 
 emission_col = "tco2e_scope1" if scope_choice == "Scope 1 only" else "tco2e_total"
 
@@ -951,10 +921,6 @@ business_window_df["emissions"] = [dff.loc[mask, emission_col].sum() for mask in
 business_window_df["avg_intensity"] = (
     business_window_df["emissions"] / business_window_df["mwh"]
 ).where(business_window_df["mwh"] > 0, 0)
-
-intensity_scale = ["#dbeafe", "#93c5fd", "#60a5fa", "#3b82f6", "#2563eb", "#1e3a8a"]
-window_ranks = business_window_df["avg_intensity"].rank(method="first", ascending=True).astype(int) - 1
-business_window_df["intensity_color"] = window_ranks.map(lambda idx: intensity_scale[idx])
 window_metrics = business_window_df.set_index("window").to_dict("index")
 
 # KPI calculations
@@ -964,14 +930,6 @@ avg_intensity = total_tco2e / total_mwh if total_mwh > 0 else 0
 renewable_mwh = dff[dff["Technology Type"].isin(ZERO_EMISSION)]["mwh"].sum()
 re_share      = 100 * renewable_mwh / total_mwh if total_mwh > 0 else 0
 
-interval_agg = (
-    dff.groupby(dff["SETTLEMENTDATE"].dt.floor(resolution))
-    .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
-    .assign(intensity=lambda x: x["tco2e"] / x["mwh"])
-)
-period_low  = interval_agg["intensity"].min() if not interval_agg.empty else 0
-period_high = interval_agg["intensity"].max() if not interval_agg.empty else 0
-
 # Hourly aggregation for duck curve
 hourly_agg = (
     dff.groupby(dff["SETTLEMENTDATE"].dt.hour)
@@ -980,36 +938,6 @@ hourly_agg = (
 )
 hourly_agg.columns = ["hour", "mwh", "tco2e"]
 hourly_agg["intensity"] = hourly_agg["tco2e"] / hourly_agg["mwh"]
-
-# Operation profiles
-operation_profiles = {
-    "Food manufacturing": {
-        "current_window": "Food operations",
-        "alternative_window": "Cheapest 4 hours",
-        "flexible_load_mwh": 20,
-        "description": "Illustrative batch cooking, pasteurisation or CIP cleaning load shifted away from its usual production window.",
-    },
-    "Small site operations": {
-        "current_window": "Small site operations",
-        "alternative_window": "Cheapest 4 hours",
-        "flexible_load_mwh": 8,
-        "description": "Illustrative EV charging, HVAC pre-cooling or pump load for a smaller commercial or light-industrial site.",
-    },
-    "Commercial HVAC": {
-        "current_window": "Standard hours",
-        "alternative_window": "Cheapest 4 hours",
-        "flexible_load_mwh": 5,
-        "description": "Illustrative pre-cooling or thermal storage strategy where part of the load can move earlier in the day.",
-    },
-    "Cold storage / warehouse": {
-        "current_window": "Late hours",
-        "alternative_window": "Cheapest 4 hours",
-        "flexible_load_mwh": 12,
-        "description": "Illustrative refrigeration defrost, charging or dispatch-prep load moved away from the evening shoulder.",
-    },
-}
-if "operation_profile" not in st.session_state:
-    st.session_state.operation_profile = list(operation_profiles.keys())[0]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1354,15 +1282,13 @@ st.markdown("<h2 class='section-heading'>Scope 2 Estimator</h2>", unsafe_allow_h
 st.markdown("<p class='section-sub'>Type your daily consumption to see illustrative emissions and savings</p>",
             unsafe_allow_html=True)
 
-est_c1, est_c2, est_c3 = st.columns([1, 1.5, 1])
+est_c1, est_c2 = st.columns([1, 1.5])
 with est_c1:
     est_mwh = st.number_input("Daily MWh", value=100.0, step=10.0, min_value=0.1, key="estimator_mwh")
 with est_c2:
     est_window = st.selectbox("Operating window",
                               [w["window"] for w in business_windows],
                               key="estimator_window")
-with est_c3:
-    est_scope_label = st.radio("Scope", ["Scope 1", "Scope 1+3"], horizontal=True, key="estimator_scope")
 
 est_intensity = window_metrics.get(est_window, {}).get("avg_intensity", avg_intensity)
 est_current = est_mwh * est_intensity
@@ -1398,449 +1324,66 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 st.caption(
-    "Illustrative only. Uses a single day's grid intensity to project. "
-    "Actual emissions depend on your metered consumption, contracted tariff, and grid conditions across the year. "
-    "This does not constitute professional advice."
+    "Illustrative only. Uses the current page filters and a single day's grid intensity profile. "
+    "Actual disclosure-grade calculations require metered interval consumption data."
 )
-
-
-# ─────────────────────────────────────────────────────────────
-# ███  CARRY-OVER SECTIONS  ███
-# ─────────────────────────────────────────────────────────────
-st.markdown("---")
-
-# ── Hero statement ───────────────────────────────────────────
-st.markdown("""
-<div class="intro-hero">
-    <h2>Australian businesses might be paying a hidden Scope 2 premium, because they don't know <em>when</em> to use electricity.</h2>
-    <p>
-        Australia's grid varies by up to <strong>4&times; in emissions intensity</strong> across a single day.
-        If your business draws power flexibly, the hour you choose matters as much as how much you use.<br><br>
-        If your organisation is preparing for <strong>ASRS Scope 2 disclosure</strong>, the accuracy of your
-        calculation depends on when you drew power from the grid, not just how much.
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# ── ASRS cards ───────────────────────────────────────────────
-st.markdown("<p class='eyebrow'>ASRS Reporting Thresholds — Who Must Disclose</p>", unsafe_allow_html=True)
-st.markdown("""
-<div class="asrs-grid">
-    <div class="asrs-card">
-        <div class="asrs-tag">In effect</div>
-        <div class="asrs-group">Group 1</div>
-        <div class="asrs-date">From January 2025</div>
-        <div class="asrs-threshold">Revenue &gt; $1B<br>OR assets &gt; $500M<br>OR &gt; 500 employees</div>
-    </div>
-    <div class="asrs-card">
-        <div class="asrs-tag">Coming soon</div>
-        <div class="asrs-group">Group 2</div>
-        <div class="asrs-date">From January 2026</div>
-        <div class="asrs-threshold">Revenue &gt; $200M<br>OR assets &gt; $500M<br>OR &gt; 250 employees</div>
-    </div>
-    <div class="asrs-card">
-        <div class="asrs-tag">On the horizon</div>
-        <div class="asrs-group">Group 3</div>
-        <div class="asrs-date">From January 2027</div>
-        <div class="asrs-threshold">Smaller entities<br>Thresholds TBC<br>&nbsp;</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div class="methodology-note">
-  <p>A regional food manufacturer with 300 staff is already in scope under Group 2.
-  The Safeguard Mechanism threshold of 100,000 tCO&#8322;-e is separate, and much higher.
-  Most mid-market operators are not Safeguard-covered, but all are ASRS-covered.</p>
-  <p>The expectation isn't "turn things off", it's "time what you can, when the grid is cleanest."</p>
-</div>
-""", unsafe_allow_html=True)
-
-
-# ── Methodology note ─────────────────────────────────────────
-st.markdown("""
-<div class="methodology-note">
-    <h2>Why this calculation matters for your disclosure</h2>
-    Under ASRS, organisations must disclose Scope 2 using location-based or market-based methodology.
-    Location-based uses the annual average grid factor, blunt and typically unfavourable.
-    The more accurate approach rewards businesses that time consumption to cleaner windows.
-    This tool derives grid intensity from AEMO's live 5-minute dispatch data, mapped to
-    <strong>National Greenhouse Accounts (NGA) emission factors</strong> published by DCCEEW, the same factors used in official Australian carbon accounting.
-</div>
-""", unsafe_allow_html=True)
-
-
-# ── Operating window intensity chart ─────────────────────────
-st.markdown("<div style='height:1.1rem'></div>", unsafe_allow_html=True)
-
-intensity_order = [
-    "Night shift", "Food operations", "Small site operations",
-    "Standard hours", "Late hours", "Cheapest 4 hours",
-]
-intensity_df = business_window_df.set_index("window").loc[intensity_order].reset_index()
-intensity_df["xpos"] = [0, 1, 2, 3, 4, 6]
-
-intensity_fig = go.Figure(go.Bar(
-    x=intensity_df["xpos"],
-    y=intensity_df["avg_intensity"],
-    width=[0.78] * len(intensity_df),
-    marker=dict(
-        color=intensity_df["intensity_color"],
-        line=dict(color="#FFFFFF", width=0.8),
-    ),
-    customdata=intensity_df[["display_label", "start_label", "end_label", "avg_intensity"]],
-    hovertemplate=(
-        "<b>%{customdata[0]}</b><br>"
-        "Shift hours: %{customdata[1]} to %{customdata[2]}<br>"
-        "Average emissions: %{customdata[3]:.3f} t CO₂-e / MWh<extra></extra>"
-    ),
-))
-intensity_fig.update_layout(
-    title=dict(
-        text="Average Emissions Intensity by Operating Window",
-        font=dict(family="DM Sans, Inter, sans-serif", color="#171717", size=15),
-        x=0, xanchor="left",
-    ),
-    plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF",
-    font=dict(color="#374151", family="Inter, sans-serif"),
-    margin=dict(l=10, r=10, t=46, b=10),
-    height=320, showlegend=False,
-    xaxis=dict(showgrid=False, color="#6B7280", tickvals=intensity_df["xpos"],
-               ticktext=intensity_df["display_label"], range=[-0.5, 6.6]),
-    yaxis=dict(color="#6B7280", title_text="t CO₂-e / MWh",
-               showgrid=True, gridcolor="#F3F4F6", rangemode="tozero"),
-)
-intensity_fig.update_xaxes(fixedrange=True)
-intensity_fig.update_yaxes(fixedrange=True)
-st.plotly_chart(intensity_fig, use_container_width=True, config=plotly_config)
-
-
-# ── Scenario comparison ──────────────────────────────────────
-st.markdown("<h3 class='section-heading'>What this means for my operation</h3>", unsafe_allow_html=True)
-selected_operation = st.session_state.operation_profile
-scenario = operation_profiles[selected_operation]
-current_metrics = window_metrics[scenario["current_window"]]
-alternative_metrics = window_metrics[scenario["alternative_window"]]
-flexible_load_mwh = scenario["flexible_load_mwh"]
-current_emissions = flexible_load_mwh * current_metrics["avg_intensity"]
-alternative_emissions = flexible_load_mwh * alternative_metrics["avg_intensity"]
-emissions_delta = current_emissions - alternative_emissions
-reduction_pct = (emissions_delta / current_emissions * 100) if current_emissions > 0 else 0
-illustrative_cost_delta = emissions_delta * ILLUSTRATIVE_CARBON_RATE
-
-scenario_fig = go.Figure()
-scenario_fig.add_trace(go.Bar(
-    x=["Current timing", "Potential alternative"],
-    y=[current_emissions, alternative_emissions],
-    marker=dict(color=["#1e3a8a", "#93c5fd"]),
-    customdata=[
-        [scenario["current_window"], current_metrics["start_label"],
-         current_metrics["end_label"], current_metrics["avg_intensity"]],
-        [scenario["alternative_window"], alternative_metrics["start_label"],
-         alternative_metrics["end_label"], alternative_metrics["avg_intensity"]],
-    ],
-    hovertemplate=(
-        "<b>%{customdata[0]}</b><br>"
-        "Shift hours: %{customdata[1]} to %{customdata[2]}<br>"
-        "Average emissions: %{customdata[3]:.3f} t CO₂-e / MWh<br>"
-        "Scenario emissions: %{y:,.1f} t CO₂-e<extra></extra>"
-    ),
-))
-scenario_fig.update_layout(
-    title=dict(text="Current versus alternative timing",
-               font=dict(family="DM Sans, Inter, sans-serif", color="#171717", size=15),
-               x=0, xanchor="left"),
-    plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF",
-    font=dict(color="#374151", family="Inter, sans-serif"),
-    margin=dict(l=10, r=10, t=46, b=10),
-    height=300, showlegend=False,
-    xaxis=dict(showgrid=False, color="#6B7280"),
-    yaxis=dict(color="#6B7280", title_text="t CO₂-e for illustrative load",
-               showgrid=True, gridcolor="#F3F4F6", rangemode="tozero"),
-)
-scenario_fig.update_xaxes(fixedrange=True)
-scenario_fig.update_yaxes(fixedrange=True)
-
-scenario_left, scenario_right = st.columns([1.5, 1], gap="large")
-with scenario_left:
-    st.plotly_chart(scenario_fig, use_container_width=True, config=plotly_config)
-    st.selectbox("Select an operating profile", list(operation_profiles.keys()), key="operation_profile")
-with scenario_right:
-    st.markdown(f"""
-    <div class="comparison-panel">
-        <div class="comparison-label">Illustrative operating case</div>
-        <div class="comparison-value">{selected_operation}</div>
-        <div class="comparison-sub">{scenario["description"]}</div>
-        <div class="comparison-grid">
-            <div>
-                <div class="comparison-item-label">Current window</div>
-                <div class="comparison-item-value">{scenario["current_window"]}</div>
-                <div class="comparison-item-copy">{current_metrics["start_label"]} to {current_metrics["end_label"]}<br>{current_metrics["avg_intensity"]:.3f} t CO&#8322;-e / MWh</div>
-            </div>
-            <div>
-                <div class="comparison-item-label">Potential reduction</div>
-                <div class="comparison-item-value">{reduction_pct:.0f}%</div>
-                <div class="comparison-item-copy">{emissions_delta:,.1f} t CO&#8322;-e avoided for a {flexible_load_mwh:.0f} MWh flexible load</div>
-            </div>
-            <div style="grid-column:1 / -1;">
-                <div class="comparison-item-label">Illustrative carbon-cost equivalent</div>
-                <div class="comparison-item-value">A${illustrative_cost_delta:,.0f}</div>
-                <div class="comparison-item-copy">Uses A${ILLUSTRATIVE_CARBON_RATE}/t CO&#8322;-e as a simple reference point. This is not an electricity tariff estimate.</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
 st.markdown("""
 <div class="chart-insight">
-    <strong>Operational caveat.</strong> The cleanest window is not automatically the best business choice.
-    Staffing, delivery cut-offs, product quality, thermal inertia and customer demand can outweigh
-    emissions benefits in some operations. This app models emissions timing, not your contracted tariff.
+  <strong>Operational caveat.</strong> The cleanest window is not automatically the best business choice.
+  Staffing, delivery cut-offs, product quality, thermal inertia, and customer demand can outweigh emissions benefits.
+  This app models emissions timing, not your tariff or full compliance workflow.
 </div>
 """, unsafe_allow_html=True)
 
-
-# ── Main combo chart ─────────────────────────────────────────
-st.markdown("<br>", unsafe_allow_html=True)
-
-dff["period"] = dff["SETTLEMENTDATE"].dt.floor(resolution)
-agg = (
-    dff.groupby("period")
-    .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
-    .reset_index()
-)
-agg["intensity"] = (agg["tco2e"] / agg["mwh"]).where(agg["mwh"] > 0)
-
-mix = dff.groupby(["period", "Technology Type"]).agg(mwh=("mwh", "sum")).reset_index()
-tech_order = [t for t in TECH_COLORS if t in mix["Technology Type"].unique()]
-
-if not interval_agg.empty and period_low > 0:
-    ratio = period_high / period_low
-    best_t  = interval_agg["intensity"].idxmin()
-    worst_t = interval_agg["intensity"].idxmax()
-    chart_title = (
-        f"Grid ran {ratio:.1f}× cleaner at {best_t.strftime('%H:%M')} than at {worst_t.strftime('%H:%M')} today"
-    )
-else:
-    chart_title = "Generation Mix & Absolute Emissions"
-
-chart_tickvals = pd.date_range(
-    start=pd.Timestamp(selected_date),
-    end=pd.Timestamp(selected_date) + pd.Timedelta(hours=22),
-    freq="2h",
-)
-
-fig = make_subplots(specs=[[{"secondary_y": True}]])
-for tech in tech_order:
-    subset = mix[mix["Technology Type"] == tech]
-    fig.add_trace(go.Bar(
-        x=subset["period"], y=subset["mwh"], name=tech,
-        marker=dict(color=TECH_COLORS.get(tech, "#555"), line=dict(color="#FAFAF8", width=0.35)),
-        hovertemplate=f"{tech}<br>%{{x|%H:%M}}<br><b>%{{y:,.0f}}</b> MWh<extra></extra>",
-    ), secondary_y=False)
-
-fig.add_trace(go.Scatter(
-    x=agg["period"], y=agg["tco2e"], name="Emissions (t CO\u2082-e)",
-    mode="lines", line=dict(color="#000000", width=3),
-    hovertemplate="%{x|%H:%M}<br><b>%{y:,.0f}</b> t CO\u2082-e<extra></extra>",
-), secondary_y=True)
-
-if clean_window_start is not None and clean_window_end is not None:
-    fig.add_vrect(
-        x0=clean_window_start, x1=clean_window_end + pd.Timedelta(minutes=5),
-        fillcolor="#bbf7d0", opacity=0.22, layer="below", line_width=0,
-        annotation_text="Cleanest 4 hours", annotation_position="top left",
-        annotation_font=dict(color="#166534", family="Inter, sans-serif", size=11),
-    )
-
-fig.update_layout(
-    barmode="stack", bargap=0, bargroupgap=0,
-    xaxis=dict(showgrid=False, color="#6B7280", tickmode="array",
-               tickvals=chart_tickvals, ticktext=[str(ts.hour) for ts in chart_tickvals], tickangle=0),
-    plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF",
-    font=dict(color="#374151", family="Inter, sans-serif"),
-    legend=dict(bgcolor="#F9FAFB", bordercolor="#E5E7EB", orientation="h",
-                yanchor="top", y=-0.08, xanchor="center", x=0.5),
-    margin=dict(l=0, r=0, t=8, b=42), hovermode="x unified", height=520,
-)
-fig.update_yaxes(title_text="", showgrid=True, gridcolor="#F3F4F6", zeroline=False,
-                 color="#6B7280", automargin=True, secondary_y=False)
-fig.update_yaxes(title_text="", showgrid=False, zeroline=False,
-                 range=[0, int(((1600 * interval_minutes / 15) + 99) // 100) * 100],
-                 color="#9CA3AF", automargin=True, secondary_y=True)
-fig.update_xaxes(fixedrange=True)
-fig.update_yaxes(fixedrange=True)
-
-st.markdown(f"<div class='chart-title'>{chart_title}</div>", unsafe_allow_html=True)
-st.markdown(
-    "<div class='chart-axis-notes'><span>Left, MWh</span><span>Right, t CO&#8322;-e</span></div>",
-    unsafe_allow_html=True)
-st.plotly_chart(fig, use_container_width=True, config=plotly_config)
-
-# KPI cards
-st.markdown(f"""
-<div class="kpi-grid">
-    <div class="metric-card">
-        <div class="metric-label">Avg Intensity</div>
-        <div class="metric-value">{avg_intensity:.3f}</div>
-        <div class="metric-sub">t CO&#8322;-e / MWh</div>
+with st.expander("How this dashboard should be used"):
+    st.markdown("""
+    <div class="section-text">
+    This dashboard is a <strong>5-minute near-real-time reference layer</strong> for NEM grid emissions intensity.
+    It shows how clean or dirty the grid is by time of day and region, using AEMO dispatch data joined to emissions factors.
+    It does <strong>not</strong> calculate a company's official disclosure by itself. Disclosure-grade Scope 2 reporting still requires the company's own interval consumption data.
     </div>
-    <div class="metric-card">
-        <div class="metric-label">Daily Low</div>
-        <div class="metric-value">{period_low:.3f}</div>
-        <div class="metric-sub">t CO&#8322;-e / MWh</div>
+    """, unsafe_allow_html=True)
+
+with st.expander("Methodology and sources"):
+    st.markdown("""
+    <div class="section-text">
+    <b>Coverage</b>: NEM regions only (QLD, NSW, VIC, SA, TAS). Excludes WEM, NT grids, and rooftop solar.<br><br>
+    <b>Transform</b>: Python joins <code>dispatch_scada.csv</code>, <code>duid_lookup.csv</code>, and <code>emissions_factors.csv</code>. Dispatch MW is converted to interval MWh with <code>mwh = SCADAVALUE * (5 / 60)</code>.<br><br>
+    <b>Sources</b><br>
+    &bull; AEMO Dispatch SCADA:
+    <a href="https://nemweb.com.au/Reports/Current/Dispatch_SCADA/">nemweb.com.au</a><br>
+    &bull; AEMO Generation Information:
+    <a href="https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/nem-forecasting-and-planning/forecasting-and-planning-data/generation-information">aemo.com.au</a><br>
+    &bull; National Greenhouse Accounts Factors 2025:
+    <a href="https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors">dcceew.gov.au</a>
     </div>
-    <div class="metric-card">
-        <div class="metric-label">Daily High</div>
-        <div class="metric-value">{period_high:.3f}</div>
-        <div class="metric-sub">t CO&#8322;-e / MWh</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-label">Total Generation</div>
-        <div class="metric-value">{total_mwh/1e3:.1f}k</div>
-        <div class="metric-sub">MWh</div>
-    </div>
-    <div class="metric-card positive full-span">
-        <div class="metric-label">Zero-Emission Share</div>
-        <div class="metric-value">{re_share:.1f}%</div>
-        <div class="metric-sub">of total generation</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Data source note
-st.markdown("""
-<div class="controls-note">
-  <b>Data sources</b>:
-  Generation: <a href="https://nemweb.com.au">AEMO NEMWEB</a>, Dispatch SCADA.
-  Unit metadata: AEMO Generation Information (Jan 2026).
-  Emission factors: <a href="https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors">NGA Factors 2025</a>, Tables 4 &amp; 5.<br>
-  <b>Coverage</b>: NEM regions only (QLD, NSW, VIC, SA, TAS), excludes WEM, NT grids, rooftop solar.
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown(
-    "<div class='chart-insight'>"
-    "Businesses with flexible load operating during today's cleanest 4-hour window could avoid an estimated "
-    "<strong>~30% of the Scope 2 emissions</strong> they would have incurred running the same load overnight, "
-    "rising above 50% on high-renewable days. "
-    "Average derived from NEM dispatch data; low estimate ~20% (winter, low solar), high estimate ~50–55% (peak summer renewable days)."
-    "</div>",
-    unsafe_allow_html=True
-)
-
-
-# ── All-data summary table + donut ───────────────────────────
-st.markdown("<h3 class='section-heading'>All-Data Summary by Technology</h3>", unsafe_allow_html=True)
-
-tech_summary = (
-    dff_all.groupby("Technology Type")
-    .agg(total_mwh=("mwh", "sum"), total_tco2e=(emission_col, "sum"))
-    .reset_index()
-    .sort_values("total_mwh", ascending=False)
-)
-tech_summary["share_pct"]  = 100 * tech_summary["total_mwh"] / tech_summary["total_mwh"].sum()
-tech_summary["avg_factor"] = tech_summary["total_tco2e"] / tech_summary["total_mwh"]
-
-left, right = st.columns([2, 1])
-with left:
-    disp = tech_summary.copy()
-    disp["Total MWh"]     = disp["total_mwh"].map("{:,.0f}".format)
-    disp["Total t CO\u2082-e"] = disp["total_tco2e"].map("{:,.1f}".format)
-    disp["Gen Share"]     = disp["share_pct"].map("{:.1f}%".format)
-    disp["Avg Intensity"] = disp["avg_factor"].apply(
-        lambda x: f"{x:.4f} t/MWh" if pd.notna(x) and x > 0 else "0 (zero-emission)"
-    )
-    st.dataframe(
-        disp[["Technology Type", "Total MWh", "Total t CO\u2082-e", "Gen Share", "Avg Intensity"]],
-        use_container_width=True, hide_index=True
-    )
-with right:
-    fig_donut = go.Figure(go.Pie(
-        labels=tech_summary["Technology Type"],
-        values=tech_summary["total_mwh"],
-        hole=0.55,
-        marker=dict(colors=[TECH_COLORS.get(t, "#555") for t in tech_summary["Technology Type"]]),
-        textinfo="percent", textfont=dict(size=11),
-        hovertemplate="%{label}<br><b>%{value:,.0f}</b> MWh (%{percent})<extra></extra>",
-    ))
-    fig_donut.update_layout(
-        showlegend=False, plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF",
-        margin=dict(l=0, r=0, t=0, b=0), font=dict(color="#374151"),
-        annotations=[dict(text="Gen Mix", x=0.5, y=0.5,
-                          font_size=13, font_color="#9CA3AF", showarrow=False)]
-    )
-    st.plotly_chart(fig_donut, use_container_width=True)
-
-
-# ── Expanders ────────────────────────────────────────────────
 with st.expander("Raw interval data"):
-    st.dataframe(
-        agg.rename(columns={
-            "period": f"Period ({resolution_label})", "mwh": "MWh",
-            "tco2e": "t CO\u2082-e", "intensity": "Intensity (t CO\u2082-e/MWh)",
-        }).sort_values(f"Period ({resolution_label})", ascending=False),
-        use_container_width=True, hide_index=True
+    raw_interval_df = (
+        dff.groupby(dff["SETTLEMENTDATE"].dt.floor(resolution))
+        .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
+        .reset_index()
+        .rename(columns={
+            "SETTLEMENTDATE": f"Period ({resolution_label})",
+            "mwh": "MWh",
+            "tco2e": "t CO\u2082-e",
+        })
     )
+    raw_interval_df["Intensity (t CO\u2082-e/MWh)"] = (
+        raw_interval_df["t CO\u2082-e"] / raw_interval_df["MWh"]
+    ).where(raw_interval_df["MWh"] > 0)
+    st.dataframe(raw_interval_df.sort_values(f"Period ({resolution_label})", ascending=False),
+                 use_container_width=True, hide_index=True)
 
 with st.expander("Emissions factors reference (NGA 2025)"):
-    ef_display = pd.read_csv(Path(__file__).parent / "data" / "emissions_factors.csv")
+    ef_display = pd.read_csv(DATA_DIR / "emissions_factors.csv")
     st.dataframe(ef_display, use_container_width=True, hide_index=True)
     st.caption(
         "Source: National Greenhouse Accounts Factors 2025, DCCEEW. "
-        "Table 4 (solid fuels Scope 1 & 3), Table 5 (gaseous fuels Scope 1). "
-        "Converted: kg CO\u2082-e/GJ \u00d7 3.6 GJ/MWh \u00f7 1000 = t CO\u2082-e/MWh."
+        "Converted with kg CO\u2082-e/GJ \u00d7 3.6 GJ/MWh \u00f7 1000."
     )
-
-st.markdown("---")
-
-
-# ── Bottom text sections ─────────────────────────────────────
-_, bottom_text_col, _ = st.columns([1.4, 4.2, 1.4])
-with bottom_text_col:
-    st.markdown("""
-    <div class="section-text">
-    <h3 class="section-heading">Limitations and Scope</h3>
-    The project covers 5 NEM regions in the AEMO dispatch framework (QLD, NSW, SA, VIC and TAS).<br><br>
-    WA has a separate grid, Wholesale Electricity Market (WEM) which supplies separate data.
-    Gas and coal are the primary fuel types.<br><br>
-    NT has three grids for Darwin-Katherine, Tennant Creek and Alice Springs, with some data supplied by
-    Interim Northern Territory Electricity Market (I-NTEM). Gas is primary fuel type.<br><br>
-    A 'national emissions data pipeline' incorporating WEM and NT data sources is outside the current scope
-    of this project and represents a natural extension for future development.
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="section-text">
-    <h3 class="section-heading">Data</h3>
-    <b>Ingestion &amp; orchestration</b>: GitHub Actions orchestrates a daily job that fetches AEMO zip files via <code>urllib</code>, appends to a historical dataset, and writes curated CSV outputs.<br><br>
-    <b>Transform &amp; model</b>: Python joins <code>dispatch_scada.csv</code>, <code>duid_lookup.csv</code>, and <code>emissions_factors.csv</code>. It maps SCADA records to DUID metadata, joins emissions factors on technology type, and converts dispatch MW into interval MWh with <code>mwh = SCADAVALUE * (5 / 60)</code>.<br><br>
-    <b>Data Validation and Quality</b>: Power BI was used for manual validation.
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="section-text">
-    <h3 class="section-heading">References</h3>
-    <b>Data Sources</b><br>
-    &bull; AEMO Dispatch SCADA, 5-minute generator output:
-      <a href="https://nemweb.com.au/Reports/Current/Dispatch_SCADA/">nemweb.com.au</a><br>
-    &bull; AEMO Generation Information (Jan 2026), DUID fuel type metadata:
-      <a href="https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/nem-forecasting-and-planning/forecasting-and-planning-data/generation-information">aemo.com.au</a><br>
-    &bull; National Greenhouse Accounts Factors 2025, emission factors by fuel type:
-      <a href="https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors">dcceew.gov.au</a><br><br>
-    <b>Regulatory Context</b><br>
-    &bull; Australian Sustainability Reporting Standards (ASRS), mandatory climate disclosure framework:
-      <a href="https://www.aasb.gov.au/australian-sustainability-reporting-standards/">aasb.gov.au</a><br>
-    &bull; AEMO Carbon Dioxide Equivalent Intensity Index (CDEII):
-      <a href="https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/market-operations/settlements-and-payments/settlements/carbon-dioxide-equivalent-intensity-index">aemo.com.au</a><br>
-    &bull; National Greenhouse and Energy Reporting (NGER) Act 2007<br><br>
-    This project is framed around ESG reporting obligations and demonstrates an end-to-end data engineering pipeline.
-    </div>
-    """, unsafe_allow_html=True)
 
 
 # ── Footer ───────────────────────────────────────────────────
