@@ -8,6 +8,8 @@ Data flow:
   emissions_factors.csv → Technology Type → t CO₂-e/MWh (NGA Factors 2025)
 """
 
+import datetime
+import glob
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -761,23 +763,15 @@ st.markdown("""
 
 
 # ─────────────────────────────────────────────────────────────
-# Load & join all three tables
+# Data loading — split by source
 # ─────────────────────────────────────────────────────────────
-@st.cache_data(ttl=3600)
-def load_data(data_dir_str: str):
-    data_dir = Path(data_dir_str)
-    scada = pd.read_csv(
-        data_dir / "dispatch_scada.csv",
-        parse_dates=["SETTLEMENTDATE"]
-    )
-    scada = scada[scada["SCADAVALUE"] > 0].copy()
-
+def _enrich(scada: pd.DataFrame, data_dir: Path) -> pd.DataFrame:
+    """Join SCADA data with DUID lookup and emissions factors, add computed columns."""
     lookup = (
         pd.read_csv(data_dir / "duid_lookup.csv")
         [["DUID", "Unit Name", "Technology Type", "Region"]]
         .drop_duplicates("DUID")
     )
-
     ef_raw = pd.read_csv(data_dir / "emissions_factors.csv")
     ef_s1 = (
         ef_raw[ef_raw["scope"] == "scope_1"]
@@ -791,34 +785,72 @@ def load_data(data_dir_str: str):
         .rename(columns={"technology_type": "Technology Type",
                          "emission_factor_tCO2e_MWh": "ef_scope3"})
     )
-
     df = (
         scada
         .merge(lookup, on="DUID", how="left")
         .merge(ef_s1,  on="Technology Type", how="left")
         .merge(ef_s3,  on="Technology Type", how="left")
     )
-
     df["Technology Type"] = df["Technology Type"].fillna("Unknown")
     df["ef_scope1"] = df["ef_scope1"].fillna(0.1855)
     df["ef_scope3"] = df["ef_scope3"].fillna(0.0)
-
     df["mwh"]          = df["SCADAVALUE"] * (5 / 60)
     df["tco2e_scope1"] = df["mwh"] * df["ef_scope1"]
     df["tco2e_scope3"] = df["mwh"] * df["ef_scope3"]
     df["tco2e_total"]  = df["tco2e_scope1"] + df["tco2e_scope3"]
-
     return df
+
+
+@st.cache_data(ttl=300)
+def load_today(data_dir_str: str) -> pd.DataFrame:
+    """Load today's SCADA file (refreshed every 5 minutes)."""
+    data_dir = Path(data_dir_str)
+    scada = pd.read_csv(data_dir / "dispatch_scada_today.csv", parse_dates=["SETTLEMENTDATE"])
+    scada = scada[scada["SCADAVALUE"] > 0].copy()
+    return _enrich(scada, data_dir)
+
+
+@st.cache_data(ttl=3600)
+def load_month(data_dir_str: str, year_month: str) -> pd.DataFrame:
+    """Load a monthly archive file (cached for 1 hour — historical data is stable)."""
+    data_dir = Path(data_dir_str)
+    scada = pd.read_csv(
+        data_dir / f"dispatch_scada_{year_month}.csv",
+        parse_dates=["SETTLEMENTDATE"],
+    )
+    scada = scada[scada["SCADAVALUE"] > 0].copy()
+    return _enrich(scada, data_dir)
+
+
+def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
+    """Load and filter data for a specific calendar date."""
+    today = datetime.date.today()
+    if date == today:
+        df = load_today(data_dir_str)
+    else:
+        df = load_month(data_dir_str, date.strftime("%Y-%m"))
+    return df[df["SETTLEMENTDATE"].dt.date == date].copy()
 
 
 try:
     APP_DIR = Path(__file__).resolve().parent
     DATA_DIR = ensure_required_data(APP_DIR)
-    df = load_data(str(DATA_DIR))
 except FileNotFoundError as e:
     st.error("### Data files not found")
     st.markdown(str(e))
     st.stop()
+
+# ── Derive date range and regions without loading all SCADA data ──
+_monthly_files = sorted(glob.glob(str(DATA_DIR / "dispatch_scada_????-??.csv")))
+if _monthly_files:
+    _earliest_month = Path(_monthly_files[0]).stem[-7:]  # e.g. "2026-02"
+    date_min = pd.Period(_earliest_month, freq="M").start_time.date()
+else:
+    date_min = datetime.date.today()
+date_max = datetime.date.today()
+
+_lookup_df = pd.read_csv(DATA_DIR / "duid_lookup.csv")
+regions = sorted(_lookup_df["Region"].dropna().unique().tolist())
 
 
 # ─────────────────────────────────────────────────────────────

@@ -18,7 +18,9 @@ from bs4 import BeautifulSoup
 # ── Config ────────────────────────────────────────────────────────
 BASE_URL = "https://nemweb.com.au"
 SCADA_URL = f"{BASE_URL}/Reports/Current/Dispatch_SCADA/"
-OUTPUT_CSV = Path(__file__).resolve().parent / "data" / "dispatch_scada.csv"
+DATA_DIR = Path(__file__).resolve().parent / "data"
+OUTPUT_CSV = DATA_DIR / "dispatch_scada.csv"
+TODAY_CSV = DATA_DIR / "dispatch_scada_today.csv"
 KEEP_COLUMNS = ["SETTLEMENTDATE", "DUID", "SCADAVALUE"]
 REQUEST_TIMEOUT_SECONDS = int(os.getenv("AEMO_REQUEST_TIMEOUT_SECONDS", "30"))
 LOOKBACK_ARCHIVES = int(os.getenv("AEMO_ZIP_LOOKBACK", "288"))
@@ -123,6 +125,34 @@ def save(df):
     print(f"Saved {len(df)} rows to {OUTPUT_CSV}")
 
 
+def get_archive_path(period: pd.Period) -> Path:
+    """Return the monthly archive path for a given period (e.g. 2026-03)."""
+    return DATA_DIR / f"dispatch_scada_{period}.csv"
+
+
+def write_today(df: pd.DataFrame) -> None:
+    """Overwrite today's CSV with only the most recent calendar day in df."""
+    today_date = df["SETTLEMENTDATE"].max().normalize()
+    today_df = df[df["SETTLEMENTDATE"].dt.normalize() == today_date]
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    today_df.to_csv(TODAY_CSV, index=False)
+    print(f"Wrote {len(today_df)} rows to {TODAY_CSV.name} ({today_date.date()})")
+
+
+def append_to_monthly_archive(df: pd.DataFrame) -> None:
+    """Upsert df rows into per-month archive files, deduplicating on SETTLEMENTDATE+DUID."""
+    for period, month_df in df.groupby(df["SETTLEMENTDATE"].dt.to_period("M")):
+        archive_path = get_archive_path(period)
+        if archive_path.exists():
+            existing = pd.read_csv(archive_path, parse_dates=["SETTLEMENTDATE"])
+            month_df = pd.concat([existing, month_df], ignore_index=True)
+            month_df.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
+        month_df.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
+        month_df.to_csv(archive_path, index=False)
+        size_mb = archive_path.stat().st_size / 1_048_576
+        print(f"  Archive {archive_path.name}: {len(month_df)} rows ({size_mb:.1f} MB)")
+
+
 def main():
     print("=" * 60)
     print("AEMO Dispatch SCADA Importer")
@@ -153,6 +183,8 @@ def main():
 
     combined.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
     save(combined)
+    write_today(combined)
+    append_to_monthly_archive(combined)
 
     print("=" * 60)
     print("Done!")

@@ -241,7 +241,7 @@ def ensure_required_data(base_dir: Path) -> Path:
         try:
             download_recent_dispatch_scada(required["SCADA data"])
         except Exception as exc:
-            bootstrap_errors.append(f"- Could not download `dispatch_scada.csv`: {exc}")
+            bootstrap_errors.append(f"- Could not download `dispatch_scada_today.csv`: {exc}")
 
     missing = []
     empty = []
@@ -270,7 +270,7 @@ def ensure_required_data(base_dir: Path) -> Path:
 def required_data_paths(base_dir: Path) -> dict[str, Path]:
     data_dir = resolve_data_dir(base_dir)
     return {
-        "SCADA data": data_dir / "dispatch_scada.csv",
+        "SCADA data": data_dir / "dispatch_scada_today.csv",
         "DUID lookup": data_dir / "duid_lookup.csv",
         "Emissions factors": data_dir / "emissions_factors.csv",
     }
