@@ -31,40 +31,41 @@ st.set_page_config(
 # ─────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
   :root {
     /* Typography */
-    --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --text-base: 0.82rem;
-    --text-lg: 0.94rem;
-    --text-xl: 1.15rem;
-    --text-2xl: 1.5rem;
+    --font-display: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --text-base: 0.9rem;
+    --text-lg: 1.04rem;
+    --text-xl: 1.4rem;
+    --text-2xl: 2.35rem;
 
     /* Colors — base */
-    --background: #25241f;
-    --foreground: #f2efe8;
-    --card: #302f2a;
-    --muted: #383730;
-    --muted-foreground: #b7b1a6;
-    --accent: #87b61f;
-    --accent-light: #e4efd2;
-    --border: rgba(243, 239, 232, 0.10);
-    --radius: 0.625rem;
+    --background: #f4f1ea;
+    --foreground: #223a42;
+    --card: #ffffff;
+    --muted: #e8e1d4;
+    --muted-foreground: #64777b;
+    --accent: #0b7f94;
+    --accent-light: #edf6f7;
+    --accent-warm: #d97b2d;
+    --border: rgba(34, 58, 66, 0.16);
+    --radius: 0;
 
     /* Semantic — timing */
-    --bg-green: #dfeacc;
-    --bg-green-border: #95b36b;
-    --bg-red: #f0d8d6;
-    --bg-red-border: #d18f88;
-    --bg-neutral: #35342f;
+    --bg-green: #eef5e6;
+    --bg-green-border: #9db36a;
+    --bg-red: #f7e7e0;
+    --bg-red-border: #d69086;
+    --bg-neutral: #ffffff;
 
     /* Warm bands */
-    --header-bg: #25241f;
-    --header-border: rgba(243, 239, 232, 0.12);
-    --footer-bg: #25241f;
-    --footer-border: rgba(243, 239, 232, 0.12);
+    --header-bg: #0b7f94;
+    --header-border: rgba(11, 127, 148, 0.18);
+    --footer-bg: #e6ece9;
+    --footer-border: rgba(34, 58, 66, 0.12);
   }
 
   /* ── Base ── */
@@ -118,111 +119,128 @@ st.markdown("""
   .header-band {
     background: var(--header-bg);
     border-top: 1px solid var(--header-border);
-    border-bottom: 1px solid var(--header-border);
-    padding: 1.55rem 0 1.45rem 0;
-    margin: 0 0 1.2rem 0;
+    border-bottom: 0;
+    padding: 1rem 0 0.9rem 0;
+    margin: 0 0 2rem 0;
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
+    box-shadow: inset 0 -4px 0 0 rgba(217, 123, 45, 0.95);
   }
   .header-band .page-header {
     font-family: var(--font-display);
     font-size: var(--text-2xl);
-    font-weight: 700;
-    color: var(--foreground);
+    font-weight: 500;
+    color: #ffffff;
     margin: 0;
-    text-align: center;
-    letter-spacing: -0.02em;
+    text-align: left;
+    letter-spacing: 0.01em;
+    max-width: 1080px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 2.5rem;
   }
   .header-band .page-deck {
-    text-align: center;
-    margin: 0.35rem auto 0 auto;
-    padding: 0 1rem;
-    max-width: 900px;
+    text-align: left;
+    margin: 0.15rem auto 0 auto;
+    padding: 0 2.5rem;
+    max-width: 1080px;
     font-family: var(--font-body);
     font-size: var(--text-base);
-    color: var(--muted-foreground);
-    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.45;
   }
   .meta-line {
     font-family: var(--font-body);
     font-size: var(--text-base);
     color: var(--muted-foreground);
-    margin-bottom: 1rem;
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
 
   /* ── Hero cards ── */
   .hero-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1.25rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
   }
   .hero-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.875rem 0.945rem;
-    text-align: center;
+    border-top: 4px solid var(--accent);
+    padding: 1rem 1rem 0.9rem 1rem;
+    text-align: left;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.6) inset;
   }
   .hero-card--accent {
-    background: var(--accent-light);
-    border-color: var(--bg-green-border);
-    color: #2e5e11;
+    background: #f7fbfb;
+    border-color: rgba(11, 127, 148, 0.24);
+    color: var(--accent);
   }
-  .hero-card--accent .hero-label { color: rgba(46, 94, 17, 0.72); }
-  .hero-card--accent .hero-value { color: #2e5e11; }
-  .hero-card--accent .hero-sub { color: rgba(46, 94, 17, 0.72); }
+  .hero-card--accent .hero-label { color: rgba(11, 127, 148, 0.75); }
+  .hero-card--accent .hero-value { color: var(--accent); }
+  .hero-card--accent .hero-sub { color: rgba(11, 127, 148, 0.75); }
   .hero-label {
     font-family: var(--font-body);
     font-size: var(--text-base);
     color: var(--muted-foreground);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.15rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
   .hero-value {
     font-family: var(--font-display);
-    font-size: var(--text-xl);
+    font-size: calc(var(--text-2xl) * 0.88);
     font-weight: 700;
     color: var(--foreground);
-    letter-spacing: -0.02em;
+    letter-spacing: 0.01em;
+    line-height: 0.95;
   }
   .hero-sub {
     font-family: var(--font-body);
     font-size: var(--text-base);
     color: var(--muted-foreground);
-    margin-top: 0.15rem;
+    margin-top: 0.35rem;
   }
 
   /* ── Insight callout ── */
   .insight-callout {
-    background: var(--accent-light);
-    border: 1px solid var(--bg-green-border);
+    background: #ffffff;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 2px solid var(--accent-warm);
+    border-left: 0;
     border-radius: var(--radius);
-    padding: 0.7rem 1.05rem;
-    margin-bottom: 1.05rem;
+    padding: 0.85rem 0;
+    margin-bottom: 1.35rem;
     font-family: var(--font-display);
-    font-size: var(--text-base);
+    font-size: var(--text-lg);
     font-weight: 500;
-    color: #2e5e11;
-    text-align: center;
+    color: var(--accent);
+    text-align: left;
     line-height: 1.5;
   }
 
   /* ── Section headings ── */
   .section-heading {
     font-family: var(--font-display);
-    font-size: var(--text-xl);
-    color: var(--foreground);
+    font-size: calc(var(--text-2xl) * 0.8);
+    color: var(--accent);
     font-weight: 600;
-    line-height: 1.3;
-    margin: 0 0 0.9rem 0;
-    letter-spacing: -0.01em;
+    line-height: 1.05;
+    margin: 0 0 0.55rem 0;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
   }
   .section-sub {
     font-family: var(--font-body);
     font-size: var(--text-base);
     color: var(--muted-foreground);
-    margin: -0.5rem 0 1rem 0;
+    margin: 0 0 1rem 0;
+    max-width: 54rem;
   }
   .eyebrow {
     font-family: var(--font-body);
@@ -242,7 +260,7 @@ st.markdown("""
   }
   .timing-card {
     border-radius: var(--radius);
-    padding: 0.7rem 0.8rem;
+    padding: 0.9rem 1rem;
     text-align: left;
     display: flex;
     flex-direction: column;
@@ -259,7 +277,7 @@ st.markdown("""
     color: #7b2424;
   }
   .timing-card--neutral {
-    background: #302f2a;
+    background: #ffffff;
     border: 1px solid var(--border);
   }
   .timing-label {
@@ -303,11 +321,11 @@ st.markdown("""
   }
   .timing-card--neutral .timing-label,
   .timing-card--neutral .timing-hours {
-    color: #d2ccbf;
+    color: var(--muted-foreground);
   }
   .timing-card--neutral .timing-intensity,
   .timing-card--neutral .timing-value {
-    color: #f2efe8;
+    color: var(--foreground);
   }
 
   /* ── Sector cards ── */
@@ -322,6 +340,7 @@ st.markdown("""
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 1.2rem 1.3rem;
+    border-top: 3px solid var(--accent);
   }
   .sector-name {
     font-family: var(--font-display);
@@ -374,10 +393,11 @@ st.markdown("""
     border-radius: var(--radius);
     padding: 0.5rem 0.65rem;
     text-align: center;
+    border-top: 3px solid var(--accent);
   }
   .estimator-card--saving {
-    background: var(--accent-light);
-    border-color: var(--bg-green-border);
+    background: #f7fbfb;
+    border-color: rgba(11, 127, 148, 0.24);
   }
   .estimator-label {
     font-family: var(--font-body);
@@ -538,11 +558,13 @@ st.markdown("""
   /* ── Chart elements ── */
   .chart-title {
     font-family: var(--font-display);
-    font-size: var(--text-lg);
+    font-size: calc(var(--text-xl) * 1.1);
     font-weight: 600;
     color: var(--foreground);
     line-height: 1.35;
     margin: 0 0 0.55rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
   .chart-axis-notes {
     display: flex;
@@ -553,17 +575,17 @@ st.markdown("""
     font-family: var(--font-body);
   }
   .chart-insight {
-    background: #e7f1d5;
-    border-left: 3px solid var(--accent);
-    padding: 0.6rem 0.9rem;
+    background: #ffffff;
+    border-left: 4px solid var(--accent-warm);
+    padding: 0.85rem 1rem;
     margin-top: 0.4rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
     font-family: var(--font-body);
     font-size: var(--text-base);
-    color: #2f431d;
+    color: var(--foreground);
     line-height: 1.55;
   }
-  .chart-insight strong { color: #203015; }
+  .chart-insight strong { color: var(--accent); }
 
   /* ── Section text ── */
   .section-text {
@@ -580,9 +602,10 @@ st.markdown("""
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.75rem 0.9rem;
+    padding: 0.95rem 1rem;
     margin-top: 0.75rem;
     margin-bottom: 0.6rem;
+    border-left: 4px solid var(--accent);
   }
   .info-panel .section-heading {
     margin-bottom: 0.6rem;
@@ -649,6 +672,41 @@ st.markdown("""
     font-family: var(--font-body);
   }
   .controls-note a { color: var(--accent); }
+  label, .stRadio label p, .stSelectbox label, .stMultiSelect label, .stDateInput label, .stNumberInput label {
+    color: var(--foreground) !important;
+    font-family: var(--font-body) !important;
+    font-size: var(--text-base) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  div[data-baseweb="select"] > div,
+  div[data-testid="stDateInput"] input,
+  div[data-testid="stNumberInput"] input {
+    background: #ffffff !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0 !important;
+    color: var(--foreground) !important;
+    box-shadow: none !important;
+  }
+  div[data-baseweb="select"] span,
+  div[data-baseweb="select"] input,
+  div[data-testid="stDateInput"] input,
+  div[data-testid="stNumberInput"] input {
+    color: var(--foreground) !important;
+    font-family: var(--font-body) !important;
+  }
+  div[data-baseweb="tag"] {
+    background: var(--accent-light) !important;
+    border-radius: 0 !important;
+    border: 1px solid rgba(11, 127, 148, 0.18) !important;
+  }
+  div[data-baseweb="radio"] label {
+    background: transparent !important;
+  }
+  div[data-testid="stCaptionContainer"] {
+    color: var(--muted-foreground) !important;
+    font-family: var(--font-body) !important;
+  }
 
   /* ── Footer ── */
   .page-footer {
@@ -680,17 +738,18 @@ st.markdown("""
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--foreground);
+    color: var(--accent);
     text-decoration: none;
     font-weight: 600;
   }
-  .linkedin-link:hover { color: var(--accent); }
+  .linkedin-link:hover { color: var(--accent-warm); }
   .linkedin-icon { width: 18px; height: 18px; fill: #374151; }
 
   details[data-testid="stExpander"] {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    border-left: 4px solid var(--accent);
   }
   details[data-testid="stExpander"] summary {
     color: var(--foreground);
@@ -698,6 +757,7 @@ st.markdown("""
   div[data-testid="stDataFrame"] {
     background: var(--card);
     border-radius: var(--radius);
+    border: 1px solid var(--border);
   }
 
   /* ── Responsive ── */
@@ -713,7 +773,7 @@ st.markdown("""
       padding-top: 1.25rem !important;
       max-width: 100% !important;
     }
-    .header-band { padding: 1.1rem 0 1rem 0; }
+    .header-band { padding: 1rem 0 0.9rem 0; }
     .header-band .page-header { font-size: var(--text-xl); padding: 0 0.9rem; }
     .header-band .page-deck { padding: 0 0.9rem; }
     .hero-grid, .sector-grid, .estimator-results {
@@ -753,7 +813,7 @@ st.markdown("""
     .insight-callout { font-size: var(--text-base); padding: 0.85rem 1rem; }
   }
   @media (min-width: 1800px) {
-    :root { --text-base: 0.82rem; --text-lg: 0.94rem; --text-xl: 1.15rem; --text-2xl: 1.5rem; }
+    :root { --text-base: 0.9rem; --text-lg: 1.04rem; --text-xl: 1.4rem; --text-2xl: 2.35rem; }
     .block-container { max-width: 1080px !important; }
   }
 
@@ -831,8 +891,9 @@ def load_full_history(data_dir_str: str) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
-def load_today(data_dir_str: str) -> pd.DataFrame:
-    """Load today's SCADA file (refreshed every 5 minutes)."""
+def load_today(data_dir_str: str, file_mtime: float = 0.0) -> pd.DataFrame:
+    """Load today's SCADA file. file_mtime is included in the cache key so the
+    cache is automatically invalidated whenever the file changes on disk."""
     data_dir = Path(data_dir_str)
     today_csv = data_dir / "dispatch_scada_today.csv"
     if today_csv.exists():
@@ -863,7 +924,9 @@ def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
     """Load and filter data for a specific calendar date."""
     today = datetime.date.today()
     if date == today:
-        df = load_today(data_dir_str)
+        today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
+        mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
+        df = load_today(data_dir_str, file_mtime=mtime)
     else:
         df = load_month(data_dir_str, date.strftime("%Y-%m"))
     return df[df["SETTLEMENTDATE"].dt.date == date].copy()
@@ -1247,6 +1310,12 @@ plotly_config = {
     "responsive": True,
 }
 
+PLOT_BG = "#ffffff"
+PLOT_TEXT = "#223a42"
+PLOT_MUTED = "#6a7c80"
+PLOT_GRID = "#d9dfdd"
+PLOT_BORDER = "#cfdbd7"
+
 
 # ─────────────────────────────────────────────────────────────
 # State & filtering
@@ -1421,9 +1490,8 @@ hourly_agg["intensity"] = hourly_agg["tco2e"] / hourly_agg["mwh"]
 # ── Header ──────────────────────────────────────────────────
 st.markdown("""
 <div class="header-band">
-  <div class="page-header">Real-Time Energy Dashboard</div>
-  <div class='page-deck'>NEM grid emissions intensity, updated from AEMO 5-minute dispatch data.
-  Personal project by Tanjim Islam, for demonstration purposes only.</div>
+  <div class="page-header">AEMO Grid Emissions Outlook</div>
+  <div class='page-deck'>Near-real-time NEM emissions intensity, historical context, and rest-of-day outlook from AEMO dispatch data.</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1494,7 +1562,7 @@ for tech in tech_order:
         x=subset["period"],
         y=subset["mwh"],
         name=tech,
-        marker=dict(color=TECH_COLORS.get(tech, "#555"), line=dict(color="#25241f", width=0.35)),
+        marker=dict(color=TECH_COLORS.get(tech, "#555"), line=dict(color="#f4f1ea", width=0.35)),
         hovertemplate=f"{tech}<br>%{{x|%H:%M}}<br><b>%{{y:,.0f}}</b> MWh<extra></extra>",
     ), secondary_y=False)
 
@@ -1511,13 +1579,13 @@ if clean_window_start is not None and clean_window_end is not None:
     combo_fig.add_vrect(
         x0=clean_window_start,
         x1=clean_window_end + pd.Timedelta(minutes=5),
-        fillcolor="#bbf7d0",
-        opacity=0.22,
+        fillcolor="#e9f2ef",
+        opacity=0.55,
         layer="below",
         line_width=0,
         annotation_text="Cleanest 4 hours",
         annotation_position="top left",
-        annotation_font=dict(color="#166534", family="Inter, sans-serif", size=11),
+        annotation_font=dict(color="#0b7f94", family="IBM Plex Sans, sans-serif", size=11),
     )
 
 combo_fig.update_layout(
@@ -1526,19 +1594,19 @@ combo_fig.update_layout(
     bargroupgap=0,
     xaxis=dict(
         showgrid=False,
-        color="#b7b1a6",
+        color=PLOT_MUTED,
         tickmode="array",
         tickvals=chart_tickvals,
         ticktext=[str(ts.hour) for ts in chart_tickvals],
         tickangle=0,
         tickfont=dict(size=13),
     ),
-    plot_bgcolor="#302f2a",
-    paper_bgcolor="#302f2a",
-    font=dict(color="#f2efe8", family="Inter, sans-serif", size=13),
+    plot_bgcolor=PLOT_BG,
+    paper_bgcolor=PLOT_BG,
+    font=dict(color=PLOT_TEXT, family="IBM Plex Sans, sans-serif", size=13),
     legend=dict(
-        bgcolor="#35342f",
-        bordercolor="#47453d",
+        bgcolor="rgba(255,255,255,0.82)",
+        bordercolor=PLOT_BORDER,
         orientation="h",
         yanchor="top",
         y=-0.08,
@@ -1553,9 +1621,9 @@ combo_fig.update_layout(
 combo_fig.update_yaxes(
     title_text="",
     showgrid=True,
-    gridcolor="#47453d",
+    gridcolor=PLOT_GRID,
     zeroline=False,
-    color="#b7b1a6",
+    color=PLOT_MUTED,
     tickfont=dict(size=13),
     automargin=True,
     secondary_y=False,
@@ -1565,7 +1633,7 @@ combo_fig.update_yaxes(
     showgrid=False,
     zeroline=False,
     range=[0, int(((1600 * interval_minutes / 15) + 99) // 100) * 100],
-    color="#b7b1a6",
+    color=PLOT_MUTED,
     tickfont=dict(size=13),
     automargin=True,
     secondary_y=True,
@@ -1661,7 +1729,7 @@ if not trend_df.empty:
     if not previous_day_value.empty:
         trend_fig.add_hline(
             y=float(previous_day_value.iloc[0]),
-            line_color="#D4A855",
+            line_color="#d97b2d",
             line_dash="dot",
             annotation_text="Previous day",
             annotation_position="top left",
@@ -1669,16 +1737,16 @@ if not trend_df.empty:
     if not previous_year_value.empty:
         trend_fig.add_hline(
             y=float(previous_year_value.iloc[0]),
-            line_color="#8B6CB8",
+            line_color="#6d6ba8",
             line_dash="dash",
             annotation_text="Same date last year",
             annotation_position="bottom left",
         )
 
     trend_fig.update_layout(
-        plot_bgcolor="#302f2a",
-        paper_bgcolor="#302f2a",
-        font=dict(color="#f2efe8", family="Inter, sans-serif", size=13),
+        plot_bgcolor=PLOT_BG,
+        paper_bgcolor=PLOT_BG,
+        font=dict(color=PLOT_TEXT, family="IBM Plex Sans, sans-serif", size=13),
         margin=dict(l=0, r=0, t=8, b=8),
         height=340,
         hovermode="x unified",
@@ -1690,8 +1758,8 @@ if not trend_df.empty:
             x=0,
             bgcolor="rgba(0,0,0,0)",
         ),
-        xaxis=dict(showgrid=False, color="#b7b1a6"),
-        yaxis=dict(showgrid=True, gridcolor="#47453d", color="#b7b1a6", title_text="t CO₂-e / MWh"),
+        xaxis=dict(showgrid=False, color=PLOT_MUTED),
+        yaxis=dict(showgrid=True, gridcolor=PLOT_GRID, color=PLOT_MUTED, title_text="t CO₂-e / MWh"),
     )
     trend_fig.update_xaxes(fixedrange=True)
     trend_fig.update_yaxes(fixedrange=True)
@@ -1744,9 +1812,9 @@ if selected_date == datetime.date.today():
 
         forecast_fig = go.Figure()
         for ref_profile, name, color in [
-            (prev_day_profile, "Previous day", "#D4A855"),
-            (prev_week_profile, "Previous 7-day avg", "#7CA7FF"),
-            (prev_year_profile, "Same date last year", "#8B6CB8"),
+            (prev_day_profile, "Previous day", "#d97b2d"),
+            (prev_week_profile, "Previous 7-day avg", "#6a93c4"),
+            (prev_year_profile, "Same date last year", "#6d6ba8"),
         ]:
             if not ref_profile.empty:
                 forecast_fig.add_trace(go.Scatter(
@@ -1773,7 +1841,7 @@ if selected_date == datetime.date.today():
                 mode="lines",
                 line=dict(color="rgba(158,210,106,0)"),
                 fill="tonexty",
-                fillcolor="rgba(158,210,106,0.14)",
+                fillcolor="rgba(11,127,148,0.12)",
                 hoverinfo="skip",
                 name="Analog range",
             ))
@@ -1783,7 +1851,7 @@ if selected_date == datetime.date.today():
             y=observed_profile["intensity"],
             mode="lines",
             name="Observed today",
-            line=dict(color="#F2EFE8", width=2.8),
+            line=dict(color="#223a42", width=2.8),
             hovertemplate="%{x|%H:%M}<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
         ))
         forecast_fig.add_trace(go.Scatter(
@@ -1791,20 +1859,20 @@ if selected_date == datetime.date.today():
             y=forecast_profile["forecast_intensity"],
             mode="lines",
             name="Forecast remainder",
-            line=dict(color="#9ED26A", width=2.6, dash="dash"),
+            line=dict(color="#0b7f94", width=2.6, dash="dash"),
             hovertemplate="%{x|%H:%M}<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
         ))
         forecast_fig.add_vline(
             x=observed_profile["period"].max(),
-            line_color="#f2efe8",
+            line_color="#223a42",
             line_dash="dot",
             opacity=0.45,
         )
 
         forecast_fig.update_layout(
-            plot_bgcolor="#302f2a",
-            paper_bgcolor="#302f2a",
-            font=dict(color="#f2efe8", family="Inter, sans-serif", size=13),
+            plot_bgcolor=PLOT_BG,
+            paper_bgcolor=PLOT_BG,
+            font=dict(color=PLOT_TEXT, family="IBM Plex Sans, sans-serif", size=13),
             margin=dict(l=0, r=0, t=8, b=8),
             height=360,
             hovermode="x unified",
@@ -1818,7 +1886,7 @@ if selected_date == datetime.date.today():
             ),
             xaxis=dict(
                 showgrid=False,
-                color="#b7b1a6",
+                color=PLOT_MUTED,
                 tickmode="array",
                 tickvals=pd.date_range(
                     start=pd.Timestamp(selected_date),
@@ -1827,7 +1895,7 @@ if selected_date == datetime.date.today():
                 ),
                 ticktext=[f"{h:02d}:00" for h in range(0, 24, 2)],
             ),
-            yaxis=dict(showgrid=True, gridcolor="#47453d", color="#b7b1a6", title_text="t CO₂-e / MWh"),
+            yaxis=dict(showgrid=True, gridcolor=PLOT_GRID, color=PLOT_MUTED, title_text="t CO₂-e / MWh"),
         )
         forecast_fig.update_xaxes(fixedrange=True)
         forecast_fig.update_yaxes(fixedrange=True)
@@ -1895,19 +1963,19 @@ with charts_left:
         orientation="h",
         marker=dict(
             color=[TECH_COLORS.get(t, "#6B7280") for t in fuel_mix["Technology Type"]],
-            line=dict(color="#25241f", width=0.5),
+            line=dict(color="#f4f1ea", width=0.5),
         ),
         customdata=fuel_mix[["pct"]],
         hovertemplate="<b>%{y}</b><br>%{x:,.0f} MWh (%{customdata[0]:.1f}%)<extra></extra>",
     ))
     fuel_fig.update_layout(
-        plot_bgcolor="#302f2a", paper_bgcolor="#302f2a",
-        font=dict(color="#f2efe8", family="Inter, sans-serif"),
+        plot_bgcolor=PLOT_BG, paper_bgcolor=PLOT_BG,
+        font=dict(color=PLOT_TEXT, family="IBM Plex Sans, sans-serif"),
         margin=dict(l=0, r=20, t=8, b=8),
         height=max(280, len(fuel_mix) * 40),
         showlegend=False,
-        xaxis=dict(showgrid=True, gridcolor="#47453d", title_text="MWh", color="#b7b1a6"),
-        yaxis=dict(showgrid=False, color="#f2efe8", automargin=True),
+        xaxis=dict(showgrid=True, gridcolor=PLOT_GRID, title_text="MWh", color=PLOT_MUTED),
+        yaxis=dict(showgrid=False, color=PLOT_TEXT, automargin=True),
     )
     fuel_fig.update_xaxes(fixedrange=True)
     fuel_fig.update_yaxes(fixedrange=True)
@@ -1941,24 +2009,24 @@ with charts_right:
         duck_fig = go.Figure(go.Bar(
             x=hourly_agg["hour"],
             y=hourly_agg["intensity"],
-            marker=dict(color=duck_colors, line=dict(color="#25241f", width=0.5)),
+            marker=dict(color=duck_colors, line=dict(color="#f4f1ea", width=0.5)),
             hovertemplate="Hour %{x}:00<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
         ))
         duck_fig.update_layout(
-            plot_bgcolor="#302f2a", paper_bgcolor="#302f2a",
-            font=dict(color="#f2efe8", family="Inter, sans-serif"),
+            plot_bgcolor=PLOT_BG, paper_bgcolor=PLOT_BG,
+            font=dict(color=PLOT_TEXT, family="IBM Plex Sans, sans-serif"),
             margin=dict(l=10, r=10, t=8, b=8),
             height=320,
             showlegend=False,
             xaxis=dict(
-                showgrid=False, color="#b7b1a6",
+                showgrid=False, color=PLOT_MUTED,
                 tickmode="array",
                 tickvals=list(range(0, 24, 2)),
                 ticktext=[f"{h}:00" for h in range(0, 24, 2)],
                 title_text="Hour of Day",
             ),
             yaxis=dict(
-                showgrid=True, gridcolor="#47453d", color="#b7b1a6",
+                showgrid=True, gridcolor=PLOT_GRID, color=PLOT_MUTED,
                 title_text="t CO₂-e / MWh", rangemode="tozero",
             ),
         )
