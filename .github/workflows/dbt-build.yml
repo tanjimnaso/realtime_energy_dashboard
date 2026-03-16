@@ -30,3 +30,10 @@ jobs:
 
       - name: dbt build (run + test)
         run: dbt build --profiles-dir profiles/
+
+      - name: Commit and push updated database
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update nem.duckdb from dbt build"
+          file_pattern: "nem.duckdb"
+          commit_options: "--no-verify"
