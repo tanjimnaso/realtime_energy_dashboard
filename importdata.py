@@ -112,14 +112,33 @@ def get_archive_path(period: pd.Period) -> Path:
     return DATA_DIR / f"dispatch_scada_{period}.csv"
 
 
-def write_today(df: pd.DataFrame) -> None:
-    """Overwrite today's CSV with only the most recent calendar day in df."""
-    dates = pd.to_datetime(df["SETTLEMENTDATE"])
-    today_date = dates.max().normalize()
-    today_df = df[dates.dt.normalize() == today_date]
+def rebuild_today_snapshot_from_archives() -> None:
+    """Rebuild dispatch_scada_today.csv from the latest calendar day in the current month archive.
+
+    This avoids truncating the today snapshot to only the most recently fetched ZIP window.
+    At midnight, the latest calendar day automatically rolls forward and the file resets.
+    """
+    archive_files = sorted(DATA_DIR.glob("dispatch_scada_????-??.csv"))
+    if not archive_files:
+        print("No monthly archives available yet; skipping today snapshot rebuild.")
+        return
+
+    latest_file = archive_files[-1]
+    latest_df = pd.read_csv(latest_file, parse_dates=["SETTLEMENTDATE"])
+    latest_df["SETTLEMENTDATE"] = pd.to_datetime(latest_df["SETTLEMENTDATE"], errors="coerce")
+    latest_df = latest_df.dropna(subset=["SETTLEMENTDATE"])
+    if latest_df.empty:
+        print(f"{latest_file.name} contains no valid settlement timestamps; skipping today snapshot rebuild.")
+        return
+
+    latest_date = latest_df["SETTLEMENTDATE"].dt.normalize().max()
+    today_df = latest_df[latest_df["SETTLEMENTDATE"].dt.normalize() == latest_date].copy()
+    today_df.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
+    today_df.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
+
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     today_df.to_csv(TODAY_CSV, index=False)
-    print(f"Wrote {len(today_df)} rows to {TODAY_CSV.name} ({today_date.date()})")
+    print(f"Rebuilt {TODAY_CSV.name} with {len(today_df)} rows for {latest_date.date()} from {latest_file.name}")
 
 
 def append_to_monthly_archive(df: pd.DataFrame) -> None:
@@ -172,8 +191,8 @@ def main():
     print(f"Dropped {before - len(new_data)} duplicate rows")
 
     new_data.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
-    write_today(new_data)
     append_to_monthly_archive(new_data)
+    rebuild_today_snapshot_from_archives()
 
     print("=" * 60)
     print("Done!")

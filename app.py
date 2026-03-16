@@ -1633,11 +1633,10 @@ if not interval_agg.empty and period_low > 0:
 else:
     chart_title = "Generation mix and total emissions"
 
-chart_tickvals = pd.date_range(
-    start=pd.Timestamp(selected_date),
-    end=pd.Timestamp(selected_date) + pd.Timedelta(hours=22),
-    freq="2h",
-)
+day_start = pd.Timestamp(selected_date)
+day_mid = day_start + pd.Timedelta(hours=12)
+day_end = day_start + pd.Timedelta(hours=24)
+chart_tickvals = [day_start, day_mid, day_end]
 
 combo_fig = make_subplots(specs=[[{"secondary_y": True}]])
 for tech in tech_order:
@@ -1681,7 +1680,8 @@ combo_fig.update_layout(
         color=PLOT_MUTED,
         tickmode="array",
         tickvals=chart_tickvals,
-        ticktext=[str(ts.hour) for ts in chart_tickvals],
+        ticktext=["00:00", "12:00", "24:00"],
+        range=[day_start, day_end],
         tickangle=0,
         tickfont=dict(size=13),
     ),
