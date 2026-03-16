@@ -901,9 +901,41 @@ def _read_scada_csv(csv_path: Path) -> pd.DataFrame:
     return scada[scada["SCADAVALUE"] > 0].copy()
 
 
+@st.cache_data(ttl=300)
+def load_generation_mix_from_duckdb() -> pd.DataFrame:
+    """Load Gold interval generation mix from DuckDB for dashboard use."""
+    try:
+        conn = get_db_connection()
+        query = """
+        SELECT
+            settlement_date AS SETTLEMENTDATE,
+            region AS Region,
+            technology_type AS "Technology Type",
+            generation_mwh AS mwh,
+            scope1_tco2e,
+            scope3_tco2e,
+            total_tco2e AS tco2e_total
+        FROM main_gold.fct_generation_mix_interval
+        ORDER BY settlement_date, region, technology_type
+        """
+        df = conn.execute(query).df()
+        conn.close()
+        if df.empty:
+            return df
+        df["SETTLEMENTDATE"] = pd.to_datetime(df["SETTLEMENTDATE"], errors="coerce")
+        df = df.dropna(subset=["SETTLEMENTDATE"])
+        return df.rename(columns={"scope1_tco2e": "tco2e_scope1", "scope3_tco2e": "tco2e_scope3"})
+    except Exception:
+        return pd.DataFrame()
+
+
 @st.cache_data(ttl=3600)
 def load_full_history(data_dir_str: str) -> pd.DataFrame:
-    """Load the full available SCADA history, preferring the monolithic CSV when present."""
+    """Load the full available history, preferring DuckDB Gold and falling back to raw CSV enrichment."""
+    gold_history = load_generation_mix_from_duckdb()
+    if not gold_history.empty:
+        return gold_history
+
     data_dir = Path(data_dir_str)
     full_csv = data_dir / "dispatch_scada.csv"
     monthly_paths = sorted(data_dir.glob("dispatch_scada_????-??.csv"))
@@ -927,13 +959,7 @@ def load_full_history(data_dir_str: str) -> pd.DataFrame:
 
 @st.cache_data(ttl=300)
 def load_today(data_dir_str: str, file_mtime: float = 0.0) -> pd.DataFrame:
-    """Load today's SCADA file. file_mtime is included in the cache key so the
-    cache is automatically invalidated whenever the file changes on disk."""
-    data_dir = Path(data_dir_str)
-    today_csv = data_dir / "dispatch_scada_today.csv"
-    if today_csv.exists():
-        return _enrich(_read_scada_csv(today_csv), data_dir)
-
+    """Load today's interval dataset, preferring Gold and falling back to raw CSV."""
     history = load_full_history(data_dir_str)
     if history.empty:
         return history
@@ -944,12 +970,7 @@ def load_today(data_dir_str: str, file_mtime: float = 0.0) -> pd.DataFrame:
 
 @st.cache_data(ttl=3600)
 def load_month(data_dir_str: str, year_month: str) -> pd.DataFrame:
-    """Load a monthly archive file (cached for 1 hour — historical data is stable)."""
-    data_dir = Path(data_dir_str)
-    month_path = data_dir / f"dispatch_scada_{year_month}.csv"
-    if month_path.exists():
-        return _enrich(_read_scada_csv(month_path), data_dir)
-
+    """Load a monthly history window, preferring Gold and falling back to raw CSV."""
     history = load_full_history(data_dir_str)
     month_mask = history["SETTLEMENTDATE"].dt.strftime("%Y-%m") == year_month
     return history[month_mask].copy()
@@ -1029,8 +1050,11 @@ def load_emissions_intensity_from_duckdb() -> pd.DataFrame:
             settlement_date,
             region,
             total_generation_mwh,
-            total_tCO2e,
-            emissions_intensity_gCO2eq_per_kWh
+            scope1_tco2e,
+            scope3_tco2e,
+            total_tco2e,
+            emissions_intensity_scope1_gco2eq_per_kwh,
+            emissions_intensity_total_gco2eq_per_kwh
         FROM main_gold.fct_regional_emissions_intensity
         ORDER BY settlement_date DESC, region
         """
