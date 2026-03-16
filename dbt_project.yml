@@ -13,6 +13,12 @@ macro-paths: ["macros"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
+on-run-start:
+  - "CREATE SCHEMA IF NOT EXISTS bronze"
+  - "CREATE OR REPLACE VIEW bronze.dispatch_scada AS SELECT * FROM read_parquet('data/bronze/dispatch_scada.parquet')"
+  - "CREATE OR REPLACE VIEW bronze.generator_metadata AS SELECT * FROM read_parquet('data/bronze/generator_metadata.parquet')"
+  - "CREATE OR REPLACE VIEW bronze.emissions_factors AS SELECT * FROM read_parquet('data/bronze/emissions_factors.parquet')"
+
 models:
   nem_pipeline:
     silver:
