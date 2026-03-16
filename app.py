@@ -15,8 +15,16 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from pathlib import Path
+import duckdb
 
 from data_bootstrap import ensure_required_data
+
+# ─────────────────────────────────────────────────────────────
+# DuckDB Connection
+# ─────────────────────────────────────────────────────────────
+def get_db_connection():
+    """Connect to nem.duckdb and return connection object."""
+    return duckdb.connect("nem.duckdb", read_only=True)
 
 # ─────────────────────────────────────────────────────────────
 # Page config
@@ -988,6 +996,29 @@ def load_today_daily_metrics(data_dir_str: str) -> pd.DataFrame:
     """Aggregate today's live file into daily metrics."""
     today_df = load_today(data_dir_str)
     return aggregate_daily_metrics(today_df)
+
+
+@st.cache_data(ttl=300)
+def load_emissions_intensity_from_duckdb() -> pd.DataFrame:
+    """Load regional emissions intensity from Gold layer (main_gold.fct_regional_emissions_intensity)."""
+    try:
+        conn = get_db_connection()
+        query = """
+        SELECT 
+            settlement_date,
+            region,
+            total_generation_mwh,
+            total_tCO2e,
+            emissions_intensity_gCO2eq_per_kWh
+        FROM main_gold.fct_regional_emissions_intensity
+        ORDER BY settlement_date DESC, region
+        """
+        df = conn.execute(query).df()
+        conn.close()
+        return df
+    except Exception as e:
+        st.error(f"Failed to load emissions data from Gold layer: {str(e)}")
+        return pd.DataFrame()
 
 
 def combine_daily_metrics_for_regions(
