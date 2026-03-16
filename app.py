@@ -801,25 +801,62 @@ def _enrich(scada: pd.DataFrame, data_dir: Path) -> pd.DataFrame:
     return df
 
 
+def _read_scada_csv(csv_path: Path) -> pd.DataFrame:
+    scada = pd.read_csv(csv_path, parse_dates=["SETTLEMENTDATE"])
+    return scada[scada["SCADAVALUE"] > 0].copy()
+
+
+@st.cache_data(ttl=3600)
+def load_full_history(data_dir_str: str) -> pd.DataFrame:
+    """Load the full available SCADA history, preferring the monolithic CSV when present."""
+    data_dir = Path(data_dir_str)
+    full_csv = data_dir / "dispatch_scada.csv"
+    monthly_paths = sorted(data_dir.glob("dispatch_scada_????-??.csv"))
+
+    frames = []
+    if full_csv.exists():
+        frames.append(_read_scada_csv(full_csv))
+    elif monthly_paths:
+        frames = [_read_scada_csv(path) for path in monthly_paths]
+
+    if not frames:
+        raise FileNotFoundError(
+            "No SCADA history found. Expected dispatch_scada.csv or dispatch_scada_YYYY-MM.csv archives."
+        )
+
+    scada = pd.concat(frames, ignore_index=True)
+    scada.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
+    scada.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
+    return _enrich(scada, data_dir)
+
+
 @st.cache_data(ttl=300)
 def load_today(data_dir_str: str) -> pd.DataFrame:
     """Load today's SCADA file (refreshed every 5 minutes)."""
     data_dir = Path(data_dir_str)
-    scada = pd.read_csv(data_dir / "dispatch_scada_today.csv", parse_dates=["SETTLEMENTDATE"])
-    scada = scada[scada["SCADAVALUE"] > 0].copy()
-    return _enrich(scada, data_dir)
+    today_csv = data_dir / "dispatch_scada_today.csv"
+    if today_csv.exists():
+        return _enrich(_read_scada_csv(today_csv), data_dir)
+
+    history = load_full_history(data_dir_str)
+    if history.empty:
+        return history
+
+    latest_date = history["SETTLEMENTDATE"].dt.date.max()
+    return history[history["SETTLEMENTDATE"].dt.date == latest_date].copy()
 
 
 @st.cache_data(ttl=3600)
 def load_month(data_dir_str: str, year_month: str) -> pd.DataFrame:
     """Load a monthly archive file (cached for 1 hour — historical data is stable)."""
     data_dir = Path(data_dir_str)
-    scada = pd.read_csv(
-        data_dir / f"dispatch_scada_{year_month}.csv",
-        parse_dates=["SETTLEMENTDATE"],
-    )
-    scada = scada[scada["SCADAVALUE"] > 0].copy()
-    return _enrich(scada, data_dir)
+    month_path = data_dir / f"dispatch_scada_{year_month}.csv"
+    if month_path.exists():
+        return _enrich(_read_scada_csv(month_path), data_dir)
+
+    history = load_full_history(data_dir_str)
+    month_mask = history["SETTLEMENTDATE"].dt.strftime("%Y-%m") == year_month
+    return history[month_mask].copy()
 
 
 def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
@@ -830,6 +867,325 @@ def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
     else:
         df = load_month(data_dir_str, date.strftime("%Y-%m"))
     return df[df["SETTLEMENTDATE"].dt.date == date].copy()
+
+
+def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate interval data into daily metrics by region."""
+    if df.empty:
+        return pd.DataFrame(
+            columns=[
+                "date", "Region", "total_mwh", "scope1_tco2e", "total_tco2e",
+                "renewable_mwh", "intensity_scope1", "intensity_total", "re_share",
+            ]
+        )
+
+    work = df.copy()
+    work["date"] = work["SETTLEMENTDATE"].dt.date
+    work["renewable_mwh"] = work["mwh"].where(work["Technology Type"].isin(ZERO_EMISSION), 0.0)
+    daily = (
+        work.groupby(["date", "Region"])
+        .agg(
+            total_mwh=("mwh", "sum"),
+            scope1_tco2e=("tco2e_scope1", "sum"),
+            total_tco2e=("tco2e_total", "sum"),
+            renewable_mwh=("renewable_mwh", "sum"),
+        )
+        .reset_index()
+    )
+    daily["intensity_scope1"] = (daily["scope1_tco2e"] / daily["total_mwh"]).where(daily["total_mwh"] > 0)
+    daily["intensity_total"] = (daily["total_tco2e"] / daily["total_mwh"]).where(daily["total_mwh"] > 0)
+    daily["re_share"] = (100 * daily["renewable_mwh"] / daily["total_mwh"]).where(daily["total_mwh"] > 0)
+    return daily.sort_values(["date", "Region"]).reset_index(drop=True)
+
+
+@st.cache_data(ttl=3600)
+def load_historical_daily_metrics(data_dir_str: str) -> pd.DataFrame:
+    """Aggregate historical daily metrics from monthly archives or the monolithic history file."""
+    history = load_full_history(data_dir_str)
+    return aggregate_daily_metrics(history)
+
+
+@st.cache_data(ttl=300)
+def load_today_daily_metrics(data_dir_str: str) -> pd.DataFrame:
+    """Aggregate today's live file into daily metrics."""
+    today_df = load_today(data_dir_str)
+    return aggregate_daily_metrics(today_df)
+
+
+def combine_daily_metrics_for_regions(
+    daily_metrics: pd.DataFrame,
+    selected_regions: list[str],
+    scope: str,
+) -> pd.DataFrame:
+    """Collapse region-level daily metrics into a single daily series for the selected regions."""
+    if daily_metrics.empty:
+        return pd.DataFrame(columns=["date", "total_mwh", "intensity", "re_share"])
+
+    filtered = daily_metrics.copy()
+    if selected_regions:
+        filtered = filtered[filtered["Region"].isin(selected_regions)]
+    if filtered.empty:
+        return pd.DataFrame(columns=["date", "total_mwh", "intensity", "re_share"])
+
+    grouped = (
+        filtered.groupby("date")
+        .agg(
+            total_mwh=("total_mwh", "sum"),
+            scope1_tco2e=("scope1_tco2e", "sum"),
+            total_tco2e=("total_tco2e", "sum"),
+            renewable_mwh=("renewable_mwh", "sum"),
+        )
+        .reset_index()
+    )
+    emissions_col = "scope1_tco2e" if scope == "Scope 1 only" else "total_tco2e"
+    grouped["intensity"] = (grouped[emissions_col] / grouped["total_mwh"]).where(grouped["total_mwh"] > 0)
+    grouped["re_share"] = (100 * grouped["renewable_mwh"] / grouped["total_mwh"]).where(grouped["total_mwh"] > 0)
+    return grouped.sort_values("date").reset_index(drop=True)
+
+
+def shift_years_safe(date_value: datetime.date, years_back: int) -> datetime.date:
+    """Shift a date backwards by whole years, falling back to 28 Feb for leap-day collisions."""
+    try:
+        return date_value.replace(year=max(date_value.year - years_back, 1))
+    except ValueError:
+        return date_value.replace(month=2, day=28, year=max(date_value.year - years_back, 1))
+
+
+def get_previous_financial_year(selected_date: datetime.date) -> tuple[datetime.date, datetime.date, str]:
+    """Return the previous Australian financial year range and required label."""
+    if selected_date >= datetime.date(selected_date.year, 7, 1):
+        fy_end_year = selected_date.year
+    else:
+        fy_end_year = selected_date.year - 1
+    fy_start = datetime.date(fy_end_year - 1, 7, 1)
+    fy_end = datetime.date(fy_end_year, 6, 30)
+    label = f"Previous FY {fy_start.strftime('%d/%B/%y')} - {fy_end.strftime('%d/%B/%y')}"
+    return fy_start, fy_end, label
+
+
+def resolve_trend_window(
+    daily_series: pd.DataFrame,
+    range_label: str,
+    anchor_date: datetime.date,
+) -> tuple[pd.DataFrame, str]:
+    """Filter the daily trend series to the requested range, clamping to available data."""
+    if daily_series.empty:
+        return daily_series, "No history available"
+
+    daily_series = daily_series.copy()
+    daily_series["date"] = pd.to_datetime(daily_series["date"])
+    min_date = daily_series["date"].min().date()
+    max_date = daily_series["date"].max().date()
+
+    if range_label == "MAX":
+        return daily_series, f"{min_date.strftime('%d %b %Y')} - {max_date.strftime('%d %b %Y')}"
+
+    if range_label in {"20Y", "10Y", "5Y"}:
+        years = int(range_label[:-1])
+        start = shift_years_safe(anchor_date, years)
+        start = max(start, min_date)
+        filtered = daily_series[daily_series["date"].dt.date >= start].copy()
+        if filtered.empty:
+            filtered = daily_series.copy()
+        return filtered, f"{filtered['date'].min().date().strftime('%d %b %Y')} - {filtered['date'].max().date().strftime('%d %b %Y')}"
+
+    fy_start, fy_end, fy_label = get_previous_financial_year(anchor_date)
+    window_start = max(fy_start, min_date)
+    window_end = min(fy_end, max_date)
+    filtered = daily_series[
+        daily_series["date"].dt.date.between(window_start, window_end)
+    ].copy()
+    if filtered.empty:
+        filtered = daily_series.copy()
+        return filtered, f"{fy_label} (showing available history)"
+    return filtered, fy_label
+
+
+def get_weather_features_for_date(
+    target_date: datetime.date,
+    selected_regions: list[str],
+) -> dict | None:
+    """Weather adapter boundary for future integration. V1 intentionally falls back to analog-only weights."""
+    _ = (target_date, tuple(selected_regions))
+    return None
+
+
+def compute_weather_similarity_weight(
+    target_weather: dict | None,
+    candidate_date: datetime.date,
+    selected_regions: list[str],
+) -> float:
+    """Return a multiplicative weather similarity weight. V1 fallback is neutral when no provider is configured."""
+    _ = (candidate_date, tuple(selected_regions))
+    return 1.0 if target_weather is None else 1.0
+
+
+def build_analog_forecast(
+    history_df: pd.DataFrame,
+    selected_regions: list[str],
+    scope: str,
+    resolution: str,
+    target_date: datetime.date,
+    observed_df: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Forecast the remaining intraday intensity profile using weighted analog days."""
+    if history_df.empty or observed_df.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    filtered_history = history_df.copy()
+    if selected_regions:
+        filtered_history = filtered_history[filtered_history["Region"].isin(selected_regions)]
+    if filtered_history.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    emission_col = "tco2e_scope1" if scope == "Scope 1 only" else "tco2e_total"
+    interval_label = observed_df["SETTLEMENTDATE"].max().floor(resolution)
+    observed_profile = (
+        observed_df.groupby(observed_df["SETTLEMENTDATE"].dt.floor(resolution))
+        .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
+        .reset_index()
+        .rename(columns={"SETTLEMENTDATE": "period"})
+    )
+    observed_profile["intensity"] = (observed_profile["tco2e"] / observed_profile["mwh"]).where(observed_profile["mwh"] > 0)
+    observed_profile["slot"] = (
+        observed_profile["period"].dt.hour * 60 + observed_profile["period"].dt.minute
+    ) // (5 if resolution == "5min" else 60)
+
+    today_weather = get_weather_features_for_date(target_date, selected_regions)
+    analog_rows = []
+
+    for candidate_date, candidate_df in filtered_history.groupby(filtered_history["SETTLEMENTDATE"].dt.date):
+        if candidate_date == target_date:
+            continue
+
+        candidate_profile = (
+            candidate_df.groupby(candidate_df["SETTLEMENTDATE"].dt.floor(resolution))
+            .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
+            .reset_index()
+            .rename(columns={"SETTLEMENTDATE": "period"})
+        )
+        candidate_profile["intensity"] = (candidate_profile["tco2e"] / candidate_profile["mwh"]).where(candidate_profile["mwh"] > 0)
+        candidate_profile["slot"] = (
+            candidate_profile["period"].dt.hour * 60 + candidate_profile["period"].dt.minute
+        ) // (5 if resolution == "5min" else 60)
+
+        compare = observed_profile[["slot", "intensity"]].merge(
+            candidate_profile[["slot", "intensity"]],
+            on="slot",
+            suffixes=("_obs", "_cand"),
+        )
+        compare = compare[compare["slot"] <= observed_profile["slot"].max()]
+        if compare.empty:
+            continue
+
+        mae = (compare["intensity_obs"] - compare["intensity_cand"]).abs().mean()
+        weekday_weight = 1.35 if candidate_date.weekday() == target_date.weekday() else 0.9
+        weekend_weight = 1.15 if (candidate_date.weekday() >= 5) == (target_date.weekday() >= 5) else 0.9
+        month_distance = abs(candidate_date.month - target_date.month)
+        month_distance = min(month_distance, 12 - month_distance)
+        season_weight = max(0.45, 1 - (month_distance / 12))
+        last_year_weight = 1.3 if (
+            candidate_date.month == target_date.month and candidate_date.day == target_date.day
+        ) else 1.0
+        weather_weight = compute_weather_similarity_weight(today_weather, candidate_date, selected_regions)
+        similarity_weight = 1 / max(mae, 0.015)
+        score = weekday_weight * weekend_weight * season_weight * last_year_weight * weather_weight * similarity_weight
+
+        analog_rows.append({
+            "candidate_date": candidate_date,
+            "score": score,
+            "mae": mae,
+        })
+
+    analog_df = pd.DataFrame(analog_rows).sort_values("score", ascending=False)
+    if analog_df.empty:
+        return observed_profile, pd.DataFrame()
+
+    top_analogs = analog_df.head(12)
+    future_slot_threshold = observed_profile["slot"].max()
+    future_profiles = []
+
+    for _, analog in top_analogs.iterrows():
+        analog_date = analog["candidate_date"]
+        analog_df_day = filtered_history[filtered_history["SETTLEMENTDATE"].dt.date == analog_date]
+        candidate_profile = (
+            analog_df_day.groupby(analog_df_day["SETTLEMENTDATE"].dt.floor(resolution))
+            .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
+            .reset_index()
+            .rename(columns={"SETTLEMENTDATE": "period"})
+        )
+        candidate_profile["intensity"] = (candidate_profile["tco2e"] / candidate_profile["mwh"]).where(candidate_profile["mwh"] > 0)
+        candidate_profile["slot"] = (
+            candidate_profile["period"].dt.hour * 60 + candidate_profile["period"].dt.minute
+        ) // (5 if resolution == "5min" else 60)
+        candidate_profile = candidate_profile[candidate_profile["slot"] > future_slot_threshold].copy()
+        if candidate_profile.empty:
+            continue
+        candidate_profile["candidate_date"] = analog_date
+        candidate_profile["score"] = analog["score"]
+        future_profiles.append(candidate_profile[["slot", "intensity", "candidate_date", "score"]])
+
+    if not future_profiles:
+        return observed_profile, pd.DataFrame()
+
+    future_df = pd.concat(future_profiles, ignore_index=True)
+    summary_rows = []
+    base_period = observed_profile["period"].max().normalize()
+    slot_minutes = 5 if resolution == "5min" else 60
+
+    for slot, slot_df in future_df.groupby("slot"):
+        weights = slot_df["score"].to_numpy()
+        values = slot_df["intensity"].to_numpy()
+        forecast_intensity = (values * weights).sum() / weights.sum()
+        summary_rows.append({
+            "slot": slot,
+            "period": base_period + pd.Timedelta(minutes=int(slot * slot_minutes)),
+            "forecast_intensity": forecast_intensity,
+            "band_low": float(slot_df["intensity"].quantile(0.25)) if len(slot_df) >= 3 else None,
+            "band_high": float(slot_df["intensity"].quantile(0.75)) if len(slot_df) >= 3 else None,
+        })
+
+    forecast_df = pd.DataFrame(summary_rows).sort_values("slot")
+    return observed_profile, forecast_df
+
+
+def build_reference_intraday_profile(
+    history_df: pd.DataFrame,
+    selected_regions: list[str],
+    scope: str,
+    resolution: str,
+    dates: list[datetime.date],
+) -> pd.DataFrame:
+    """Aggregate one or more reference days into an average intraday intensity profile."""
+    if history_df.empty or not dates:
+        return pd.DataFrame(columns=["slot", "period", "intensity"])
+
+    filtered = history_df[history_df["SETTLEMENTDATE"].dt.date.isin(dates)].copy()
+    if selected_regions:
+        filtered = filtered[filtered["Region"].isin(selected_regions)]
+    if filtered.empty:
+        return pd.DataFrame(columns=["slot", "period", "intensity"])
+
+    emission_col = "tco2e_scope1" if scope == "Scope 1 only" else "tco2e_total"
+    profile = (
+        filtered.groupby(filtered["SETTLEMENTDATE"].dt.floor(resolution))
+        .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
+        .reset_index()
+        .rename(columns={"SETTLEMENTDATE": "period"})
+    )
+    profile["slot"] = (
+        profile["period"].dt.hour * 60 + profile["period"].dt.minute
+    ) // (5 if resolution == "5min" else 60)
+    profile["intensity"] = (profile["tco2e"] / profile["mwh"]).where(profile["mwh"] > 0)
+    profile = (
+        profile.groupby("slot")
+        .agg(intensity=("intensity", "mean"))
+        .reset_index()
+    )
+    base_day = pd.Timestamp(datetime.date.today())
+    slot_minutes = 5 if resolution == "5min" else 60
+    profile["period"] = base_day + pd.to_timedelta(profile["slot"] * slot_minutes, unit="m")
+    return profile
 
 
 try:
@@ -845,9 +1201,13 @@ _monthly_files = sorted(glob.glob(str(DATA_DIR / "dispatch_scada_????-??.csv")))
 if _monthly_files:
     _earliest_month = Path(_monthly_files[0]).stem[-7:]  # e.g. "2026-02"
     date_min = pd.Period(_earliest_month, freq="M").start_time.date()
+elif (DATA_DIR / "dispatch_scada.csv").exists():
+    _min_df = pd.read_csv(DATA_DIR / "dispatch_scada.csv", usecols=["SETTLEMENTDATE"], parse_dates=["SETTLEMENTDATE"])
+    date_min = _min_df["SETTLEMENTDATE"].min().date()
 else:
     date_min = datetime.date.today()
 date_max = datetime.date.today()
+has_monthly_archives = bool(_monthly_files)
 
 _lookup_df = pd.read_csv(DATA_DIR / "duid_lookup.csv")
 regions = sorted(_lookup_df["Region"].dropna().unique().tolist())
@@ -899,6 +1259,9 @@ if "scope_choice" not in st.session_state:
     st.session_state.scope_choice = "Scope 1 only"
 if "sel_regions" not in st.session_state:
     st.session_state.sel_regions = regions.copy()
+_, _, previous_fy_label_default = get_previous_financial_year(datetime.date.today())
+if "trend_range" not in st.session_state:
+    st.session_state.trend_range = "MAX"
 
 selected_date = st.session_state.selected_date
 resolution_label = st.session_state.resolution_label
@@ -906,10 +1269,21 @@ resolution = RESOLUTIONS[resolution_label]
 interval_minutes = INTERVAL_MINUTES[resolution_label]
 scope_choice = st.session_state.scope_choice
 sel_regions = st.session_state.sel_regions
+_, _, previous_fy_label = get_previous_financial_year(selected_date)
 
 # Load data for the selected date and filter to chosen regions
 _day_df = load_scada_for_date(str(DATA_DIR), selected_date)
 dff = _day_df[_day_df["Region"].isin(sel_regions)].copy() if sel_regions else _day_df.iloc[0:0].copy()
+
+# Historical daily metrics used for long-range trends
+historical_daily_metrics = load_historical_daily_metrics(str(DATA_DIR))
+today_daily_metrics = load_today_daily_metrics(str(DATA_DIR))
+if not today_daily_metrics.empty:
+    historical_daily_metrics = historical_daily_metrics[
+        historical_daily_metrics["date"] != today_daily_metrics["date"].iloc[0]
+    ]
+daily_history = pd.concat([historical_daily_metrics, today_daily_metrics], ignore_index=True)
+daily_history = combine_daily_metrics_for_regions(daily_history, sel_regions, scope_choice)
 
 # ── Auto-refresh every 5 minutes when viewing today's live data ──
 import time as _time
@@ -1228,6 +1602,242 @@ st.markdown(
     f"{scope_choice}  &middot;  {resolution_label} intervals</div>",
     unsafe_allow_html=True
 )
+
+source_label = "Live today" if selected_date == datetime.date.today() else "Historical archive"
+st.caption(f"Source: {source_label}")
+if not has_monthly_archives:
+    st.caption(
+        "Historical archives are currently being served from dispatch_scada.csv. "
+        "Run migrate_to_monthly.py once to materialize monthly archive files."
+    )
+
+st.markdown("<h2 class='section-heading'>Historical Daily Trend</h2>", unsafe_allow_html=True)
+st.markdown(
+    "<p class='section-sub'>Daily emissions-intensity context across the selected history window</p>",
+    unsafe_allow_html=True,
+)
+
+trend_options = ["MAX", "20Y", "10Y", "5Y", previous_fy_label]
+stored_trend_range = st.session_state.get("trend_range", "MAX")
+if stored_trend_range not in trend_options:
+    stored_trend_range = "MAX"
+trend_range = st.radio(
+    "Historical range",
+    trend_options,
+    horizontal=True,
+    index=trend_options.index(stored_trend_range),
+    label_visibility="collapsed",
+)
+st.session_state.trend_range = trend_range
+
+trend_df, trend_range_label = resolve_trend_window(daily_history, trend_range, selected_date)
+if not trend_df.empty:
+    trend_df = trend_df.sort_values("date").copy()
+    trend_df["rolling_7d"] = trend_df["intensity"].rolling(7, min_periods=3).mean()
+
+    previous_day = selected_date - datetime.timedelta(days=1)
+    previous_year_same_day = shift_years_safe(selected_date, 1)
+    previous_day_value = daily_history.loc[pd.to_datetime(daily_history["date"]) == pd.Timestamp(previous_day), "intensity"]
+    previous_year_value = daily_history.loc[pd.to_datetime(daily_history["date"]) == pd.Timestamp(previous_year_same_day), "intensity"]
+
+    trend_fig = go.Figure()
+    trend_fig.add_trace(go.Scatter(
+        x=pd.to_datetime(trend_df["date"]),
+        y=trend_df["intensity"],
+        mode="lines",
+        name="Daily intensity",
+        line=dict(color="#9ED26A", width=2.5),
+        hovertemplate="%{x|%d %b %Y}<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
+    ))
+    trend_fig.add_trace(go.Scatter(
+        x=pd.to_datetime(trend_df["date"]),
+        y=trend_df["rolling_7d"],
+        mode="lines",
+        name="7-day average",
+        line=dict(color="#7CA7FF", width=1.8, dash="dot"),
+        hovertemplate="%{x|%d %b %Y}<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
+    ))
+
+    if not previous_day_value.empty:
+        trend_fig.add_hline(
+            y=float(previous_day_value.iloc[0]),
+            line_color="#D4A855",
+            line_dash="dot",
+            annotation_text="Previous day",
+            annotation_position="top left",
+        )
+    if not previous_year_value.empty:
+        trend_fig.add_hline(
+            y=float(previous_year_value.iloc[0]),
+            line_color="#8B6CB8",
+            line_dash="dash",
+            annotation_text="Same date last year",
+            annotation_position="bottom left",
+        )
+
+    trend_fig.update_layout(
+        plot_bgcolor="#302f2a",
+        paper_bgcolor="#302f2a",
+        font=dict(color="#f2efe8", family="Inter, sans-serif", size=13),
+        margin=dict(l=0, r=0, t=8, b=8),
+        height=340,
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        xaxis=dict(showgrid=False, color="#b7b1a6"),
+        yaxis=dict(showgrid=True, gridcolor="#47453d", color="#b7b1a6", title_text="t CO₂-e / MWh"),
+    )
+    trend_fig.update_xaxes(fixedrange=True)
+    trend_fig.update_yaxes(fixedrange=True)
+
+    st.plotly_chart(trend_fig, use_container_width=True, config=plotly_config)
+    st.caption(f"Showing: {trend_range_label}")
+else:
+    st.info("No historical daily trend data is available for the current selection.")
+
+if selected_date == datetime.date.today():
+    st.markdown("<h2 class='section-heading'>Rest of Day Forecast</h2>", unsafe_allow_html=True)
+    st.markdown(
+        "<p class='section-sub'>Observed intensity so far, projected remainder of today, and reference curves from recent analog days</p>",
+        unsafe_allow_html=True,
+    )
+
+    full_history = load_full_history(str(DATA_DIR))
+    observed_profile, forecast_profile = build_analog_forecast(
+        full_history,
+        sel_regions,
+        scope_choice,
+        resolution,
+        selected_date,
+        dff,
+    )
+
+    if not observed_profile.empty and not forecast_profile.empty:
+        prev_day_profile = build_reference_intraday_profile(
+            full_history,
+            sel_regions,
+            scope_choice,
+            resolution,
+            [selected_date - datetime.timedelta(days=1)],
+        )
+        prev_week_profile = build_reference_intraday_profile(
+            full_history,
+            sel_regions,
+            scope_choice,
+            resolution,
+            [selected_date - datetime.timedelta(days=offset) for offset in range(1, 8)],
+        )
+        same_day_last_year = shift_years_safe(selected_date, 1)
+        prev_year_profile = build_reference_intraday_profile(
+            full_history,
+            sel_regions,
+            scope_choice,
+            resolution,
+            [same_day_last_year],
+        )
+
+        forecast_fig = go.Figure()
+        for ref_profile, name, color in [
+            (prev_day_profile, "Previous day", "#D4A855"),
+            (prev_week_profile, "Previous 7-day avg", "#7CA7FF"),
+            (prev_year_profile, "Same date last year", "#8B6CB8"),
+        ]:
+            if not ref_profile.empty:
+                forecast_fig.add_trace(go.Scatter(
+                    x=ref_profile["period"],
+                    y=ref_profile["intensity"],
+                    mode="lines",
+                    name=name,
+                    line=dict(color=color, width=1.4, dash="dot"),
+                    opacity=0.45,
+                ))
+
+        if forecast_profile["band_low"].notna().any():
+            forecast_fig.add_trace(go.Scatter(
+                x=forecast_profile["period"],
+                y=forecast_profile["band_high"],
+                mode="lines",
+                line=dict(color="rgba(158,210,106,0)"),
+                hoverinfo="skip",
+                showlegend=False,
+            ))
+            forecast_fig.add_trace(go.Scatter(
+                x=forecast_profile["period"],
+                y=forecast_profile["band_low"],
+                mode="lines",
+                line=dict(color="rgba(158,210,106,0)"),
+                fill="tonexty",
+                fillcolor="rgba(158,210,106,0.14)",
+                hoverinfo="skip",
+                name="Analog range",
+            ))
+
+        forecast_fig.add_trace(go.Scatter(
+            x=observed_profile["period"],
+            y=observed_profile["intensity"],
+            mode="lines",
+            name="Observed today",
+            line=dict(color="#F2EFE8", width=2.8),
+            hovertemplate="%{x|%H:%M}<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
+        ))
+        forecast_fig.add_trace(go.Scatter(
+            x=forecast_profile["period"],
+            y=forecast_profile["forecast_intensity"],
+            mode="lines",
+            name="Forecast remainder",
+            line=dict(color="#9ED26A", width=2.6, dash="dash"),
+            hovertemplate="%{x|%H:%M}<br><b>%{y:.3f}</b> t CO₂-e/MWh<extra></extra>",
+        ))
+        forecast_fig.add_vline(
+            x=observed_profile["period"].max(),
+            line_color="#f2efe8",
+            line_dash="dot",
+            opacity=0.45,
+        )
+
+        forecast_fig.update_layout(
+            plot_bgcolor="#302f2a",
+            paper_bgcolor="#302f2a",
+            font=dict(color="#f2efe8", family="Inter, sans-serif", size=13),
+            margin=dict(l=0, r=0, t=8, b=8),
+            height=360,
+            hovermode="x unified",
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="left",
+                x=0,
+                bgcolor="rgba(0,0,0,0)",
+            ),
+            xaxis=dict(
+                showgrid=False,
+                color="#b7b1a6",
+                tickmode="array",
+                tickvals=pd.date_range(
+                    start=pd.Timestamp(selected_date),
+                    end=pd.Timestamp(selected_date) + pd.Timedelta(hours=22),
+                    freq="2h",
+                ),
+                ticktext=[f"{h:02d}:00" for h in range(0, 24, 2)],
+            ),
+            yaxis=dict(showgrid=True, gridcolor="#47453d", color="#b7b1a6", title_text="t CO₂-e / MWh"),
+        )
+        forecast_fig.update_xaxes(fixedrange=True)
+        forecast_fig.update_yaxes(fixedrange=True)
+        st.plotly_chart(forecast_fig, use_container_width=True, config=plotly_config)
+        st.caption(
+            "Forecast uses weighted analog days based on observed shape so far, weekday/weekend pattern, "
+            "seasonality, same-date-last-year similarity, and a pluggable weather adapter with neutral fallback."
+        )
+    else:
+        st.info("Not enough historical analog data is available yet to forecast the remainder of today.")
 
 
 # ── D.3  Insight Callout ────────────────────────────────────
