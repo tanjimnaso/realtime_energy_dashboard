@@ -192,6 +192,29 @@ If you only have a legacy monolithic SCADA file and want monthly archives:
 python migrate_to_monthly.py
 ```
 
+### Run the dbt pipeline (Bronze → Silver → Gold)
+
+Build Bronze Parquet files from raw CSVs:
+
+```bash
+python ingestion/bronze_writer.py
+```
+
+Run all dbt models and tests:
+
+```bash
+dbt build --profiles-dir profiles/
+```
+
+Explore the compiled DAG and docs:
+
+```bash
+dbt docs generate --profiles-dir profiles/
+dbt docs serve
+```
+
+**Note:** A Python 3.11+ environment is required (via `.venv` or equivalent). The project venv is at `.venv/`.
+
 ## Repository roadmap
 
 **Current work (Work Package 3):** Implementing the Bronze/Silver/Gold data layers using dbt Core + DuckDB locally.

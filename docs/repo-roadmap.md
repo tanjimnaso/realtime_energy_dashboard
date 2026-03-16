@@ -89,7 +89,7 @@ Avoid breaking the live app while restructuring.
 - ingestion folder buildout (SCADA importer, monthly archive, backfill helper)
 - raw CSV landing in `data/`
 
-### Work package 3 — In progress
+### Work package 3 — Complete
 
 **Stack decision:** dbt Core + DuckDB locally. GCP/BigQuery skipped at this stage.
 Rationale: Azure Databricks + Delta Lake is the production-shaped design target (better fit for Australian energy hiring market). dbt profile swap to cloud is deferred until local models are working.
