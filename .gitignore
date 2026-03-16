@@ -1,9 +1,7 @@
 .DS_Store
 __pycache__/
 .runtime_data/
-nem.duckdb
 nem.duckdb.wal
-data/bronze/
 target/
 dbt_packages/
 .venv/

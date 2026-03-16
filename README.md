@@ -33,7 +33,8 @@ This data engineering project is designed as the portfolio version of the data p
 - Appends to CSV
 - Joins generator unit fuel type from AEMO Generation Information
 - Applies DCCEEW emissions factors to calculate emissions by fuel type
-- Streamlit dashboard visualises live grid emissions intensity
+- Streamlit dashboard visualises live grid emissions intensity, background poll for new data triggered from new writes on Github
+> st.session_state + time.sleep()
 
 **Data sources:**
 - [AEMO Dispatch SCADA](https://nemweb.com.au/Reports/Current/Dispatch_SCADA/)

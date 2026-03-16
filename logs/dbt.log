@@ -6191,3 +6191,1306 @@ where total_tCO2e is null
 [0m20:00:45.812004 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10b562430>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x102393d20>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10a6aef30>]}
 [0m20:00:45.812196 [debug] [MainThread]: Flushing usage events
 [0m20:00:46.959119 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m01:36:01.336221 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10ad3c6e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10bd934d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10bd93750>]}
+
+
+============================== 01:36:01.339970 | 2c0e5deb-7967-44fa-ae5b-94a9ba0241b0 ==============================
+[0m01:36:01.339970 [info ] [MainThread]: Running with dbt=1.11.7
+[0m01:36:01.340278 [debug] [MainThread]: running dbt with arguments {'log_cache_events': 'False', 'profiles_dir': 'profiles/', 'static_parser': 'True', 'warn_error': 'None', 'empty': 'None', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'quiet': 'False', 'invocation_command': 'dbt test --profiles-dir profiles/', 'cache_selected_only': 'False', 'partial_parse': 'True', 'log_format': 'default', 'send_anonymous_usage_stats': 'True', 'no_print': 'None', 'log_path': '/Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/logs', 'version_check': 'True', 'write_json': 'True', 'fail_fast': 'False', 'introspect': 'True', 'printer_width': '80', 'target_path': 'None', 'use_colors': 'True', 'debug': 'False', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])'}
+[0m01:36:01.535080 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '2c0e5deb-7967-44fa-ae5b-94a9ba0241b0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10b0c8e90>]}
+[0m01:36:01.581244 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '2c0e5deb-7967-44fa-ae5b-94a9ba0241b0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10bc23ac0>]}
+[0m01:36:01.584932 [info ] [MainThread]: Registered adapter: duckdb=1.10.1
+[0m01:36:01.673255 [debug] [MainThread]: checksum: b80718358155fc17c3559352095564dd56ada1cc1a1c0ef2e62c857e71583775, vars: {}, profile: , target: , version: 1.11.7
+[0m01:36:01.773255 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m01:36:01.773542 [debug] [MainThread]: Nothing changed, skipping partial parsing.
+[0m01:36:01.773693 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m01:36:01.814540 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '2c0e5deb-7967-44fa-ae5b-94a9ba0241b0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10c1dee50>]}
+[0m01:36:01.956134 [debug] [MainThread]: Wrote artifact WritableManifest to /Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/target/manifest.json
+[0m01:36:01.958059 [debug] [MainThread]: Wrote artifact SemanticManifest to /Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/target/semantic_manifest.json
+[0m01:36:01.999430 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '2c0e5deb-7967-44fa-ae5b-94a9ba0241b0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10c5705f0>]}
+[0m01:36:01.999826 [info ] [MainThread]: Found 5 models, 4 operations, 25 data tests, 3 sources, 474 macros
+[0m01:36:02.000008 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '2c0e5deb-7967-44fa-ae5b-94a9ba0241b0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10bd74e50>]}
+[0m01:36:02.006858 [info ] [MainThread]: 
+[0m01:36:02.008748 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m01:36:02.009451 [info ] [MainThread]: 
+[0m01:36:02.011304 [debug] [MainThread]: Acquiring new duckdb connection 'master'
+[0m01:36:02.023548 [debug] [ThreadPool]: Acquiring new duckdb connection 'list_nem_main_gold'
+[0m01:36:02.034401 [debug] [ThreadPool]: Acquiring new duckdb connection 'list_nem_main_silver'
+[0m01:36:02.079019 [debug] [ThreadPool]: Using duckdb connection "list_nem_main_gold"
+[0m01:36:02.079294 [debug] [ThreadPool]: On list_nem_main_gold: BEGIN
+[0m01:36:02.079424 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m01:36:02.082583 [debug] [ThreadPool]: Using duckdb connection "list_nem_main_silver"
+[0m01:36:02.082826 [debug] [ThreadPool]: On list_nem_main_silver: BEGIN
+[0m01:36:02.082950 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m01:36:02.111680 [debug] [ThreadPool]: SQL status: OK in 0.032 seconds
+[0m01:36:02.114172 [debug] [ThreadPool]: Using duckdb connection "list_nem_main_gold"
+[0m01:36:02.113234 [debug] [ThreadPool]: SQL status: OK in 0.030 seconds
+[0m01:36:02.116660 [debug] [ThreadPool]: Using duckdb connection "list_nem_main_silver"
+[0m01:36:02.117154 [debug] [ThreadPool]: On list_nem_main_silver: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "connection_name": "list_nem_main_silver"} */
+select
+      'nem' as database,
+      table_name as name,
+      table_schema as schema,
+      CASE table_type
+        WHEN 'BASE TABLE' THEN 'table'
+        WHEN 'VIEW' THEN 'view'
+        WHEN 'LOCAL TEMPORARY' THEN 'table'
+        END as type
+    from system.information_schema.tables
+    where lower(table_schema) = 'main_silver'
+    and lower(table_catalog) = 'nem'
+  
+[0m01:36:02.115839 [debug] [ThreadPool]: On list_nem_main_gold: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "connection_name": "list_nem_main_gold"} */
+select
+      'nem' as database,
+      table_name as name,
+      table_schema as schema,
+      CASE table_type
+        WHEN 'BASE TABLE' THEN 'table'
+        WHEN 'VIEW' THEN 'view'
+        WHEN 'LOCAL TEMPORARY' THEN 'table'
+        END as type
+    from system.information_schema.tables
+    where lower(table_schema) = 'main_gold'
+    and lower(table_catalog) = 'nem'
+  
+[0m01:36:02.129331 [debug] [ThreadPool]: SQL status: OK in 0.012 seconds
+[0m01:36:02.129742 [debug] [ThreadPool]: SQL status: OK in 0.012 seconds
+[0m01:36:02.133053 [debug] [ThreadPool]: On list_nem_main_gold: ROLLBACK
+[0m01:36:02.135460 [debug] [ThreadPool]: Failed to rollback 'list_nem_main_gold'
+[0m01:36:02.135683 [debug] [ThreadPool]: On list_nem_main_gold: Close
+[0m01:36:02.141458 [debug] [ThreadPool]: On list_nem_main_silver: ROLLBACK
+[0m01:36:02.143936 [debug] [ThreadPool]: Failed to rollback 'list_nem_main_silver'
+[0m01:36:02.144354 [debug] [ThreadPool]: On list_nem_main_silver: Close
+[0m01:36:02.148838 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '2c0e5deb-7967-44fa-ae5b-94a9ba0241b0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10c57fad0>]}
+[0m01:36:02.149802 [debug] [MainThread]: Using duckdb connection "master"
+[0m01:36:02.150152 [debug] [MainThread]: On master: BEGIN
+[0m01:36:02.150496 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m01:36:02.151713 [debug] [MainThread]: SQL status: OK in 0.001 seconds
+[0m01:36:02.152750 [debug] [MainThread]: On master: COMMIT
+[0m01:36:02.152969 [debug] [MainThread]: Using duckdb connection "master"
+[0m01:36:02.153172 [debug] [MainThread]: On master: COMMIT
+[0m01:36:02.153427 [debug] [MainThread]: SQL status: OK in 0.000 seconds
+[0m01:36:02.166083 [debug] [MainThread]: Writing injected SQL for node "operation.nem_pipeline.nem_pipeline-on-run-start-0"
+[0m01:36:02.177553 [info ] [MainThread]: 1 of 4 START hook: nem_pipeline.on-run-start.0 ................................. [RUN]
+[0m01:36:02.178520 [debug] [MainThread]: Using duckdb connection "master"
+[0m01:36:02.179094 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "connection_name": "master"} */
+CREATE SCHEMA IF NOT EXISTS bronze
+[0m01:36:02.180647 [debug] [MainThread]: SQL status: OK in 0.001 seconds
+[0m01:36:02.182422 [info ] [MainThread]: 1 of 4 OK hook: nem_pipeline.on-run-start.0 .................................... [[32mOK[0m in 0.03s]
+[0m01:36:02.187997 [debug] [MainThread]: Writing injected SQL for node "operation.nem_pipeline.nem_pipeline-on-run-start-1"
+[0m01:36:02.190789 [info ] [MainThread]: 2 of 4 START hook: nem_pipeline.on-run-start.1 ................................. [RUN]
+[0m01:36:02.191564 [debug] [MainThread]: Using duckdb connection "master"
+[0m01:36:02.192094 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "connection_name": "master"} */
+CREATE OR REPLACE VIEW bronze.dispatch_scada AS SELECT * FROM read_parquet('data/bronze/dispatch_scada.parquet')
+[0m01:36:02.198336 [debug] [MainThread]: SQL status: OK in 0.006 seconds
+[0m01:36:02.198994 [info ] [MainThread]: 2 of 4 OK hook: nem_pipeline.on-run-start.1 .................................... [[32mOK[0m in 0.02s]
+[0m01:36:02.199892 [debug] [MainThread]: Writing injected SQL for node "operation.nem_pipeline.nem_pipeline-on-run-start-2"
+[0m01:36:02.200417 [info ] [MainThread]: 3 of 4 START hook: nem_pipeline.on-run-start.2 ................................. [RUN]
+[0m01:36:02.200614 [debug] [MainThread]: Using duckdb connection "master"
+[0m01:36:02.200751 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "connection_name": "master"} */
+CREATE OR REPLACE VIEW bronze.generator_metadata AS SELECT * FROM read_parquet('data/bronze/generator_metadata.parquet')
+[0m01:36:02.202858 [debug] [MainThread]: SQL status: OK in 0.002 seconds
+[0m01:36:02.203755 [info ] [MainThread]: 3 of 4 OK hook: nem_pipeline.on-run-start.2 .................................... [[32mOK[0m in 0.00s]
+[0m01:36:02.208557 [debug] [MainThread]: Writing injected SQL for node "operation.nem_pipeline.nem_pipeline-on-run-start-3"
+[0m01:36:02.210223 [info ] [MainThread]: 4 of 4 START hook: nem_pipeline.on-run-start.3 ................................. [RUN]
+[0m01:36:02.210532 [debug] [MainThread]: Using duckdb connection "master"
+[0m01:36:02.210689 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "connection_name": "master"} */
+CREATE OR REPLACE VIEW bronze.emissions_factors AS SELECT * FROM read_parquet('data/bronze/emissions_factors.parquet')
+[0m01:36:02.213554 [debug] [MainThread]: SQL status: OK in 0.003 seconds
+[0m01:36:02.214184 [info ] [MainThread]: 4 of 4 OK hook: nem_pipeline.on-run-start.3 .................................... [[32mOK[0m in 0.01s]
+[0m01:36:02.214329 [info ] [MainThread]: 
+[0m01:36:02.214466 [debug] [MainThread]: On master: Close
+[0m01:36:02.220460 [debug] [Thread-1 (]: Began running node test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772
+[0m01:36:02.224885 [info ] [Thread-1 (]: 1 of 25 START test accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1  [RUN]
+[0m01:36:02.221950 [debug] [Thread-2 (]: Began running node test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5
+[0m01:36:02.225636 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly list_nem_main_gold, now test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772)
+[0m01:36:02.227935 [debug] [Thread-1 (]: Began compiling node test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772
+[0m01:36:02.226352 [debug] [Thread-3 (]: Began running node test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a
+[0m01:36:02.252048 [info ] [Thread-3 (]: 3 of 25 START test accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled  [RUN]
+[0m01:36:02.253250 [debug] [Thread-3 (]: Acquiring new duckdb connection 'test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a'
+[0m01:36:02.254330 [debug] [Thread-3 (]: Began compiling node test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a
+[0m01:36:02.224068 [debug] [Thread-4 (]: Began running node test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba
+[0m01:36:02.261110 [info ] [Thread-4 (]: 4 of 25 START test accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1  [RUN]
+[0m01:36:02.262087 [debug] [Thread-4 (]: Acquiring new duckdb connection 'test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba'
+[0m01:36:02.262544 [debug] [Thread-4 (]: Began compiling node test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba
+[0m01:36:02.283207 [debug] [Thread-4 (]: Writing injected SQL for node "test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba"
+[0m01:36:02.226720 [info ] [Thread-2 (]: 2 of 25 START test accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1  [RUN]
+[0m01:36:02.283870 [debug] [Thread-3 (]: Writing injected SQL for node "test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a"
+[0m01:36:02.284307 [debug] [Thread-1 (]: Writing injected SQL for node "test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772"
+[0m01:36:02.284548 [debug] [Thread-2 (]: Re-using an available connection from the pool (formerly list_nem_main_silver, now test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5)
+[0m01:36:02.285321 [debug] [Thread-2 (]: Began compiling node test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5
+[0m01:36:02.289850 [debug] [Thread-2 (]: Writing injected SQL for node "test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5"
+[0m01:36:02.290347 [debug] [Thread-1 (]: Began executing node test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772
+[0m01:36:02.305897 [debug] [Thread-1 (]: Writing runtime sql for node "test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772"
+[0m01:36:02.306335 [debug] [Thread-2 (]: Began executing node test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5
+[0m01:36:02.306583 [debug] [Thread-4 (]: Began executing node test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba
+[0m01:36:02.306763 [debug] [Thread-3 (]: Began executing node test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a
+[0m01:36:02.307917 [debug] [Thread-2 (]: Writing runtime sql for node "test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5"
+[0m01:36:02.309071 [debug] [Thread-4 (]: Writing runtime sql for node "test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba"
+[0m01:36:02.310296 [debug] [Thread-3 (]: Writing runtime sql for node "test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a"
+[0m01:36:02.310557 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772"
+[0m01:36:02.310943 [debug] [Thread-1 (]: On test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772: BEGIN
+[0m01:36:02.311153 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m01:36:02.311621 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba"
+[0m01:36:02.311803 [debug] [Thread-4 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba: BEGIN
+[0m01:36:02.311986 [debug] [Thread-4 (]: Opening a new connection, currently in state init
+[0m01:36:02.312274 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5"
+[0m01:36:02.312533 [debug] [Thread-2 (]: On test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5: BEGIN
+[0m01:36:02.312719 [debug] [Thread-4 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.312898 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a"
+[0m01:36:02.313047 [debug] [Thread-1 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.313203 [debug] [Thread-2 (]: Opening a new connection, currently in state closed
+[0m01:36:02.313352 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba"
+[0m01:36:02.313506 [debug] [Thread-3 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a: BEGIN
+[0m01:36:02.313642 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772"
+[0m01:36:02.313901 [debug] [Thread-4 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+with all_values as (
+
+    select
+        region as value_field,
+        count(*) as n_records
+
+    from "nem"."main_silver"."silver_generator_metadata"
+    group by region
+
+)
+
+select *
+from all_values
+where value_field not in (
+    'NSW1','VIC1','QLD1','SA1','TAS1'
+)
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.314059 [debug] [Thread-3 (]: Opening a new connection, currently in state init
+[0m01:36:02.314189 [debug] [Thread-2 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.314329 [debug] [Thread-1 (]: On test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+with all_values as (
+
+    select
+        region as value_field,
+        count(*) as n_records
+
+    from "nem"."main_gold"."dim_generator"
+    group by region
+
+)
+
+select *
+from all_values
+where value_field not in (
+    'NSW1','VIC1','QLD1','SA1','TAS1'
+)
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.314636 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5"
+[0m01:36:02.314800 [debug] [Thread-3 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.315037 [debug] [Thread-2 (]: On test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+with all_values as (
+
+    select
+        region as value_field,
+        count(*) as n_records
+
+    from "nem"."main_gold"."fct_regional_emissions_intensity"
+    group by region
+
+)
+
+select *
+from all_values
+where value_field not in (
+    'NSW1','VIC1','QLD1','SA1','TAS1'
+)
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.315222 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a"
+[0m01:36:02.315482 [debug] [Thread-3 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+with all_values as (
+
+    select
+        dispatch_type as value_field,
+        count(*) as n_records
+
+    from "nem"."main_silver"."silver_generator_metadata"
+    group by dispatch_type
+
+)
+
+select *
+from all_values
+where value_field not in (
+    'Scheduled','Semi-scheduled','Non-scheduled','Significant Non-scheduled'
+)
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.318246 [debug] [Thread-2 (]: SQL status: OK in 0.003 seconds
+[0m01:36:02.318485 [debug] [Thread-1 (]: SQL status: OK in 0.004 seconds
+[0m01:36:02.318693 [debug] [Thread-4 (]: SQL status: OK in 0.004 seconds
+[0m01:36:02.318998 [debug] [Thread-3 (]: SQL status: OK in 0.003 seconds
+[0m01:36:02.321449 [debug] [Thread-2 (]: On test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5: ROLLBACK
+[0m01:36:02.322350 [debug] [Thread-1 (]: On test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772: ROLLBACK
+[0m01:36:02.322954 [debug] [Thread-4 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba: ROLLBACK
+[0m01:36:02.323711 [debug] [Thread-3 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a: ROLLBACK
+[0m01:36:02.324095 [debug] [Thread-1 (]: Failed to rollback 'test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772'
+[0m01:36:02.324354 [debug] [Thread-2 (]: Failed to rollback 'test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5'
+[0m01:36:02.324618 [debug] [Thread-4 (]: Failed to rollback 'test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba'
+[0m01:36:02.324901 [debug] [Thread-3 (]: Failed to rollback 'test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a'
+[0m01:36:02.325063 [debug] [Thread-1 (]: On test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772: Close
+[0m01:36:02.325272 [debug] [Thread-2 (]: On test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5: Close
+[0m01:36:02.325441 [debug] [Thread-4 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba: Close
+[0m01:36:02.325595 [debug] [Thread-3 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a: Close
+[0m01:36:02.325917 [info ] [Thread-2 (]: 2 of 25 PASS accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1  [[32mPASS[0m in 0.04s]
+[0m01:36:02.326137 [info ] [Thread-1 (]: 1 of 25 PASS accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1 . [[32mPASS[0m in 0.10s]
+[0m01:36:02.326371 [info ] [Thread-4 (]: 4 of 25 PASS accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1  [[32mPASS[0m in 0.06s]
+[0m01:36:02.326954 [debug] [Thread-2 (]: Finished running node test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5
+[0m01:36:02.326602 [info ] [Thread-3 (]: 3 of 25 PASS accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled  [[32mPASS[0m in 0.07s]
+[0m01:36:02.327254 [debug] [Thread-1 (]: Finished running node test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772
+[0m01:36:02.327536 [debug] [Thread-4 (]: Finished running node test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba
+[0m01:36:02.327735 [debug] [Thread-2 (]: Began running node test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065
+[0m01:36:02.328050 [debug] [Thread-3 (]: Finished running node test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a
+[0m01:36:02.328262 [debug] [Thread-1 (]: Began running node test.nem_pipeline.assert_emissions_intensity_plausible
+[0m01:36:02.328509 [debug] [Thread-4 (]: Began running node test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6
+[0m01:36:02.328749 [info ] [Thread-2 (]: 5 of 25 START test accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other  [RUN]
+[0m01:36:02.328993 [debug] [Thread-3 (]: Began running node test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca
+[0m01:36:02.329231 [info ] [Thread-1 (]: 6 of 25 START test assert_emissions_intensity_plausible ........................ [RUN]
+[0m01:36:02.329453 [info ] [Thread-4 (]: 7 of 25 START test not_null_dim_generator_duid ................................. [RUN]
+[0m01:36:02.329693 [debug] [Thread-2 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.accepted_values_fct_regional_emissions_intensity_region__NSW1__VIC1__QLD1__SA1__TAS1.6ea919f4b5, now test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065)
+[0m01:36:02.329897 [info ] [Thread-3 (]: 8 of 25 START test not_null_dim_generator_technology_type ...................... [RUN]
+[0m01:36:02.330130 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.accepted_values_dim_generator_region__NSW1__VIC1__QLD1__SA1__TAS1.23358aa772, now test.nem_pipeline.assert_emissions_intensity_plausible)
+[0m01:36:02.330300 [debug] [Thread-4 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.accepted_values_silver_generator_metadata_region__NSW1__VIC1__QLD1__SA1__TAS1.43033130ba, now test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6)
+[0m01:36:02.330454 [debug] [Thread-2 (]: Began compiling node test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065
+[0m01:36:02.330662 [debug] [Thread-3 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.accepted_values_silver_generator_metadata_dispatch_type__Scheduled__Semi_scheduled__Non_scheduled__Significant_Non_scheduled.238244f30a, now test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca)
+[0m01:36:02.336316 [debug] [Thread-3 (]: Began compiling node test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca
+[0m01:36:02.330850 [debug] [Thread-1 (]: Began compiling node test.nem_pipeline.assert_emissions_intensity_plausible
+[0m01:36:02.335882 [debug] [Thread-2 (]: Writing injected SQL for node "test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065"
+[0m01:36:02.339713 [debug] [Thread-3 (]: Writing injected SQL for node "test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca"
+[0m01:36:02.341736 [debug] [Thread-1 (]: Writing injected SQL for node "test.nem_pipeline.assert_emissions_intensity_plausible"
+[0m01:36:02.330988 [debug] [Thread-4 (]: Began compiling node test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6
+[0m01:36:02.343025 [debug] [Thread-3 (]: Began executing node test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca
+[0m01:36:02.345802 [debug] [Thread-4 (]: Writing injected SQL for node "test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6"
+[0m01:36:02.353047 [debug] [Thread-4 (]: Began executing node test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6
+[0m01:36:02.347301 [debug] [Thread-2 (]: Began executing node test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065
+[0m01:36:02.358435 [debug] [Thread-4 (]: Writing runtime sql for node "test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6"
+[0m01:36:02.363741 [debug] [Thread-2 (]: Writing runtime sql for node "test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065"
+[0m01:36:02.349762 [debug] [Thread-3 (]: Writing runtime sql for node "test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca"
+[0m01:36:02.372497 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065"
+[0m01:36:02.373311 [debug] [Thread-2 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065: BEGIN
+[0m01:36:02.373551 [debug] [Thread-2 (]: Opening a new connection, currently in state closed
+[0m01:36:02.373942 [debug] [Thread-2 (]: SQL status: OK in 0.000 seconds
+[0m01:36:02.374095 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065"
+[0m01:36:02.374260 [debug] [Thread-2 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+with all_values as (
+
+    select
+        technology_type as value_field,
+        count(*) as n_records
+
+    from "nem"."main_silver"."silver_generator_metadata"
+    group by technology_type
+
+)
+
+select *
+from all_values
+where value_field not in (
+    'Coal','Brown coal','Gas Turbine','Hydro','Wind','Solar PV','Battery Storage','Other'
+)
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.367555 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6"
+[0m01:36:02.374929 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6: BEGIN
+[0m01:36:02.375073 [debug] [Thread-4 (]: Opening a new connection, currently in state closed
+[0m01:36:02.375405 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca"
+[0m01:36:02.375747 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca: BEGIN
+[0m01:36:02.376219 [debug] [Thread-3 (]: Opening a new connection, currently in state closed
+[0m01:36:02.376534 [debug] [Thread-4 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.378560 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6"
+[0m01:36:02.379340 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select duid
+from "nem"."main_gold"."dim_generator"
+where duid is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.365570 [debug] [Thread-1 (]: Began executing node test.nem_pipeline.assert_emissions_intensity_plausible
+[0m01:36:02.382485 [debug] [Thread-1 (]: Writing runtime sql for node "test.nem_pipeline.assert_emissions_intensity_plausible"
+[0m01:36:02.383593 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.assert_emissions_intensity_plausible"
+[0m01:36:02.384323 [debug] [Thread-1 (]: On test.nem_pipeline.assert_emissions_intensity_plausible: BEGIN
+[0m01:36:02.385717 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m01:36:02.386785 [debug] [Thread-1 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.388809 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.assert_emissions_intensity_plausible"
+[0m01:36:02.389553 [debug] [Thread-1 (]: On test.nem_pipeline.assert_emissions_intensity_plausible: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.assert_emissions_intensity_plausible"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  -- tests/assert_emissions_intensity_plausible.sql
+-- Fails if any regional intensity row is outside the plausible physical range.
+-- NEM grid intensity has historically ranged from near 0 (100% renewables)
+-- to ~1000 gCO2eq/kWh (heavy coal states). 1500 is a hard upper bound.
+
+select
+    settlement_date,
+    region,
+    emissions_intensity_gCO2eq_per_kWh
+from "nem"."main_gold"."fct_regional_emissions_intensity"
+where emissions_intensity_gCO2eq_per_kWh < 0
+   or emissions_intensity_gCO2eq_per_kWh > 1500
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.391196 [debug] [Thread-4 (]: SQL status: OK in 0.010 seconds
+[0m01:36:02.395631 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6: ROLLBACK
+[0m01:36:02.397371 [debug] [Thread-4 (]: Failed to rollback 'test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6'
+[0m01:36:02.398494 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6: Close
+[0m01:36:02.400454 [info ] [Thread-4 (]: 7 of 25 PASS not_null_dim_generator_duid ....................................... [[32mPASS[0m in 0.07s]
+[0m01:36:02.401748 [debug] [Thread-4 (]: Finished running node test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6
+[0m01:36:02.409930 [debug] [Thread-4 (]: Began running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d
+[0m01:36:02.412489 [info ] [Thread-4 (]: 9 of 25 START test not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh  [RUN]
+[0m01:36:02.413437 [debug] [Thread-4 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_dim_generator_duid.bd27870eb6, now test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d)
+[0m01:36:02.413937 [debug] [Thread-4 (]: Began compiling node test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d
+[0m01:36:02.424499 [debug] [Thread-4 (]: Writing injected SQL for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d"
+[0m01:36:02.427401 [debug] [Thread-4 (]: Began executing node test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d
+[0m01:36:02.425927 [debug] [Thread-2 (]: SQL status: OK in 0.051 seconds
+[0m01:36:02.430362 [debug] [Thread-4 (]: Writing runtime sql for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d"
+[0m01:36:02.425527 [debug] [Thread-3 (]: SQL status: OK in 0.049 seconds
+[0m01:36:02.431881 [debug] [Thread-2 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065: ROLLBACK
+[0m01:36:02.443675 [debug] [Thread-2 (]: Failed to rollback 'test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065'
+[0m01:36:02.435458 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca"
+[0m01:36:02.446692 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select technology_type
+from "nem"."main_gold"."dim_generator"
+where technology_type is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.436302 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d"
+[0m01:36:02.451518 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d: BEGIN
+[0m01:36:02.453234 [debug] [Thread-4 (]: Opening a new connection, currently in state closed
+[0m01:36:02.454441 [debug] [Thread-4 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.455226 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d"
+[0m01:36:02.445212 [debug] [Thread-2 (]: On test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065: Close
+[0m01:36:02.450454 [debug] [Thread-3 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.433143 [debug] [Thread-1 (]: SQL status: OK in 0.043 seconds
+[0m01:36:02.456769 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select emissions_intensity_gCO2eq_per_kWh
+from "nem"."main_gold"."fct_regional_emissions_intensity"
+where emissions_intensity_gCO2eq_per_kWh is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.457877 [info ] [Thread-2 (]: 5 of 25 PASS accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other  [[32mPASS[0m in 0.13s]
+[0m01:36:02.468554 [debug] [Thread-2 (]: Finished running node test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065
+[0m01:36:02.464510 [debug] [Thread-1 (]: On test.nem_pipeline.assert_emissions_intensity_plausible: ROLLBACK
+[0m01:36:02.469338 [debug] [Thread-2 (]: Began running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df
+[0m01:36:02.472520 [info ] [Thread-2 (]: 10 of 25 START test not_null_fct_regional_emissions_intensity_region ........... [RUN]
+[0m01:36:02.473372 [debug] [Thread-2 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.accepted_values_silver_generator_metadata_technology_type__Coal__Brown_coal__Gas_Turbine__Hydro__Wind__Solar_PV__Battery_Storage__Other.b1dabb1065, now test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df)
+[0m01:36:02.460857 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca: ROLLBACK
+[0m01:36:02.473922 [debug] [Thread-2 (]: Began compiling node test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df
+[0m01:36:02.474438 [debug] [Thread-4 (]: SQL status: OK in 0.009 seconds
+[0m01:36:02.475978 [debug] [Thread-3 (]: Failed to rollback 'test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca'
+[0m01:36:02.479150 [debug] [Thread-2 (]: Writing injected SQL for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df"
+[0m01:36:02.471381 [debug] [Thread-1 (]: Failed to rollback 'test.nem_pipeline.assert_emissions_intensity_plausible'
+[0m01:36:02.479589 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca: Close
+[0m01:36:02.480658 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d: ROLLBACK
+[0m01:36:02.480900 [debug] [Thread-1 (]: On test.nem_pipeline.assert_emissions_intensity_plausible: Close
+[0m01:36:02.481271 [info ] [Thread-3 (]: 8 of 25 PASS not_null_dim_generator_technology_type ............................ [[32mPASS[0m in 0.15s]
+[0m01:36:02.481685 [debug] [Thread-4 (]: Failed to rollback 'test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d'
+[0m01:36:02.481882 [debug] [Thread-2 (]: Began executing node test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df
+[0m01:36:02.482120 [debug] [Thread-3 (]: Finished running node test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca
+[0m01:36:02.482439 [info ] [Thread-1 (]: 6 of 25 PASS assert_emissions_intensity_plausible .............................. [[32mPASS[0m in 0.15s]
+[0m01:36:02.482690 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d: Close
+[0m01:36:02.483838 [debug] [Thread-2 (]: Writing runtime sql for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df"
+[0m01:36:02.484024 [debug] [Thread-3 (]: Began running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55
+[0m01:36:02.484291 [debug] [Thread-1 (]: Finished running node test.nem_pipeline.assert_emissions_intensity_plausible
+[0m01:36:02.484559 [info ] [Thread-4 (]: 9 of 25 PASS not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh  [[32mPASS[0m in 0.07s]
+[0m01:36:02.484880 [info ] [Thread-3 (]: 11 of 25 START test not_null_fct_regional_emissions_intensity_settlement_date .. [RUN]
+[0m01:36:02.485276 [debug] [Thread-1 (]: Began running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba
+[0m01:36:02.485631 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df"
+[0m01:36:02.485938 [debug] [Thread-4 (]: Finished running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d
+[0m01:36:02.486164 [debug] [Thread-3 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_dim_generator_technology_type.80408618ca, now test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55)
+[0m01:36:02.486488 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df: BEGIN
+[0m01:36:02.486345 [info ] [Thread-1 (]: 12 of 25 START test not_null_fct_regional_emissions_intensity_total_generation_mwh  [RUN]
+[0m01:36:02.486680 [debug] [Thread-4 (]: Began running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3
+[0m01:36:02.486844 [debug] [Thread-3 (]: Began compiling node test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55
+[0m01:36:02.487046 [debug] [Thread-2 (]: Opening a new connection, currently in state closed
+[0m01:36:02.487276 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.assert_emissions_intensity_plausible, now test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba)
+[0m01:36:02.487480 [info ] [Thread-4 (]: 13 of 25 START test not_null_fct_regional_emissions_intensity_total_tCO2e ...... [RUN]
+[0m01:36:02.489779 [debug] [Thread-3 (]: Writing injected SQL for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55"
+[0m01:36:02.490091 [debug] [Thread-1 (]: Began compiling node test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba
+[0m01:36:02.490278 [debug] [Thread-4 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_fct_regional_emissions_intensity_emissions_intensity_gCO2eq_per_kWh.775ed05d0d, now test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3)
+[0m01:36:02.490426 [debug] [Thread-2 (]: SQL status: OK in 0.003 seconds
+[0m01:36:02.493702 [debug] [Thread-1 (]: Writing injected SQL for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba"
+[0m01:36:02.494468 [debug] [Thread-4 (]: Began compiling node test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3
+[0m01:36:02.495360 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df"
+[0m01:36:02.498653 [debug] [Thread-4 (]: Writing injected SQL for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3"
+[0m01:36:02.499092 [debug] [Thread-3 (]: Began executing node test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55
+[0m01:36:02.499438 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select region
+from "nem"."main_gold"."fct_regional_emissions_intensity"
+where region is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.499774 [debug] [Thread-1 (]: Began executing node test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba
+[0m01:36:02.503171 [debug] [Thread-3 (]: Writing runtime sql for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55"
+[0m01:36:02.503632 [debug] [Thread-4 (]: Began executing node test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3
+[0m01:36:02.505651 [debug] [Thread-1 (]: Writing runtime sql for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba"
+[0m01:36:02.506514 [debug] [Thread-2 (]: SQL status: OK in 0.003 seconds
+[0m01:36:02.506881 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55"
+[0m01:36:02.508259 [debug] [Thread-4 (]: Writing runtime sql for node "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3"
+[0m01:36:02.509454 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df: ROLLBACK
+[0m01:36:02.509794 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55: BEGIN
+[0m01:36:02.510732 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba"
+[0m01:36:02.511710 [debug] [Thread-2 (]: Failed to rollback 'test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df'
+[0m01:36:02.512222 [debug] [Thread-3 (]: Opening a new connection, currently in state closed
+[0m01:36:02.512806 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba: BEGIN
+[0m01:36:02.513093 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3"
+[0m01:36:02.513438 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df: Close
+[0m01:36:02.513927 [debug] [Thread-3 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.514113 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m01:36:02.514282 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3: BEGIN
+[0m01:36:02.514590 [info ] [Thread-2 (]: 10 of 25 PASS not_null_fct_regional_emissions_intensity_region ................. [[32mPASS[0m in 0.04s]
+[0m01:36:02.514868 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55"
+[0m01:36:02.515504 [debug] [Thread-4 (]: Opening a new connection, currently in state closed
+[0m01:36:02.515824 [debug] [Thread-2 (]: Finished running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df
+[0m01:36:02.516563 [debug] [Thread-2 (]: Began running node test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6
+[0m01:36:02.516764 [info ] [Thread-2 (]: 14 of 25 START test not_null_silver_dispatch_interval_dq_flag .................. [RUN]
+[0m01:36:02.516017 [debug] [Thread-1 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.517183 [debug] [Thread-2 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_fct_regional_emissions_intensity_region.1270f835df, now test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6)
+[0m01:36:02.516232 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select settlement_date
+from "nem"."main_gold"."fct_regional_emissions_intensity"
+where settlement_date is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.517441 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba"
+[0m01:36:02.517598 [debug] [Thread-4 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.517756 [debug] [Thread-2 (]: Began compiling node test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6
+[0m01:36:02.518579 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select total_generation_mwh
+from "nem"."main_gold"."fct_regional_emissions_intensity"
+where total_generation_mwh is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.519268 [debug] [Thread-3 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.519795 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3"
+[0m01:36:02.522823 [debug] [Thread-2 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6"
+[0m01:36:02.523440 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select total_tCO2e
+from "nem"."main_gold"."fct_regional_emissions_intensity"
+where total_tCO2e is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.528711 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55: ROLLBACK
+[0m01:36:02.530853 [debug] [Thread-3 (]: Failed to rollback 'test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55'
+[0m01:36:02.529374 [debug] [Thread-1 (]: SQL status: OK in 0.006 seconds
+[0m01:36:02.531399 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55: Close
+[0m01:36:02.539479 [info ] [Thread-3 (]: 11 of 25 PASS not_null_fct_regional_emissions_intensity_settlement_date ........ [[32mPASS[0m in 0.05s]
+[0m01:36:02.542473 [debug] [Thread-3 (]: Finished running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55
+[0m01:36:02.545342 [debug] [Thread-3 (]: Began running node test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475
+[0m01:36:02.535881 [debug] [Thread-2 (]: Began executing node test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6
+[0m01:36:02.545925 [info ] [Thread-3 (]: 15 of 25 START test not_null_silver_dispatch_interval_duid ..................... [RUN]
+[0m01:36:02.548670 [debug] [Thread-3 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_fct_regional_emissions_intensity_settlement_date.c1ffe0aa55, now test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475)
+[0m01:36:02.548837 [debug] [Thread-3 (]: Began compiling node test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475
+[0m01:36:02.534772 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba: ROLLBACK
+[0m01:36:02.551050 [debug] [Thread-3 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475"
+[0m01:36:02.536628 [debug] [Thread-4 (]: SQL status: OK in 0.007 seconds
+[0m01:36:02.548070 [debug] [Thread-2 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6"
+[0m01:36:02.554532 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3: ROLLBACK
+[0m01:36:02.559497 [debug] [Thread-4 (]: Failed to rollback 'test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3'
+[0m01:36:02.556310 [debug] [Thread-1 (]: Failed to rollback 'test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba'
+[0m01:36:02.560412 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba: Close
+[0m01:36:02.558668 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6"
+[0m01:36:02.561244 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6: BEGIN
+[0m01:36:02.557698 [debug] [Thread-3 (]: Began executing node test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475
+[0m01:36:02.565540 [debug] [Thread-3 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475"
+[0m01:36:02.560830 [info ] [Thread-1 (]: 12 of 25 PASS not_null_fct_regional_emissions_intensity_total_generation_mwh ... [[32mPASS[0m in 0.07s]
+[0m01:36:02.561703 [debug] [Thread-2 (]: Opening a new connection, currently in state closed
+[0m01:36:02.566685 [debug] [Thread-1 (]: Finished running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba
+[0m01:36:02.568286 [debug] [Thread-1 (]: Began running node test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4
+[0m01:36:02.568813 [info ] [Thread-1 (]: 16 of 25 START test not_null_silver_dispatch_interval_scada_mw ................. [RUN]
+[0m01:36:02.559897 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3: Close
+[0m01:36:02.574886 [info ] [Thread-4 (]: 13 of 25 PASS not_null_fct_regional_emissions_intensity_total_tCO2e ............ [[32mPASS[0m in 0.08s]
+[0m01:36:02.576034 [debug] [Thread-4 (]: Finished running node test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3
+[0m01:36:02.576309 [debug] [Thread-4 (]: Began running node test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef
+[0m01:36:02.576465 [info ] [Thread-4 (]: 17 of 25 START test not_null_silver_dispatch_interval_settlement_date .......... [RUN]
+[0m01:36:02.576679 [debug] [Thread-4 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_tCO2e.88b56172b3, now test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef)
+[0m01:36:02.576822 [debug] [Thread-4 (]: Began compiling node test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef
+[0m01:36:02.570031 [debug] [Thread-2 (]: SQL status: OK in 0.008 seconds
+[0m01:36:02.583482 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6"
+[0m01:36:02.584165 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select dq_flag
+from "nem"."main_silver"."silver_dispatch_interval"
+where dq_flag is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.571967 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475"
+[0m01:36:02.585288 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475: BEGIN
+[0m01:36:02.586237 [debug] [Thread-3 (]: Opening a new connection, currently in state closed
+[0m01:36:02.587043 [debug] [Thread-3 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.587554 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475"
+[0m01:36:02.588094 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select duid
+from "nem"."main_silver"."silver_dispatch_interval"
+where duid is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.582046 [debug] [Thread-4 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef"
+[0m01:36:02.589967 [debug] [Thread-4 (]: Began executing node test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef
+[0m01:36:02.594115 [debug] [Thread-4 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef"
+[0m01:36:02.596238 [debug] [Thread-2 (]: SQL status: OK in 0.011 seconds
+[0m01:36:02.598792 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6: ROLLBACK
+[0m01:36:02.599745 [debug] [Thread-2 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6'
+[0m01:36:02.600155 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6: Close
+[0m01:36:02.569465 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_fct_regional_emissions_intensity_total_generation_mwh.a406ccefba, now test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4)
+[0m01:36:02.600662 [debug] [Thread-1 (]: Began compiling node test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4
+[0m01:36:02.607579 [debug] [Thread-1 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4"
+[0m01:36:02.608893 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef"
+[0m01:36:02.609982 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef: BEGIN
+[0m01:36:02.611464 [debug] [Thread-4 (]: Opening a new connection, currently in state closed
+[0m01:36:02.612310 [debug] [Thread-4 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.612758 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef"
+[0m01:36:02.613895 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select settlement_date
+from "nem"."main_silver"."silver_dispatch_interval"
+where settlement_date is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.615341 [debug] [Thread-4 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.616210 [debug] [Thread-1 (]: Began executing node test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4
+[0m01:36:02.617289 [debug] [Thread-3 (]: SQL status: OK in 0.028 seconds
+[0m01:36:02.620045 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef: ROLLBACK
+[0m01:36:02.629330 [info ] [Thread-2 (]: 14 of 25 PASS not_null_silver_dispatch_interval_dq_flag ........................ [[32mPASS[0m in 0.11s]
+[0m01:36:02.633456 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475: ROLLBACK
+[0m01:36:02.641570 [debug] [Thread-3 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475'
+[0m01:36:02.641972 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475: Close
+[0m01:36:02.636895 [debug] [Thread-1 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4"
+[0m01:36:02.638825 [debug] [Thread-4 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef'
+[0m01:36:02.649362 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef: Close
+[0m01:36:02.650335 [info ] [Thread-4 (]: 17 of 25 PASS not_null_silver_dispatch_interval_settlement_date ................ [[32mPASS[0m in 0.07s]
+[0m01:36:02.651635 [debug] [Thread-4 (]: Finished running node test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef
+[0m01:36:02.652296 [debug] [Thread-4 (]: Began running node test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d
+[0m01:36:02.652721 [info ] [Thread-4 (]: 18 of 25 START test not_null_silver_emissions_factor_emission_factor_tCO2e_MWh . [RUN]
+[0m01:36:02.653286 [debug] [Thread-4 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_silver_dispatch_interval_settlement_date.f0f7f1acef, now test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d)
+[0m01:36:02.643027 [info ] [Thread-3 (]: 15 of 25 PASS not_null_silver_dispatch_interval_duid ........................... [[32mPASS[0m in 0.09s]
+[0m01:36:02.657262 [debug] [Thread-3 (]: Finished running node test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475
+[0m01:36:02.657745 [debug] [Thread-3 (]: Began running node test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef
+[0m01:36:02.658267 [info ] [Thread-3 (]: 19 of 25 START test not_null_silver_emissions_factor_technology_type ........... [RUN]
+[0m01:36:02.653892 [debug] [Thread-4 (]: Began compiling node test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d
+[0m01:36:02.673507 [debug] [Thread-4 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d"
+[0m01:36:02.646334 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4"
+[0m01:36:02.658793 [debug] [Thread-3 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_silver_dispatch_interval_duid.8a219a6475, now test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef)
+[0m01:36:02.678042 [debug] [Thread-3 (]: Began compiling node test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef
+[0m01:36:02.640390 [debug] [Thread-2 (]: Finished running node test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6
+[0m01:36:02.685631 [debug] [Thread-3 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef"
+[0m01:36:02.687095 [debug] [Thread-2 (]: Began running node test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84
+[0m01:36:02.690249 [info ] [Thread-2 (]: 20 of 25 START test not_null_silver_emissions_factor_technology_type_key ....... [RUN]
+[0m01:36:02.690563 [debug] [Thread-2 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_silver_dispatch_interval_dq_flag.471cac57f6, now test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84)
+[0m01:36:02.690731 [debug] [Thread-2 (]: Began compiling node test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84
+[0m01:36:02.688674 [debug] [Thread-4 (]: Began executing node test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d
+[0m01:36:02.693133 [debug] [Thread-2 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84"
+[0m01:36:02.698054 [debug] [Thread-4 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d"
+[0m01:36:02.676509 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4: BEGIN
+[0m01:36:02.689618 [debug] [Thread-3 (]: Began executing node test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef
+[0m01:36:02.702044 [debug] [Thread-2 (]: Began executing node test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84
+[0m01:36:02.703197 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d"
+[0m01:36:02.714068 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d: BEGIN
+[0m01:36:02.703988 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m01:36:02.708159 [debug] [Thread-3 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef"
+[0m01:36:02.713097 [debug] [Thread-2 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84"
+[0m01:36:02.714237 [debug] [Thread-4 (]: Opening a new connection, currently in state closed
+[0m01:36:02.716649 [debug] [Thread-4 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.715620 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84"
+[0m01:36:02.717694 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84: BEGIN
+[0m01:36:02.716319 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef"
+[0m01:36:02.718660 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef: BEGIN
+[0m01:36:02.719334 [debug] [Thread-3 (]: Opening a new connection, currently in state closed
+[0m01:36:02.715963 [debug] [Thread-1 (]: SQL status: OK in 0.012 seconds
+[0m01:36:02.720065 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4"
+[0m01:36:02.717866 [debug] [Thread-2 (]: Opening a new connection, currently in state closed
+[0m01:36:02.720590 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select scada_mw
+from "nem"."main_silver"."silver_dispatch_interval"
+where scada_mw is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.721544 [debug] [Thread-3 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.716795 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d"
+[0m01:36:02.722466 [debug] [Thread-2 (]: SQL status: OK in 0.005 seconds
+[0m01:36:02.722677 [debug] [Thread-1 (]: SQL status: OK in 0.000 seconds
+[0m01:36:02.722847 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef"
+[0m01:36:02.723108 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select emission_factor_tCO2e_MWh
+from "nem"."main_silver"."silver_emissions_factor"
+where emission_factor_tCO2e_MWh is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.723512 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84"
+[0m01:36:02.723774 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select technology_type
+from "nem"."main_silver"."silver_emissions_factor"
+where technology_type is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.724596 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4: ROLLBACK
+[0m01:36:02.725214 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select technology_type_key
+from "nem"."main_silver"."silver_emissions_factor"
+where technology_type_key is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.725528 [debug] [Thread-4 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.726091 [debug] [Thread-1 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4'
+[0m01:36:02.726514 [debug] [Thread-3 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.726751 [debug] [Thread-2 (]: SQL status: OK in 0.000 seconds
+[0m01:36:02.727620 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d: ROLLBACK
+[0m01:36:02.727874 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4: Close
+[0m01:36:02.729788 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef: ROLLBACK
+[0m01:36:02.730512 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84: ROLLBACK
+[0m01:36:02.730980 [debug] [Thread-4 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d'
+[0m01:36:02.731365 [info ] [Thread-1 (]: 16 of 25 PASS not_null_silver_dispatch_interval_scada_mw ....................... [[32mPASS[0m in 0.16s]
+[0m01:36:02.731822 [debug] [Thread-3 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef'
+[0m01:36:02.732053 [debug] [Thread-2 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84'
+[0m01:36:02.732210 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d: Close
+[0m01:36:02.732490 [debug] [Thread-1 (]: Finished running node test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4
+[0m01:36:02.732687 [debug] [Thread-3 (]: On test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef: Close
+[0m01:36:02.732906 [debug] [Thread-2 (]: On test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84: Close
+[0m01:36:02.733245 [info ] [Thread-4 (]: 18 of 25 PASS not_null_silver_emissions_factor_emission_factor_tCO2e_MWh ....... [[32mPASS[0m in 0.08s]
+[0m01:36:02.734458 [debug] [Thread-4 (]: Finished running node test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d
+[0m01:36:02.733483 [debug] [Thread-1 (]: Began running node test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e
+[0m01:36:02.734168 [info ] [Thread-2 (]: 20 of 25 PASS not_null_silver_emissions_factor_technology_type_key ............. [[32mPASS[0m in 0.04s]
+[0m01:36:02.735092 [debug] [Thread-4 (]: Began running node test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc
+[0m01:36:02.733863 [info ] [Thread-3 (]: 19 of 25 PASS not_null_silver_emissions_factor_technology_type ................. [[32mPASS[0m in 0.08s]
+[0m01:36:02.735928 [info ] [Thread-1 (]: 21 of 25 START test not_null_silver_generator_metadata_duid .................... [RUN]
+[0m01:36:02.736784 [debug] [Thread-2 (]: Finished running node test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84
+[0m01:36:02.737054 [info ] [Thread-4 (]: 22 of 25 START test not_null_silver_generator_metadata_technology_type ......... [RUN]
+[0m01:36:02.737367 [debug] [Thread-3 (]: Finished running node test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef
+[0m01:36:02.737589 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_silver_dispatch_interval_scada_mw.8d41a9d7d4, now test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e)
+[0m01:36:02.738023 [debug] [Thread-2 (]: Began running node test.nem_pipeline.unique_dim_generator_duid.7706171e1c
+[0m01:36:02.738258 [debug] [Thread-4 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_silver_emissions_factor_emission_factor_tCO2e_MWh.e08ada5c9d, now test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc)
+[0m01:36:02.738462 [debug] [Thread-3 (]: Began running node test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735
+[0m01:36:02.738771 [debug] [Thread-1 (]: Began compiling node test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e
+[0m01:36:02.739102 [debug] [Thread-4 (]: Began compiling node test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc
+[0m01:36:02.738968 [info ] [Thread-2 (]: 23 of 25 START test unique_dim_generator_duid .................................. [RUN]
+[0m01:36:02.741886 [debug] [Thread-1 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e"
+[0m01:36:02.739388 [info ] [Thread-3 (]: 24 of 25 START test unique_silver_emissions_factor_technology_type_key ......... [RUN]
+[0m01:36:02.743786 [debug] [Thread-4 (]: Writing injected SQL for node "test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc"
+[0m01:36:02.744046 [debug] [Thread-2 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_silver_emissions_factor_technology_type_key.29ada76f84, now test.nem_pipeline.unique_dim_generator_duid.7706171e1c)
+[0m01:36:02.744416 [debug] [Thread-3 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_silver_emissions_factor_technology_type.e892f05bef, now test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735)
+[0m01:36:02.745649 [debug] [Thread-3 (]: Began compiling node test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735
+[0m01:36:02.744856 [debug] [Thread-1 (]: Began executing node test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e
+[0m01:36:02.745336 [debug] [Thread-2 (]: Began compiling node test.nem_pipeline.unique_dim_generator_duid.7706171e1c
+[0m01:36:02.749248 [debug] [Thread-3 (]: Writing injected SQL for node "test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735"
+[0m01:36:02.745199 [debug] [Thread-4 (]: Began executing node test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc
+[0m01:36:02.750874 [debug] [Thread-1 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e"
+[0m01:36:02.752909 [debug] [Thread-2 (]: Writing injected SQL for node "test.nem_pipeline.unique_dim_generator_duid.7706171e1c"
+[0m01:36:02.754742 [debug] [Thread-4 (]: Writing runtime sql for node "test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc"
+[0m01:36:02.755556 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e"
+[0m01:36:02.755771 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e: BEGIN
+[0m01:36:02.755968 [debug] [Thread-3 (]: Began executing node test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735
+[0m01:36:02.756161 [debug] [Thread-2 (]: Began executing node test.nem_pipeline.unique_dim_generator_duid.7706171e1c
+[0m01:36:02.756355 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m01:36:02.756541 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc"
+[0m01:36:02.757627 [debug] [Thread-3 (]: Writing runtime sql for node "test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735"
+[0m01:36:02.758621 [debug] [Thread-2 (]: Writing runtime sql for node "test.nem_pipeline.unique_dim_generator_duid.7706171e1c"
+[0m01:36:02.758913 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc: BEGIN
+[0m01:36:02.759313 [debug] [Thread-1 (]: SQL status: OK in 0.003 seconds
+[0m01:36:02.759465 [debug] [Thread-4 (]: Opening a new connection, currently in state closed
+[0m01:36:02.759746 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e"
+[0m01:36:02.760148 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.unique_dim_generator_duid.7706171e1c"
+[0m01:36:02.760455 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select duid
+from "nem"."main_silver"."silver_generator_metadata"
+where duid is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.760628 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735"
+[0m01:36:02.760801 [debug] [Thread-4 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.760952 [debug] [Thread-2 (]: On test.nem_pipeline.unique_dim_generator_duid.7706171e1c: BEGIN
+[0m01:36:02.761351 [debug] [Thread-3 (]: On test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735: BEGIN
+[0m01:36:02.761579 [debug] [Thread-4 (]: Using duckdb connection "test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc"
+[0m01:36:02.761746 [debug] [Thread-1 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.761925 [debug] [Thread-2 (]: Opening a new connection, currently in state closed
+[0m01:36:02.762115 [debug] [Thread-3 (]: Opening a new connection, currently in state closed
+[0m01:36:02.762613 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+
+
+select technology_type
+from "nem"."main_silver"."silver_generator_metadata"
+where technology_type is null
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.763945 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e: ROLLBACK
+[0m01:36:02.764146 [debug] [Thread-2 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.764552 [debug] [Thread-3 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.764916 [debug] [Thread-1 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e'
+[0m01:36:02.765093 [debug] [Thread-2 (]: Using duckdb connection "test.nem_pipeline.unique_dim_generator_duid.7706171e1c"
+[0m01:36:02.765239 [debug] [Thread-4 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.765391 [debug] [Thread-3 (]: Using duckdb connection "test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735"
+[0m01:36:02.765530 [debug] [Thread-1 (]: On test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e: Close
+[0m01:36:02.765689 [debug] [Thread-2 (]: On test.nem_pipeline.unique_dim_generator_duid.7706171e1c: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.unique_dim_generator_duid.7706171e1c"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+select
+    duid as unique_field,
+    count(*) as n_records
+
+from "nem"."main_gold"."dim_generator"
+where duid is not null
+group by duid
+having count(*) > 1
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.765902 [debug] [Thread-3 (]: On test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+select
+    technology_type_key as unique_field,
+    count(*) as n_records
+
+from "nem"."main_silver"."silver_emissions_factor"
+where technology_type_key is not null
+group by technology_type_key
+having count(*) > 1
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.766554 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc: ROLLBACK
+[0m01:36:02.766936 [info ] [Thread-1 (]: 21 of 25 PASS not_null_silver_generator_metadata_duid .......................... [[32mPASS[0m in 0.03s]
+[0m01:36:02.767294 [debug] [Thread-1 (]: Finished running node test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e
+[0m01:36:02.767580 [debug] [Thread-1 (]: Began running node test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7
+[0m01:36:02.767904 [debug] [Thread-4 (]: Failed to rollback 'test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc'
+[0m01:36:02.768216 [info ] [Thread-1 (]: 25 of 25 START test unique_silver_generator_metadata_duid ...................... [RUN]
+[0m01:36:02.768859 [debug] [Thread-4 (]: On test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc: Close
+[0m01:36:02.769107 [debug] [Thread-3 (]: SQL status: OK in 0.002 seconds
+[0m01:36:02.769348 [debug] [Thread-1 (]: Re-using an available connection from the pool (formerly test.nem_pipeline.not_null_silver_generator_metadata_duid.819077885e, now test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7)
+[0m01:36:02.769515 [debug] [Thread-2 (]: SQL status: OK in 0.003 seconds
+[0m01:36:02.769955 [debug] [Thread-1 (]: Began compiling node test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7
+[0m01:36:02.769809 [info ] [Thread-4 (]: 22 of 25 PASS not_null_silver_generator_metadata_technology_type ............... [[32mPASS[0m in 0.03s]
+[0m01:36:02.770759 [debug] [Thread-3 (]: On test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735: ROLLBACK
+[0m01:36:02.773290 [debug] [Thread-1 (]: Writing injected SQL for node "test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7"
+[0m01:36:02.774046 [debug] [Thread-2 (]: On test.nem_pipeline.unique_dim_generator_duid.7706171e1c: ROLLBACK
+[0m01:36:02.774306 [debug] [Thread-4 (]: Finished running node test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc
+[0m01:36:02.774709 [debug] [Thread-3 (]: Failed to rollback 'test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735'
+[0m01:36:02.775066 [debug] [Thread-2 (]: Failed to rollback 'test.nem_pipeline.unique_dim_generator_duid.7706171e1c'
+[0m01:36:02.775300 [debug] [Thread-3 (]: On test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735: Close
+[0m01:36:02.775468 [debug] [Thread-2 (]: On test.nem_pipeline.unique_dim_generator_duid.7706171e1c: Close
+[0m01:36:02.775760 [info ] [Thread-3 (]: 24 of 25 PASS unique_silver_emissions_factor_technology_type_key ............... [[32mPASS[0m in 0.03s]
+[0m01:36:02.775935 [debug] [Thread-1 (]: Began executing node test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7
+[0m01:36:02.776159 [info ] [Thread-2 (]: 23 of 25 PASS unique_dim_generator_duid ........................................ [[32mPASS[0m in 0.03s]
+[0m01:36:02.776382 [debug] [Thread-3 (]: Finished running node test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735
+[0m01:36:02.778789 [debug] [Thread-1 (]: Writing runtime sql for node "test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7"
+[0m01:36:02.779638 [debug] [Thread-2 (]: Finished running node test.nem_pipeline.unique_dim_generator_duid.7706171e1c
+[0m01:36:02.780434 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7"
+[0m01:36:02.781019 [debug] [Thread-1 (]: On test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7: BEGIN
+[0m01:36:02.781199 [debug] [Thread-1 (]: Opening a new connection, currently in state closed
+[0m01:36:02.781544 [debug] [Thread-1 (]: SQL status: OK in 0.000 seconds
+[0m01:36:02.781677 [debug] [Thread-1 (]: Using duckdb connection "test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7"
+[0m01:36:02.781818 [debug] [Thread-1 (]: On test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7: /* {"app": "dbt", "dbt_version": "1.11.7", "profile_name": "nem_pipeline", "target_name": "dev", "node_id": "test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7"} */
+
+    
+    select
+      count(*) as failures,
+      count(*) != 0 as should_warn,
+      count(*) != 0 as should_error
+    from (
+      
+    
+  
+    
+    
+
+select
+    duid as unique_field,
+    count(*) as n_records
+
+from "nem"."main_silver"."silver_generator_metadata"
+where duid is not null
+group by duid
+having count(*) > 1
+
+
+
+  
+  
+      
+    ) dbt_internal_test
+[0m01:36:02.782769 [debug] [Thread-1 (]: SQL status: OK in 0.001 seconds
+[0m01:36:02.783612 [debug] [Thread-1 (]: On test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7: ROLLBACK
+[0m01:36:02.783949 [debug] [Thread-1 (]: Failed to rollback 'test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7'
+[0m01:36:02.784089 [debug] [Thread-1 (]: On test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7: Close
+[0m01:36:02.784501 [info ] [Thread-1 (]: 25 of 25 PASS unique_silver_generator_metadata_duid ............................ [[32mPASS[0m in 0.02s]
+[0m01:36:02.784825 [debug] [Thread-1 (]: Finished running node test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7
+[0m01:36:02.788682 [debug] [MainThread]: Using duckdb connection "master"
+[0m01:36:02.788939 [debug] [MainThread]: On master: BEGIN
+[0m01:36:02.789053 [debug] [MainThread]: Opening a new connection, currently in state closed
+[0m01:36:02.789448 [debug] [MainThread]: SQL status: OK in 0.000 seconds
+[0m01:36:02.789661 [debug] [MainThread]: On master: COMMIT
+[0m01:36:02.789785 [debug] [MainThread]: Using duckdb connection "master"
+[0m01:36:02.789885 [debug] [MainThread]: On master: COMMIT
+[0m01:36:02.790092 [debug] [MainThread]: SQL status: OK in 0.000 seconds
+[0m01:36:02.790202 [debug] [MainThread]: On master: Close
+[0m01:36:02.790377 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m01:36:02.790487 [debug] [MainThread]: Connection 'test.nem_pipeline.unique_silver_generator_metadata_duid.3fb1cb64a7' was properly closed.
+[0m01:36:02.790580 [debug] [MainThread]: Connection 'test.nem_pipeline.unique_dim_generator_duid.7706171e1c' was properly closed.
+[0m01:36:02.790669 [debug] [MainThread]: Connection 'test.nem_pipeline.unique_silver_emissions_factor_technology_type_key.164ba63735' was properly closed.
+[0m01:36:02.790756 [debug] [MainThread]: Connection 'test.nem_pipeline.not_null_silver_generator_metadata_technology_type.8a4fa71adc' was properly closed.
+[0m01:36:02.790920 [info ] [MainThread]: 
+[0m01:36:02.791063 [info ] [MainThread]: Finished running 4 project hooks, 25 data tests in 0 hours 0 minutes and 0.78 seconds (0.78s).
+[0m01:36:02.796105 [debug] [MainThread]: Command end result
+[0m01:36:02.852075 [debug] [MainThread]: Wrote artifact WritableManifest to /Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/target/manifest.json
+[0m01:36:02.856320 [debug] [MainThread]: Wrote artifact SemanticManifest to /Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/target/semantic_manifest.json
+[0m01:36:02.868956 [debug] [MainThread]: Wrote artifact RunExecutionResult to /Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/target/run_results.json
+[0m01:36:02.869183 [info ] [MainThread]: 
+[0m01:36:02.869362 [info ] [MainThread]: [32mCompleted successfully[0m
+[0m01:36:02.869483 [info ] [MainThread]: 
+[0m01:36:02.869614 [info ] [MainThread]: Done. PASS=29 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=29
+[0m01:36:02.904688 [debug] [MainThread]: Resource report: {"command_name": "test", "command_success": true, "command_wall_clock_time": 1.6239997, "process_in_blocks": "0", "process_kernel_time": 0.450502, "process_mem_max_rss": "165330944", "process_out_blocks": "0", "process_user_time": 1.891742}
+[0m01:36:02.905801 [debug] [MainThread]: Command `dbt test` succeeded at 01:36:02.905474 after 1.62 seconds
+[0m01:36:02.906552 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10bbaaf90>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10c56ee60>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10c56f490>]}
+[0m01:36:02.907220 [debug] [MainThread]: Flushing usage events
+[0m01:36:03.879663 [debug] [MainThread]: An error was encountered while trying to flush usage events
