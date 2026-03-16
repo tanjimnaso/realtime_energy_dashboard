@@ -1251,6 +1251,75 @@ def build_reference_intraday_profile(
     return profile
 
 
+def interpolate_yearly_series(years: list[int], anchors: dict[int, float]) -> list[float]:
+    """Linearly interpolate a yearly series from sparse anchor points."""
+    sorted_points = sorted(anchors.items())
+    values = []
+    for year in years:
+        if year <= sorted_points[0][0]:
+            values.append(sorted_points[0][1])
+            continue
+        if year >= sorted_points[-1][0]:
+            values.append(sorted_points[-1][1])
+            continue
+
+        for (y0, v0), (y1, v1) in zip(sorted_points[:-1], sorted_points[1:]):
+            if y0 <= year <= y1:
+                ratio = (year - y0) / (y1 - y0)
+                values.append(v0 + ratio * (v1 - v0))
+                break
+    return values
+
+
+def build_placeholder_outlook_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Create placeholder medium- and long-term outlook frames for UI scaffolding."""
+    years = list(range(2025, 2051))
+
+    scenario_generation_anchors = {
+        "Official transition": {
+            "Coal": {2025: 135, 2030: 88, 2035: 48, 2040: 20, 2050: 4},
+            "Gas": {2025: 42, 2030: 38, 2035: 36, 2040: 32, 2050: 26},
+            "Wind": {2025: 32, 2030: 58, 2035: 84, 2040: 108, 2050: 132},
+            "Solar": {2025: 28, 2030: 66, 2035: 101, 2040: 136, 2050: 170},
+            "Hydro + storage": {2025: 18, 2030: 24, 2035: 31, 2040: 37, 2050: 46},
+        },
+        "Delayed buildout": {
+            "Coal": {2025: 135, 2030: 105, 2035: 79, 2040: 52, 2050: 18},
+            "Gas": {2025: 42, 2030: 44, 2035: 45, 2040: 43, 2050: 39},
+            "Wind": {2025: 32, 2030: 46, 2035: 61, 2040: 76, 2050: 95},
+            "Solar": {2025: 28, 2030: 51, 2035: 72, 2040: 94, 2050: 121},
+            "Hydro + storage": {2025: 18, 2030: 21, 2035: 25, 2040: 29, 2050: 34},
+        },
+        "Accelerated clean grid": {
+            "Coal": {2025: 135, 2030: 72, 2035: 26, 2040: 6, 2050: 0},
+            "Gas": {2025: 42, 2030: 34, 2035: 28, 2040: 22, 2050: 15},
+            "Wind": {2025: 32, 2030: 69, 2035: 104, 2040: 134, 2050: 165},
+            "Solar": {2025: 28, 2030: 82, 2035: 125, 2040: 164, 2050: 202},
+            "Hydro + storage": {2025: 18, 2030: 28, 2035: 39, 2040: 50, 2050: 61},
+        },
+    }
+
+    generation_rows = []
+    for scenario, tech_map in scenario_generation_anchors.items():
+        for technology, anchors in tech_map.items():
+            for year, twh in zip(years, interpolate_yearly_series(years, anchors)):
+                generation_rows.append(
+                    {"year": year, "scenario": scenario, "technology": technology, "generation_twh": twh}
+                )
+
+    price_anchors = {
+        "Official transition": {2025: 188, 2030: 171, 2035: 156, 2040: 148, 2050: 141},
+        "Delayed buildout": {2025: 188, 2030: 196, 2035: 207, 2040: 214, 2050: 221},
+        "Accelerated clean grid": {2025: 188, 2030: 165, 2035: 145, 2040: 136, 2050: 128},
+    }
+    price_rows = []
+    for scenario, anchors in price_anchors.items():
+        for year, aud_mwh in zip(years, interpolate_yearly_series(years, anchors)):
+            price_rows.append({"year": year, "scenario": scenario, "aud_mwh": aud_mwh})
+
+    return pd.DataFrame(generation_rows), pd.DataFrame(price_rows)
+
+
 try:
     APP_DIR = Path(__file__).resolve().parent
     DATA_DIR = ensure_required_data(APP_DIR)
@@ -1906,6 +1975,127 @@ if selected_date == datetime.date.today():
         )
     else:
         st.info("Not enough historical analog data is available yet to forecast the remainder of today.")
+
+
+st.markdown("<h2 class='section-heading'>Medium-Term and 2050 Outlook</h2>", unsafe_allow_html=True)
+st.markdown(
+    "<p class='section-sub'>Placeholder scenario visuals for the later planning layer: historical context for managers, then medium- and long-term generation and price pathways</p>",
+    unsafe_allow_html=True,
+)
+
+st.markdown("""
+<div class="info-panel section-text">
+This section is intentionally <strong>placeholder scenario data</strong>. It is here to define the product shape before the long-horizon modelling is built properly in Databricks/Prefect. 
+The goal is to separate <strong>live operations</strong> from <strong>strategic outlook</strong>: managers can use the historical chart for context and curiosity, while the scenario charts below show how a later pipeline could present the federal transition pathway, delayed buildout risk, and faster clean-grid delivery.
+</div>
+""", unsafe_allow_html=True)
+
+generation_placeholder_df, price_placeholder_df = build_placeholder_outlook_frames()
+scenario_order = ["Official transition", "Delayed buildout", "Accelerated clean grid"]
+scenario_choice = st.radio(
+    "Scenario outlook",
+    scenario_order,
+    horizontal=True,
+    key="scenario_outlook_choice",
+)
+
+scenario_chart_col, price_chart_col = st.columns(2, gap="large")
+
+with scenario_chart_col:
+    st.markdown("<div class='chart-title'>Expected Generation by Technology</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='chart-axis-notes'><span>Placeholder TWh trajectory</span><span>2025 to 2050</span></div>",
+        unsafe_allow_html=True,
+    )
+    scenario_gen = generation_placeholder_df[generation_placeholder_df["scenario"] == scenario_choice]
+    gen_fig = go.Figure()
+    technology_colors = {
+        "Coal": "#7f3b3b",
+        "Gas": "#d97b2d",
+        "Wind": "#0b7f94",
+        "Solar": "#f0b24b",
+        "Hydro + storage": "#5d8db9",
+    }
+    for technology in ["Coal", "Gas", "Wind", "Solar", "Hydro + storage"]:
+        tech_df = scenario_gen[scenario_gen["technology"] == technology]
+        gen_fig.add_trace(go.Scatter(
+            x=tech_df["year"],
+            y=tech_df["generation_twh"],
+            mode="lines",
+            name=technology,
+            line=dict(color=technology_colors[technology], width=2.4),
+            hovertemplate=f"{technology}<br>%{{x}}<br><b>%{{y:.0f}}</b> TWh<extra></extra>",
+        ))
+    gen_fig.update_layout(
+        plot_bgcolor=PLOT_BG,
+        paper_bgcolor=PLOT_BG,
+        font=dict(color=PLOT_TEXT, family="IBM Plex Sans, sans-serif", size=13),
+        margin=dict(l=0, r=0, t=8, b=8),
+        height=340,
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, bgcolor="rgba(0,0,0,0)"),
+        xaxis=dict(showgrid=False, color=PLOT_MUTED, dtick=5),
+        yaxis=dict(showgrid=True, gridcolor=PLOT_GRID, color=PLOT_MUTED, title_text="TWh"),
+    )
+    gen_fig.update_xaxes(fixedrange=True)
+    gen_fig.update_yaxes(fixedrange=True)
+    st.plotly_chart(gen_fig, use_container_width=True, config=plotly_config)
+    st.markdown(f"""
+    <div class="section-text" style="margin-top: 0.6rem;">
+    <strong>{scenario_choice}</strong> is shown as a simple placeholder pathway. In the eventual data-engineered version, this chart would be sourced from official planning artefacts and scenario assumptions, then reconciled into expected generation by technology. 
+    For now it is only defining the information architecture: a manager should be able to see whether coal exits quickly, whether gas remains a balancing technology, and how much wind, solar, hydro, and storage are expected to carry the system by 2050.
+    </div>
+    """, unsafe_allow_html=True)
+
+with price_chart_col:
+    st.markdown("<div class='chart-title'>Illustrative Business Electricity Cost Benchmark</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='chart-axis-notes'><span>Placeholder delivered-cost proxy</span><span>A$/MWh</span></div>",
+        unsafe_allow_html=True,
+    )
+    price_fig = go.Figure()
+    scenario_colors = {
+        "Official transition": "#0b7f94",
+        "Delayed buildout": "#d97b2d",
+        "Accelerated clean grid": "#6aa84f",
+    }
+    for scenario_name in scenario_order:
+        scenario_df = price_placeholder_df[price_placeholder_df["scenario"] == scenario_name]
+        price_fig.add_trace(go.Scatter(
+            x=scenario_df["year"],
+            y=scenario_df["aud_mwh"],
+            mode="lines",
+            name=scenario_name,
+            line=dict(color=scenario_colors[scenario_name], width=2.6),
+            hovertemplate=f"{scenario_name}<br>%{{x}}<br><b>A$%{{y:.0f}}</b>/MWh<extra></extra>",
+        ))
+    price_fig.update_layout(
+        plot_bgcolor=PLOT_BG,
+        paper_bgcolor=PLOT_BG,
+        font=dict(color=PLOT_TEXT, family="IBM Plex Sans, sans-serif", size=13),
+        margin=dict(l=0, r=0, t=8, b=8),
+        height=340,
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, bgcolor="rgba(0,0,0,0)"),
+        xaxis=dict(showgrid=False, color=PLOT_MUTED, dtick=5),
+        yaxis=dict(showgrid=True, gridcolor=PLOT_GRID, color=PLOT_MUTED, title_text="A$/MWh"),
+    )
+    price_fig.update_xaxes(fixedrange=True)
+    price_fig.update_yaxes(fixedrange=True)
+    st.plotly_chart(price_fig, use_container_width=True, config=plotly_config)
+    st.markdown("""
+    <div class="section-text" style="margin-top: 0.6rem;">
+    This second chart is not a tariff quote. It is a placeholder for a later <strong>business cost benchmark</strong> layer that could combine wholesale expectations, network pressure, and transition-delivery assumptions into an illustrative range. 
+    In the eventual version, each line should be source-linked to public planning and industry commentary, so the user can distinguish official pathway assumptions from delayed-buildout risk or faster clean-grid delivery.
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+<div class="chart-insight">
+  <strong>Placeholder design note.</strong> These long-horizon visuals are intentionally not presented as hard predictions. 
+  They are scaffolding for a later scenario engine, where assumptions from DCCEEW, AEMO, the Clean Energy Council, and other market sources can be versioned, compared, and cited directly.
+</div>
+""", unsafe_allow_html=True)
 
 
 # ── D.3  Insight Callout ────────────────────────────────────
