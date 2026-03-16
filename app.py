@@ -49,6 +49,12 @@ if current_time - st.session_state.last_refresh_time > 300:
     st.session_state.last_refresh_time = current_time
     st.rerun()
 
+# Timestamp display function
+def format_refresh_time():
+    """Return formatted last refresh timestamp for display."""
+    from datetime import datetime
+    return datetime.fromtimestamp(st.session_state.last_refresh_time).strftime("%H:%M:%S")
+
 # ─────────────────────────────────────────────────────────────
 # CSS Design System
 # ─────────────────────────────────────────────────────────────
@@ -2648,6 +2654,11 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ── Live data status ──────────────────────────────────────────
+st.divider()
+col1, col2 = st.columns([3, 1])
+with col2:
+    st.caption(f"🔄 Last refreshed: {format_refresh_time()}")
 
 # ── Footer ───────────────────────────────────────────────────
 st.markdown("""
