@@ -1,0 +1,39 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: "Raw AEMO data landed as Parquet by ingestion/bronze_writer.py"
+    meta:
+      layer: bronze
+    tables:
+      - name: dispatch_scada
+        description: "AEMO Dispatch SCADA 5-minute generation readings"
+        external:
+          location: "data/bronze/dispatch_scada.parquet"
+        columns:
+          - name: SETTLEMENTDATE
+            description: "5-minute dispatch interval end timestamp"
+          - name: DUID
+            description: "Dispatchable Unit Identifier"
+          - name: SCADAVALUE
+            description: "Generation output in MW"
+
+      - name: generator_metadata
+        description: "AEMO generator registration metadata (DUID lookup)"
+        external:
+          location: "data/bronze/generator_metadata.parquet"
+        columns:
+          - name: DUID
+          - name: Unit Name
+          - name: Technology Type
+          - name: Region
+          - name: Dispatch Type
+
+      - name: emissions_factors
+        description: "NGA emissions factors by technology type and scope"
+        external:
+          location: "data/bronze/emissions_factors.parquet"
+        columns:
+          - name: technology_type
+          - name: scope
+          - name: emission_factor_tCO2e_MWh
