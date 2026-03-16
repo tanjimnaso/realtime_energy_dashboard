@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,6 +40,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git add data/bronze/*.parquet 2>/dev/null || true
           git add nem.duckdb
           if git diff --staged --quiet; then
@@ -45,5 +48,4 @@ jobs:
             exit 0
           fi
           git commit -m "chore: update bronze parquet and duckdb build"
-          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push

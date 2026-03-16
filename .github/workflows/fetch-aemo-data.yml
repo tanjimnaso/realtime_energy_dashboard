@@ -44,6 +44,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git add data/dispatch_scada_today.csv
           git add data/dispatch_scada_????-??.csv 2>/dev/null || true
           if git diff --staged --quiet; then
@@ -51,5 +52,4 @@ jobs:
             exit 0
           fi
           git commit -m "Auto: update SCADA data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
