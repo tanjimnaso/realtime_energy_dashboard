@@ -132,8 +132,9 @@ def get_archive_path(period: pd.Period) -> Path:
 
 def write_today(df: pd.DataFrame) -> None:
     """Overwrite today's CSV with only the most recent calendar day in df."""
-    today_date = df["SETTLEMENTDATE"].max().normalize()
-    today_df = df[df["SETTLEMENTDATE"].dt.normalize() == today_date]
+    dates = pd.to_datetime(df["SETTLEMENTDATE"])
+    today_date = dates.max().normalize()
+    today_df = df[dates.dt.normalize() == today_date]
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     today_df.to_csv(TODAY_CSV, index=False)
     print(f"Wrote {len(today_df)} rows to {TODAY_CSV.name} ({today_date.date()})")
@@ -141,7 +142,8 @@ def write_today(df: pd.DataFrame) -> None:
 
 def append_to_monthly_archive(df: pd.DataFrame) -> None:
     """Upsert df rows into per-month archive files, deduplicating on SETTLEMENTDATE+DUID."""
-    for period, month_df in df.groupby(df["SETTLEMENTDATE"].dt.to_period("M")):
+    dates = pd.to_datetime(df["SETTLEMENTDATE"])
+    for period, month_df in df.groupby(dates.dt.to_period("M")):
         archive_path = get_archive_path(period)
         if archive_path.exists():
             existing = pd.read_csv(archive_path, parse_dates=["SETTLEMENTDATE"])
