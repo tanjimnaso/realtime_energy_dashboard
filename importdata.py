@@ -19,7 +19,6 @@ from bs4 import BeautifulSoup
 BASE_URL = "https://nemweb.com.au"
 SCADA_URL = f"{BASE_URL}/Reports/Current/Dispatch_SCADA/"
 DATA_DIR = Path(__file__).resolve().parent / "data"
-OUTPUT_CSV = DATA_DIR / "dispatch_scada.csv"
 TODAY_CSV = DATA_DIR / "dispatch_scada_today.csv"
 KEEP_COLUMNS = ["SETTLEMENTDATE", "DUID", "SCADAVALUE"]
 REQUEST_TIMEOUT_SECONDS = int(os.getenv("AEMO_REQUEST_TIMEOUT_SECONDS", "30"))
@@ -108,23 +107,6 @@ def download_and_extract(links):
     return new_data
 
 
-def load_existing():
-    """Load the existing CSV if it exists, otherwise return empty DataFrame."""
-    if OUTPUT_CSV.exists():
-        existing = pd.read_csv(OUTPUT_CSV)
-        print(f"Loaded {len(existing)} existing rows")
-        return existing
-    print("No existing CSV found — starting fresh")
-    return pd.DataFrame(columns=KEEP_COLUMNS)
-
-
-def save(df):
-    """Write DataFrame to CSV, creating the data/ directory if needed."""
-    OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(OUTPUT_CSV, index=False)
-    print(f"Saved {len(df)} rows to {OUTPUT_CSV}")
-
-
 def get_archive_path(period: pd.Period) -> Path:
     """Return the monthly archive path for a given period (e.g. 2026-03)."""
     return DATA_DIR / f"dispatch_scada_{period}.csv"
@@ -155,16 +137,24 @@ def append_to_monthly_archive(df: pd.DataFrame) -> None:
         print(f"  Archive {archive_path.name}: {len(month_df)} rows ({size_mb:.1f} MB)")
 
 
+def latest_settlement_from_archives() -> pd.Timestamp | None:
+    """Derive the most recent SETTLEMENTDATE from existing monthly archive files."""
+    archive_files = sorted(DATA_DIR.glob("dispatch_scada_????-??.csv"))
+    if not archive_files:
+        return None
+    latest_file = archive_files[-1]
+    df = pd.read_csv(latest_file, usecols=["SETTLEMENTDATE"])
+    ts = pd.to_datetime(df["SETTLEMENTDATE"]).max()
+    print(f"Latest saved interval (from {latest_file.name}): {ts}")
+    return ts
+
+
 def main():
     print("=" * 60)
     print("AEMO Dispatch SCADA Importer")
     print("=" * 60)
 
-    existing = load_existing()
-    latest_settlement = None
-    if not existing.empty:
-        latest_settlement = pd.to_datetime(existing["SETTLEMENTDATE"]).max()
-        print(f"Latest saved interval: {latest_settlement}")
+    latest_settlement = latest_settlement_from_archives()
 
     links = get_zip_links(latest_settlement)
     if not links:
@@ -177,16 +167,13 @@ def main():
         print("Nothing new to save.")
         return
 
-    combined = pd.concat([existing, new_data], ignore_index=True)
+    before = len(new_data)
+    new_data.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
+    print(f"Dropped {before - len(new_data)} duplicate rows")
 
-    before = len(combined)
-    combined.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
-    print(f"Dropped {before - len(combined)} duplicate rows")
-
-    combined.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
-    save(combined)
-    write_today(combined)
-    append_to_monthly_archive(combined)
+    new_data.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
+    write_today(new_data)
+    append_to_monthly_archive(new_data)
 
     print("=" * 60)
     print("Done!")
