@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: silver_dispatch_interval
+    description: "Typed and deduplicated 5-minute SCADA dispatch intervals with data quality flags"
+    columns:
+      - name: settlement_date
+        description: "Dispatch interval end timestamp (UTC+10 AEST as published by AEMO)"
+        tests:
+          - not_null
+      - name: duid
+        description: "Dispatchable Unit Identifier"
+        tests:
+          - not_null
+      - name: scada_mw
+        description: "Generation output in MW"
+        tests:
+          - not_null
+      - name: dq_flag
+        description: "True if scada_mw is outside the plausible range (< 0 or > 5000 MW)"
+        tests:
+          - not_null
