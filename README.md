@@ -50,7 +50,13 @@ The inspiration for this project came from a Financial Times article:<br>
 https://www.ft.com/content/b0f83b19-1cd6-4876-b2dd-88c331d7744a<br>
 <img src="images/ft_article.jpg" width="50%">
 
-The core analytical question is:
+There's an estimated $100 Billion of foreign investments (mostly US firms) coming in to build out data centres in Australia. Data centres currently consume 2% of the NEMs output, expected to grow to 12%.<br>
+
+Data centres employ few people, and most of the money goes back to the US. The claimed goal is to empower future Australian businesses with stronger data infrastructure. The environmental impact on water, fuel sourcing, and emissions will be significant.<br>
+
+What signals would we look for in the market that Australians and Australian businesses are benefitting from, or losing out due to hosting foreign infrastructure.
+
+###  The core analytical question is:
 
 > How clean or dirty was the NEM, by region and interval, and what does that imply for corporate Scope 2 reporting, renewable timing, and operational load-shifting?
 
@@ -61,7 +67,7 @@ This repo intentionally separates two products:
 - `Historical context and transition narrative`
   Focused on long-run market context, planning signals, and scenario storytelling.
 
-They should not be conflated in the data model or the README.
+
 
 ## Current implementation
 
