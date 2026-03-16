@@ -4,29 +4,22 @@ Australia's NEM produces 200TWh of electricity annually, by 2050 it's expected t
 
 Australia's mandatory climate disclosure regime (Scope 2 reporting under AASB S2) makes granular electricity-emissions data a real business need, so businesses are incentivised to time their energy impact during low emissions periods. Otherwise their emissions impact affects their green certification, the offset pathway is to buy offsets.
 
-Many businesses are investing in internally, or paying suppliers for products that can calculate their emissions from captured metering data.
+Many businesses are investing into an internal product, or paying suppliers for products that can calculate their emissions from captured metering data.
 
-This data engineering project is designed as the portfolio version of the data platform that Australian energy employers, retailers, consultancies, and sustainability teams are building:
-1. GitHub Actions (Every 5 Minutes)
-The project runs .github/workflows/fetch-aemo-data.yml on a schedule:<br>
-<code>
-   cron: '*/5 * * * *'  # Every 5 minutes
-  workflow_dispatch:
-</code><br>
-This triggers a Python job that:
+This data engineering project is designed as the portfolio version of the data platform that Australian energy employers, retailers, consultancies, and sustainability teams are building:<br>
 
-Checks out the repo<br>
-Runs python importdata.py<br>
-Ingest raw AEMO market data <br>
-Commits the updated CSVs to data/ .csv<br>
-There's a daily_data, and monthly_data.<br>
+>The outcome is a dashboard. Backend, github actions every 5 minutes imports dispatch data from AEMO (import_data.py), drop columns, append rows to CSV.<br>
+> https://nemweb.com.au/Reports/Current/Dispatch_SCADA/ <br>
+> https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors
 
-- calculate regional emissions intensity
-- expose business-facing datasets and dashboards
+> Connect table to 2nd database about genunit fuel type, get DCCEEW workbook for emissions by fuel type.<br>
+https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/nem-forecasting-and-planning/forecasting-and-planning-data/generation-information <br>
+ Filter design connects tables, and calculated emissions from energy output by fuel type.
+
 
 The NEM itself is changing rapidly under the 82% renewables-by-2030 transition narrative.
 
-Initial reading/sources:<br>
+### Initial reading/sources:<br>
 https://www.corrs.com.au/insights/australias-data-centre-boom-needs-an-energy-plan
 
 https://www.theguardian.com/environment/2026/mar/02/datacentres-australia-power-prices-water-supply-emissions
@@ -52,6 +45,10 @@ flowchart LR
 ```
 
 ## Business framing
+
+The inspiration for this project came from a Financial Times article:<br>
+https://www.ft.com/content/b0f83b19-1cd6-4876-b2dd-88c331d7744a
+
 
 The core analytical question is:
 
