@@ -867,6 +867,8 @@ def _enrich(scada: pd.DataFrame, data_dir: Path) -> pd.DataFrame:
 
 def _read_scada_csv(csv_path: Path) -> pd.DataFrame:
     scada = pd.read_csv(csv_path, parse_dates=["SETTLEMENTDATE"])
+    scada["SETTLEMENTDATE"] = pd.to_datetime(scada["SETTLEMENTDATE"], errors="coerce")
+    scada = scada.dropna(subset=["SETTLEMENTDATE"])
     return scada[scada["SCADAVALUE"] > 0].copy()
 
 
@@ -947,6 +949,15 @@ def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     work = df.copy()
+    work["SETTLEMENTDATE"] = pd.to_datetime(work["SETTLEMENTDATE"], errors="coerce")
+    work = work.dropna(subset=["SETTLEMENTDATE"])
+    if work.empty:
+        return pd.DataFrame(
+            columns=[
+                "date", "Region", "total_mwh", "scope1_tco2e", "total_tco2e",
+                "renewable_mwh", "intensity_scope1", "intensity_total", "re_share",
+            ]
+        )
     work["date"] = work["SETTLEMENTDATE"].dt.date
     work["renewable_mwh"] = work["mwh"].where(work["Technology Type"].isin(ZERO_EMISSION), 0.0)
     daily = (
