@@ -20,3 +20,47 @@ models:
         description: "True if scada_mw is outside the plausible range (< 0 or > 5000 MW)"
         tests:
           - not_null
+
+  - name: silver_generator_metadata
+    description: "Normalised AEMO generator metadata with region codes enforced"
+    columns:
+      - name: duid
+        description: "Dispatchable Unit Identifier (primary key)"
+        tests:
+          - not_null
+          - unique
+      - name: unit_name
+        description: "Human-readable generator name"
+      - name: technology_type
+        description: "Generator technology (Coal, Gas Turbine, Solar PV, Wind, Hydro, Battery Storage, Other)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Coal', 'Brown coal', 'Gas Turbine', 'Hydro', 'Wind', 'Solar PV', 'Battery Storage', 'Other']
+      - name: region
+        description: "NEM region code"
+        tests:
+          - accepted_values:
+              values: ['NSW1', 'VIC1', 'QLD1', 'SA1', 'TAS1']
+      - name: dispatch_type
+        description: "AEMO dispatch classification"
+        tests:
+          - accepted_values:
+              values: ['Scheduled', 'Semi-scheduled', 'Non-scheduled', 'Significant Non-scheduled']
+
+  - name: silver_emissions_factor
+    description: "Scope 1 NGA emissions factors by technology type"
+    columns:
+      - name: technology_type_key
+        description: "Lowercase normalised technology type for joining"
+        tests:
+          - not_null
+          - unique
+      - name: technology_type
+        description: "Original technology type label"
+        tests:
+          - not_null
+      - name: emission_factor_tCO2e_MWh
+        description: "Scope 1 emissions factor in tCO2e per MWh"
+        tests:
+          - not_null
