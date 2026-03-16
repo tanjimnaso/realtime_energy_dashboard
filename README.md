@@ -40,6 +40,16 @@ This data engineering project is designed as the portfolio version of the data p
 - [AEMO Generation Information](https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/nem-forecasting-and-planning/forecasting-and-planning-data/generation-information)
 - [DCCEEW National Greenhouse Accounts Factors](https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors)
 
+
+**Medallion architecture:**
+- dbt build Github Action runs
+- Bronze: Converts .csv to .parquet
+- dbt uses Bronze table as source
+- Silver: Columns renamed, remove duplicates, region codes, joins table from Emissions workbook
+- Gold: Emissions calculated, dimension table region, generator
+
+DuckDB to Streamlit app, Gold tables read
+
 ## Architecture
 
 ```mermaid
