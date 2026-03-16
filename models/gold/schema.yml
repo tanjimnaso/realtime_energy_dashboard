@@ -38,11 +38,50 @@ models:
         description: "Total generation in MWh across all generators in the region this interval"
         tests:
           - not_null
-      - name: total_tCO2e
-        description: "Total CO2-equivalent emissions in tonnes for this region-interval"
+      - name: scope1_tco2e
+        description: "Total Scope 1 emissions in tonnes for this region-interval"
         tests:
           - not_null
-      - name: emissions_intensity_gCO2eq_per_kWh
-        description: "Grid emissions intensity in gCO2eq/kWh (location-based Scope 2)"
+      - name: scope3_tco2e
+        description: "Total Scope 3 emissions in tonnes for this region-interval"
+        tests:
+          - not_null
+      - name: total_tco2e
+        description: "Total Scope 1 + 3 CO2-equivalent emissions in tonnes for this region-interval"
+        tests:
+          - not_null
+      - name: emissions_intensity_scope1_gco2eq_per_kwh
+        description: "Grid emissions intensity in gCO2eq/kWh using Scope 1 only"
+        tests:
+          - not_null
+      - name: emissions_intensity_total_gco2eq_per_kwh
+        description: "Grid emissions intensity in gCO2eq/kWh using Scope 1 + 3"
+        tests:
+          - not_null
+
+  - name: fct_generation_mix_interval
+    description: "Region and technology generation/emissions mix per 5-minute interval"
+    columns:
+      - name: settlement_date
+        tests:
+          - not_null
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['NSW1', 'VIC1', 'QLD1', 'SA1', 'TAS1']
+      - name: technology_type
+        tests:
+          - not_null
+      - name: generation_mwh
+        tests:
+          - not_null
+      - name: scope1_tco2e
+        tests:
+          - not_null
+      - name: scope3_tco2e
+        tests:
+          - not_null
+      - name: total_tco2e
         tests:
           - not_null

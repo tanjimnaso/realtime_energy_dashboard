@@ -34,9 +34,16 @@ jobs:
       - name: dbt build (run + test)
         run: dbt build --profiles-dir profiles/
 
-      - name: Commit and push updated database
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: update nem.duckdb from dbt build"
-          file_pattern: "nem.duckdb"
-          commit_options: "--no-verify"
+      - name: Commit generated Bronze and DuckDB outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/bronze/*.parquet 2>/dev/null || true
+          git add nem.duckdb
+          if git diff --staged --quiet; then
+            echo "No dbt artifacts changed."
+            exit 0
+          fi
+          git commit -m "chore: update bronze parquet and duckdb build"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push

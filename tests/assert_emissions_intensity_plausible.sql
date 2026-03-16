@@ -6,7 +6,7 @@
 select
     settlement_date,
     region,
-    emissions_intensity_gCO2eq_per_kWh
+    emissions_intensity_scope1_gco2eq_per_kwh
 from {{ ref('fct_regional_emissions_intensity') }}
-where emissions_intensity_gCO2eq_per_kWh < 0
-   or emissions_intensity_gCO2eq_per_kWh > 1500
+where emissions_intensity_scope1_gco2eq_per_kwh < 0
+   or emissions_intensity_scope1_gco2eq_per_kwh > 1500

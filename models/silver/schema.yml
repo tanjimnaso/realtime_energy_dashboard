@@ -49,7 +49,7 @@ models:
               values: ['Scheduled', 'Semi-scheduled', 'Non-scheduled', 'Significant Non-scheduled']
 
   - name: silver_emissions_factor
-    description: "Scope 1 NGA emissions factors by technology type"
+    description: "NGA emissions factors by technology type with scope 1 and scope 3 columns"
     columns:
       - name: technology_type_key
         description: "Lowercase normalised technology type for joining"
@@ -60,7 +60,11 @@ models:
         description: "Original technology type label"
         tests:
           - not_null
-      - name: emission_factor_tCO2e_MWh
+      - name: ef_scope1_tco2e_mwh
         description: "Scope 1 emissions factor in tCO2e per MWh"
+        tests:
+          - not_null
+      - name: ef_scope3_tco2e_mwh
+        description: "Scope 3 emissions factor in tCO2e per MWh"
         tests:
           - not_null
