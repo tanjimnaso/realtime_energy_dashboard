@@ -1,0 +1,8 @@
+# profiles/profiles.yml
+nem_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: nem.duckdb
+      threads: 4
