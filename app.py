@@ -1444,10 +1444,8 @@ PLOT_BORDER = "#cfdbd7"
 # ─────────────────────────────────────────────────────────────
 # State & filtering
 # ─────────────────────────────────────────────────────────────
-if "selected_date" not in st.session_state:
-    st.session_state.selected_date = date_max
-if "resolution_label" not in st.session_state:
-    st.session_state.resolution_label = "1 hour"
+st.session_state.selected_date = date_max
+st.session_state.resolution_label = "5 minutes"
 if "scope_choice" not in st.session_state:
     st.session_state.scope_choice = "Scope 1 only"
 if "sel_regions" not in st.session_state:
@@ -1815,7 +1813,7 @@ combo_fig.update_yaxes(
     title_text="",
     showgrid=False,
     zeroline=False,
-    range=[0, int(((1600 * interval_minutes / 15) + 99) // 100) * 100],
+    range=[0, max(100, float(agg["tco2e"].max()) * 1.15 if not agg.empty else 100)],
     color=PLOT_MUTED,
     tickfont=dict(size=13),
     automargin=True,
@@ -1825,6 +1823,14 @@ combo_fig.update_xaxes(fixedrange=True)
 combo_fig.update_yaxes(fixedrange=True)
 
 st.markdown(f"<div class='chart-title'>{chart_title}</div>", unsafe_allow_html=True)
+c3, c4 = st.columns([1.35, 2.4], gap="medium")
+with c3:
+    st.radio("Emissions scope", ["Scope 1 only", "Scope 1 + 3 (combined)"],
+             key="scope_choice",
+             help="Scope 1 = direct combustion. Scope 3 = upstream fuel extraction (coal only in NGA 2025).",
+             horizontal=True)
+with c4:
+    st.multiselect("Regions", regions, key="sel_regions")
 st.markdown(
     "<div class='chart-axis-notes'><span>Left, MWh</span><span>Right, t CO&#8322;-e</span></div>",
     unsafe_allow_html=True,
@@ -1833,24 +1839,10 @@ st.plotly_chart(combo_fig, use_container_width=True, config=plotly_config)
 
 
 # ── Controls ────────────────────────────────────────────────
-c1, c2, c3, c4 = st.columns([1.15, 1.1, 1.35, 2.4], gap="medium")
-with c1:
-    st.date_input("Date", min_value=date_min, max_value=date_max,
-                  key="selected_date", format="DD/MM/YYYY")
-with c2:
-    st.selectbox("Interval", list(RESOLUTIONS.keys()), key="resolution_label")
-with c3:
-    st.radio("Emissions scope", ["Scope 1 only", "Scope 1 + 3 (combined)"],
-             key="scope_choice",
-             help="Scope 1 = direct combustion. Scope 3 = upstream fuel extraction (coal only in NGA 2025).",
-             horizontal=True)
-with c4:
-    st.multiselect("Regions", regions, key="sel_regions")
-
 st.markdown(
     f"<div class='meta-line'>AEMO NEM  &middot;  {selected_date.strftime('%d %B %Y')}  &middot;  "
     f"{', '.join(sel_regions) if sel_regions else 'No region selected'}  &middot;  "
-    f"{scope_choice}  &middot;  {resolution_label} intervals</div>",
+    f"{scope_choice}</div>",
     unsafe_allow_html=True
 )
 
@@ -1869,9 +1861,6 @@ st.markdown(
 )
 
 trend_options = [
-    "Today",
-    "Past week",
-    current_fy_ytd_label,
     previous_fy_label,
     "5Y",
     "10Y",
@@ -2294,7 +2283,7 @@ with charts_left:
         plot_bgcolor=PLOT_BG, paper_bgcolor=PLOT_BG,
         font=dict(color=PLOT_TEXT, family="IBM Plex Sans, sans-serif"),
         margin=dict(l=0, r=20, t=8, b=8),
-        height=max(280, len(fuel_mix) * 40),
+        height=320,
         showlegend=False,
         xaxis=dict(showgrid=True, gridcolor=PLOT_GRID, title_text="MWh", color=PLOT_MUTED),
         yaxis=dict(showgrid=False, color=PLOT_TEXT, automargin=True),
@@ -2343,8 +2332,9 @@ with charts_right:
             xaxis=dict(
                 showgrid=False, color=PLOT_MUTED,
                 tickmode="array",
-                tickvals=list(range(0, 24, 2)),
-                ticktext=[f"{h}:00" for h in range(0, 24, 2)],
+                tickvals=[0, 12, 24],
+                ticktext=["00:00", "12:00", "24:00"],
+                range=[0, 24],
                 title_text="Hour of Day",
             ),
             yaxis=dict(
