@@ -31,12 +31,13 @@ st.set_page_config(
 # ─────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap');
 
   :root {
     /* Typography */
-    --font-display: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-display: 'Source Serif 4', Georgia, serif;
     --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
     --text-base: 0.9rem;
     --text-lg: 1.04rem;
     --text-xl: 1.4rem;
@@ -192,12 +193,13 @@ st.markdown("""
     letter-spacing: 0.08em;
   }
   .hero-value {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: calc(var(--text-2xl) * 0.88);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--foreground);
-    letter-spacing: 0.01em;
+    letter-spacing: -0.02em;
     line-height: 0.95;
+    font-variant-numeric: tabular-nums lining-nums;
   }
   .hero-sub {
     font-family: var(--font-body);
@@ -227,13 +229,12 @@ st.markdown("""
   /* ── Section headings ── */
   .section-heading {
     font-family: var(--font-display);
-    font-size: calc(var(--text-2xl) * 0.8);
-    color: var(--accent);
+    font-size: calc(var(--text-2xl) * 0.7);
+    color: var(--foreground);
     font-weight: 600;
-    line-height: 1.05;
+    line-height: 1.15;
     margin: 0 0 0.55rem 0;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
+    letter-spacing: -0.01em;
   }
   .section-sub {
     font-family: var(--font-body);
@@ -558,13 +559,12 @@ st.markdown("""
   /* ── Chart elements ── */
   .chart-title {
     font-family: var(--font-display);
-    font-size: calc(var(--text-xl) * 1.1);
+    font-size: calc(var(--text-xl) * 1.02);
     font-weight: 600;
     color: var(--foreground);
-    line-height: 1.35;
+    line-height: 1.25;
     margin: 0 0 0.55rem 0;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: -0.01em;
   }
   .chart-axis-notes {
     display: flex;
@@ -609,6 +609,10 @@ st.markdown("""
   }
   .info-panel .section-heading {
     margin-bottom: 0.6rem;
+  }
+  code, pre, .stCode {
+    font-family: var(--font-mono) !important;
+    font-variant-numeric: tabular-nums lining-nums;
   }
   .info-panel p,
   .info-panel div,
@@ -1597,8 +1601,8 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
-st.markdown("<h2 class='section-heading'>Generation Mix and Emissions Profile</h2>", unsafe_allow_html=True)
-st.markdown("<p class='section-sub'>Stacked generation by technology with total emissions over the selected day</p>",
+st.markdown("<h2 class='section-heading'>Today's dispatch shows when the grid gets cleaner</h2>", unsafe_allow_html=True)
+st.markdown("<p class='section-sub'>Stacked generation and total emissions reveal how coal, gas, wind, hydro, and solar shape the selected day</p>",
             unsafe_allow_html=True)
 
 dff["period"] = dff["SETTLEMENTDATE"].dt.floor(resolution)
@@ -1748,9 +1752,9 @@ if not has_monthly_archives:
         "Run migrate_to_monthly.py once to materialize monthly archive files."
     )
 
-st.markdown("<h2 class='section-heading'>Historical Daily Trend</h2>", unsafe_allow_html=True)
+st.markdown("<h2 class='section-heading'>Recent history shows whether today's grid is unusual</h2>", unsafe_allow_html=True)
 st.markdown(
-    "<p class='section-sub'>Daily emissions-intensity context across the selected history window</p>",
+    "<p class='section-sub'>Daily emissions intensity provides context for the current day, the recent run-rate, and the previous financial year</p>",
     unsafe_allow_html=True,
 )
 
@@ -1839,9 +1843,9 @@ else:
     st.info("No historical daily trend data is available for the current selection.")
 
 if selected_date == datetime.date.today():
-    st.markdown("<h2 class='section-heading'>Rest of Day Forecast</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='section-heading'>The remainder of today is projected from analog grid days</h2>", unsafe_allow_html=True)
     st.markdown(
-        "<p class='section-sub'>Observed intensity so far, projected remainder of today, and reference curves from recent analog days</p>",
+        "<p class='section-sub'>Observed intensity so far is extended with recent analog days, prior-day structure, and same-date-last-year context</p>",
         unsafe_allow_html=True,
     )
 
@@ -1977,9 +1981,9 @@ if selected_date == datetime.date.today():
         st.info("Not enough historical analog data is available yet to forecast the remainder of today.")
 
 
-st.markdown("<h2 class='section-heading'>Medium-Term and 2050 Outlook</h2>", unsafe_allow_html=True)
+st.markdown("<h2 class='section-heading'>Long-horizon pathways belong in scenarios, not single-point forecasts</h2>", unsafe_allow_html=True)
 st.markdown(
-    "<p class='section-sub'>Placeholder scenario visuals for the later planning layer: historical context for managers, then medium- and long-term generation and price pathways</p>",
+    "<p class='section-sub'>These placeholder scenario views separate operational monitoring from medium- and long-term transition pathways</p>",
     unsafe_allow_html=True,
 )
 
@@ -2002,7 +2006,12 @@ scenario_choice = st.radio(
 scenario_chart_col, price_chart_col = st.columns(2, gap="large")
 
 with scenario_chart_col:
-    st.markdown("<div class='chart-title'>Expected Generation by Technology</div>", unsafe_allow_html=True)
+    scenario_generation_titles = {
+        "Official transition": "Official transition retires coal steadily and lifts wind and solar",
+        "Delayed buildout": "Delayed buildout keeps fossil generation in the mix for longer",
+        "Accelerated clean grid": "Accelerated buildout shifts the system decisively toward clean generation",
+    }
+    st.markdown(f"<div class='chart-title'>{scenario_generation_titles[scenario_choice]}</div>", unsafe_allow_html=True)
     st.markdown(
         "<div class='chart-axis-notes'><span>Placeholder TWh trajectory</span><span>2025 to 2050</span></div>",
         unsafe_allow_html=True,
@@ -2048,7 +2057,12 @@ with scenario_chart_col:
     """, unsafe_allow_html=True)
 
 with price_chart_col:
-    st.markdown("<div class='chart-title'>Illustrative Business Electricity Cost Benchmark</div>", unsafe_allow_html=True)
+    scenario_price_titles = {
+        "Official transition": "Official transition keeps delivered-cost pressure elevated before easing",
+        "Delayed buildout": "Delayed buildout leaves businesses exposed to a higher cost path",
+        "Accelerated clean grid": "Faster clean-grid delivery lowers the long-run business cost proxy",
+    }
+    st.markdown(f"<div class='chart-title'>{scenario_price_titles[scenario_choice]}</div>", unsafe_allow_html=True)
     st.markdown(
         "<div class='chart-axis-notes'><span>Placeholder delivered-cost proxy</span><span>A$/MWh</span></div>",
         unsafe_allow_html=True,
@@ -2127,8 +2141,8 @@ st.markdown(f'<div class="insight-callout">{insight_text}</div>', unsafe_allow_h
 charts_left, charts_right = st.columns(2, gap="large")
 
 with charts_left:
-    st.markdown("<h2 class='section-heading'>Fuel Mix by Region</h2>", unsafe_allow_html=True)
-    st.markdown("<p class='section-sub'>Current-day generation breakdown by technology type</p>",
+    st.markdown("<h2 class='section-heading'>Regional fuel mix shows why the NEM does not clean uniformly</h2>", unsafe_allow_html=True)
+    st.markdown("<p class='section-sub'>The same time of day can look very different across regions because each grid relies on a different mix of coal, gas, hydro, wind, and solar</p>",
                 unsafe_allow_html=True)
 
     fuel_region = st.radio("Region", ["All"] + [r.replace("1", "") for r in regions],
@@ -2172,8 +2186,8 @@ with charts_left:
     st.plotly_chart(fuel_fig, use_container_width=True, config=plotly_config)
 
 with charts_right:
-    st.markdown("<h2 class='section-heading'>Emissions Intensity Across the Day</h2>", unsafe_allow_html=True)
-    st.markdown("<p class='section-sub'>The duck curve, when the grid is clean vs dirty, by hour</p>",
+    st.markdown("<h2 class='section-heading'>Midday usually runs cleaner; the evening ramp lifts intensity</h2>", unsafe_allow_html=True)
+    st.markdown("<p class='section-sub'>The duck-curve view shows when the grid is cleaner, when thermal generation returns, and how fast intensity rises into the evening</p>",
                 unsafe_allow_html=True)
 
     if not hourly_agg.empty and hourly_agg["intensity"].notna().any():
@@ -2260,8 +2274,8 @@ with charts_right:
 
 
 # ── D.6  Timing Cards ──────────────────────────────────────
-st.markdown("<h2 class='section-heading'>Operational Windows</h2>", unsafe_allow_html=True)
-st.markdown("<p class='section-sub'>Best and worst times to run flexible load today</p>",
+st.markdown("<h2 class='section-heading'>Flexible load should sit away from the evening ramp</h2>", unsafe_allow_html=True)
+st.markdown("<p class='section-sub'>These windows translate the day profile into simple operational timing guidance</p>",
             unsafe_allow_html=True)
 
 if not hourly_agg.empty and len(hourly_agg) > 6:
@@ -2320,8 +2334,8 @@ else:
 
 
 # ── D.7  Sector Cards ──────────────────────────────────────
-st.markdown("<h2 class='section-heading'>Industry Impact Profiles</h2>", unsafe_allow_html=True)
-st.markdown("<p class='section-sub'>Illustrative daily emissions for typical operations, and what shifting to the cleanest window could save</p>",
+st.markdown("<h2 class='section-heading'>The same electricity use can produce very different emissions outcomes</h2>", unsafe_allow_html=True)
+st.markdown("<p class='section-sub'>Illustrative operating profiles show how timing changes reported emissions even when total consumption stays constant</p>",
             unsafe_allow_html=True)
 
 clean_4h_intensity = window_metrics.get("Cheapest 4 hours", {}).get("avg_intensity", avg_intensity)
@@ -2367,8 +2381,8 @@ st.markdown(sector_html, unsafe_allow_html=True)
 
 
 # ── D.8  Scope 2 Estimator ─────────────────────────────────
-st.markdown("<h2 class='section-heading'>Scope 2 Estimator</h2>", unsafe_allow_html=True)
-st.markdown("<p class='section-sub'>Type your daily consumption to see illustrative emissions and savings</p>",
+st.markdown("<h2 class='section-heading'>A single operating window can materially change Scope 2</h2>", unsafe_allow_html=True)
+st.markdown("<p class='section-sub'>This illustrative estimator applies the current day profile to a simple operating window and compares it with the cleanest period</p>",
             unsafe_allow_html=True)
 
 est_c1, est_c2 = st.columns([1, 1.5])
@@ -2452,7 +2466,7 @@ with st.expander("Emissions factors reference (NGA 2025)"):
 
 st.markdown("""
 <div class="info-panel section-text">
-<h3 class="section-heading">How this dashboard should be used</h3>
+<h3 class="section-heading">How to read this dashboard</h3>
 This dashboard is a <strong>5-minute near-real-time reference layer</strong> for NEM grid emissions intensity.
 It shows how clean or dirty the grid is by time of day and region, using AEMO dispatch data joined to emissions factors.
 It does <strong>not</strong> calculate a company's official disclosure by itself. Disclosure-grade Scope 2 reporting still requires the company's own interval consumption data.
@@ -2461,7 +2475,7 @@ It does <strong>not</strong> calculate a company's official disclosure by itself
 
 st.markdown("""
 <div class="info-panel section-text">
-<h3 class="section-heading">Data lineage, methodology, and sources</h3>
+<h3 class="section-heading">Methodology, lineage, and sources</h3>
 <b>Coverage</b>: NEM regions only (QLD, NSW, VIC, SA, TAS). Excludes WEM, NT grids, and rooftop solar.<br><br>
 <b>Lineage</b>: <code>dispatch_scada.csv</code> provides 5-minute generator dispatch by DUID, <code>duid_lookup.csv</code> maps DUIDs to technology and region, and <code>emissions_factors.csv</code> provides technology-level emissions factors.<br><br>
 <b>Transform</b>: Python joins those three datasets, filters to positive dispatch, converts dispatch MW into interval MWh with <code>mwh = SCADAVALUE * (5 / 60)</code>, and aggregates by time window and technology.<br><br>
