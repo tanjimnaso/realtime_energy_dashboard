@@ -47,8 +47,8 @@ flowchart LR
 ## Business framing
 
 The inspiration for this project came from a Financial Times article:<br>
-https://www.ft.com/content/b0f83b19-1cd6-4876-b2dd-88c331d7744a
-
+https://www.ft.com/content/b0f83b19-1cd6-4876-b2dd-88c331d7744a<br>
+<img src="images/ft_article.jpg" width="50%">
 
 The core analytical question is:
 
