@@ -35,6 +35,21 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────────────────────────
+# Background Polling for Live Data
+# ─────────────────────────────────────────────────────────────
+import time
+
+# Initialize polling state
+if "last_refresh_time" not in st.session_state:
+    st.session_state.last_refresh_time = time.time()
+
+# Background polling: rerun every 300 seconds (5 minutes, matches data update cadence)
+current_time = time.time()
+if current_time - st.session_state.last_refresh_time > 300:
+    st.session_state.last_refresh_time = current_time
+    st.rerun()
+
+# ─────────────────────────────────────────────────────────────
 # CSS Design System
 # ─────────────────────────────────────────────────────────────
 st.markdown("""
