@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: dim_generator
+    description: "Generator dimension — one row per DUID"
+    columns:
+      - name: duid
+        description: "Dispatchable Unit Identifier (primary key)"
+        tests:
+          - not_null
+          - unique
+      - name: technology_type
+        description: "Generator technology type"
+        tests:
+          - not_null
+      - name: region
+        description: "NEM region code"
+        tests:
+          - accepted_values:
+              values: ['NSW1', 'VIC1', 'QLD1', 'SA1', 'TAS1']
