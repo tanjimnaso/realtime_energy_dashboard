@@ -1041,6 +1041,20 @@ def get_previous_financial_year(selected_date: datetime.date) -> tuple[datetime.
     return fy_start, fy_end, label
 
 
+def get_current_financial_year_ytd(selected_date: datetime.date) -> tuple[datetime.date, datetime.date, str]:
+    """Return the current Australian financial year YTD range and compact label."""
+    if selected_date >= datetime.date(selected_date.year, 7, 1):
+        fy_start = datetime.date(selected_date.year, 7, 1)
+        fy_start_year = selected_date.year
+        fy_end_year = selected_date.year + 1
+    else:
+        fy_start = datetime.date(selected_date.year - 1, 7, 1)
+        fy_start_year = selected_date.year - 1
+        fy_end_year = selected_date.year
+    label = f"YTD {str(fy_start_year)[-2:]}-{str(fy_end_year)[-2:]}"
+    return fy_start, selected_date, label
+
+
 def resolve_trend_window(
     daily_series: pd.DataFrame,
     range_label: str,
@@ -1055,10 +1069,36 @@ def resolve_trend_window(
     min_date = daily_series["date"].min().date()
     max_date = daily_series["date"].max().date()
 
-    if range_label == "MAX":
+    if range_label == "Today":
+        filtered = daily_series[daily_series["date"].dt.date == anchor_date].copy()
+        if filtered.empty:
+            filtered = daily_series[daily_series["date"].dt.date == max_date].copy()
+            if filtered.empty:
+                filtered = daily_series.tail(1).copy()
+        return filtered, f"{filtered['date'].min().date().strftime('%d %b %Y')}"
+
+    if range_label == "Past week":
+        start = max(anchor_date - datetime.timedelta(days=6), min_date)
+        filtered = daily_series[daily_series["date"].dt.date >= start].copy()
+        if filtered.empty:
+            filtered = daily_series.copy()
+        return filtered, f"{filtered['date'].min().date().strftime('%d %b %Y')} - {filtered['date'].max().date().strftime('%d %b %Y')}"
+
+    current_fy_start, current_fy_end, current_fy_label = get_current_financial_year_ytd(anchor_date)
+    if range_label == current_fy_label:
+        window_start = max(current_fy_start, min_date)
+        filtered = daily_series[
+            daily_series["date"].dt.date.between(window_start, current_fy_end)
+        ].copy()
+        if filtered.empty:
+            filtered = daily_series.copy()
+            return filtered, f"{current_fy_label} (showing available history)"
+        return filtered, f"{current_fy_label} · {filtered['date'].min().date().strftime('%d %b %Y')} - {filtered['date'].max().date().strftime('%d %b %Y')}"
+
+    if range_label == "MAX (28 years)":
         return daily_series, f"{min_date.strftime('%d %b %Y')} - {max_date.strftime('%d %b %Y')}"
 
-    if range_label in {"20Y", "10Y", "5Y"}:
+    if range_label in {"10Y", "5Y"}:
         years = int(range_label[:-1])
         start = shift_years_safe(anchor_date, years)
         start = max(start, min_date)
@@ -1414,7 +1454,7 @@ if "sel_regions" not in st.session_state:
     st.session_state.sel_regions = regions.copy()
 _, _, previous_fy_label_default = get_previous_financial_year(datetime.date.today())
 if "trend_range" not in st.session_state:
-    st.session_state.trend_range = "MAX"
+    st.session_state.trend_range = previous_fy_label_default
 
 selected_date = st.session_state.selected_date
 resolution_label = st.session_state.resolution_label
@@ -1422,6 +1462,7 @@ resolution = RESOLUTIONS[resolution_label]
 interval_minutes = INTERVAL_MINUTES[resolution_label]
 scope_choice = st.session_state.scope_choice
 sel_regions = st.session_state.sel_regions
+_, _, current_fy_ytd_label = get_current_financial_year_ytd(selected_date)
 _, _, previous_fy_label = get_previous_financial_year(selected_date)
 
 # Load data for the selected date and filter to chosen regions
@@ -1769,10 +1810,18 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-trend_options = ["MAX", "20Y", "10Y", "5Y", previous_fy_label]
-stored_trend_range = st.session_state.get("trend_range", "MAX")
+trend_options = [
+    "Today",
+    "Past week",
+    current_fy_ytd_label,
+    previous_fy_label,
+    "5Y",
+    "10Y",
+    "MAX (28 years)",
+]
+stored_trend_range = st.session_state.get("trend_range", previous_fy_label)
 if stored_trend_range not in trend_options:
-    stored_trend_range = "MAX"
+    stored_trend_range = previous_fy_label
 trend_range = st.radio(
     "Historical range",
     trend_options,
@@ -2476,27 +2525,32 @@ with st.expander("Emissions factors reference (NGA 2025)"):
     )
 
 st.markdown("""
-<div class="info-panel section-text">
-<h3 class="section-heading">How to read this dashboard</h3>
-This dashboard is a <strong>5-minute near-real-time reference layer</strong> for NEM grid emissions intensity.
-It shows how clean or dirty the grid is by time of day and region, using AEMO dispatch data joined to emissions factors.
-It does <strong>not</strong> calculate a company's official disclosure by itself. Disclosure-grade Scope 2 reporting still requires the company's own interval consumption data.
-</div>
-""", unsafe_allow_html=True)
+<div class="section-text" style="margin-top: 1.1rem;">
+  <h3 class="section-heading">How to read this dashboard</h3>
+  <p>
+    This dashboard is a <strong>5-minute near-real-time reference layer</strong> for NEM grid emissions intensity.
+    It shows how clean or dirty the grid is by time of day and region, using AEMO dispatch data joined to emissions factors.
+    It does <strong>not</strong> calculate a company's official disclosure by itself. Disclosure-grade Scope 2 reporting still requires the company's own interval consumption data.
+  </p>
 
-st.markdown("""
-<div class="info-panel section-text">
-<h3 class="section-heading">Methodology, lineage, and sources</h3>
-<b>Coverage</b>: NEM regions only (QLD, NSW, VIC, SA, TAS). Excludes WEM, NT grids, and rooftop solar.<br><br>
-<b>Lineage</b>: <code>dispatch_scada.csv</code> provides 5-minute generator dispatch by DUID, <code>duid_lookup.csv</code> maps DUIDs to technology and region, and <code>emissions_factors.csv</code> provides technology-level emissions factors.<br><br>
-<b>Transform</b>: Python joins those three datasets, filters to positive dispatch, converts dispatch MW into interval MWh with <code>mwh = SCADAVALUE * (5 / 60)</code>, and aggregates by time window and technology.<br><br>
-<b>Sources</b><br>
-&bull; AEMO Dispatch SCADA:
-<a href="https://nemweb.com.au/Reports/Current/Dispatch_SCADA/">nemweb.com.au</a><br>
-&bull; AEMO Generation Information:
-<a href="https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/nem-forecasting-and-planning/forecasting-and-planning-data/generation-information">aemo.com.au</a><br>
-&bull; National Greenhouse Accounts Factors 2025:
-<a href="https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors">dcceew.gov.au</a>
+  <h3 class="section-heading" style="margin-top: 1.5rem;">Methodology, lineage, and sources</h3>
+  <p>
+    <strong>Coverage.</strong> NEM regions only: QLD, NSW, VIC, SA, and TAS. This excludes WEM, NT grids, and rooftop solar.
+  </p>
+  <p>
+    <strong>Lineage.</strong> <code>dispatch_scada.csv</code> provides 5-minute generator dispatch by DUID, <code>duid_lookup.csv</code> maps DUIDs to technology and region, and <code>emissions_factors.csv</code> provides technology-level emissions factors.
+  </p>
+  <p>
+    <strong>Transform.</strong> Python joins those datasets, filters to positive dispatch, converts dispatch MW into interval MWh using <code>mwh = SCADAVALUE * (5 / 60)</code>, and aggregates by time window and technology.
+  </p>
+  <p>
+    <strong>Sources.</strong> AEMO Dispatch SCADA:
+    <a href="https://nemweb.com.au/Reports/Current/Dispatch_SCADA/">nemweb.com.au</a>.
+    AEMO Generation Information:
+    <a href="https://www.aemo.com.au/energy-systems/electricity/national-electricity-market-nem/nem-forecasting-and-planning/forecasting-and-planning-data/generation-information">aemo.com.au</a>.
+    National Greenhouse Accounts Factors 2025:
+    <a href="https://www.dcceew.gov.au/climate-change/publications/national-greenhouse-accounts-factors">dcceew.gov.au</a>.
+  </p>
 </div>
 """, unsafe_allow_html=True)
 
