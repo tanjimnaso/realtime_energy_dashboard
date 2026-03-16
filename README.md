@@ -1,6 +1,37 @@
 # NEM Emissions Intensity Pipeline
 
-Builds a 5-minute National Electricity Market emissions-intensity pipeline for regional Scope 2 reporting under AASB S2, using AEMO dispatch data, generator metadata, and emissions factors.
+Australia's NEM produces 200TWh of electricity annually, by 2050 it's expected to produce 400TWh.
+
+Australia's mandatory climate disclosure regime (Scope 2 reporting under AASB S2) makes granular electricity-emissions data a real business need, so businesses are incentivised to time their energy impact during low emissions periods. Otherwise their emissions impact affects their green certification, the offset pathway is to buy offsets.
+
+Many businesses are investing in internally, or paying suppliers for products that can calculate their emissions from captured metering data.
+
+This data engineering project is designed as the portfolio version of the data platform that Australian energy employers, retailers, consultancies, and sustainability teams are building:
+1. GitHub Actions (Every 5 Minutes)
+The project runs .github/workflows/fetch-aemo-data.yml on a schedule:<br>
+<code>
+   cron: '*/5 * * * *'  # Every 5 minutes
+  workflow_dispatch:
+</code><br>
+This triggers a Python job that:
+
+Checks out the repo<br>
+Runs python importdata.py<br>
+Ingest raw AEMO market data <br>
+Commits the updated CSVs to data/ .csv<br>
+There's a daily_data, and monthly_data.<br>
+
+- calculate regional emissions intensity
+- expose business-facing datasets and dashboards
+
+The NEM itself is changing rapidly under the 82% renewables-by-2030 transition narrative.
+
+Initial reading/sources:<br>
+https://www.corrs.com.au/insights/australias-data-centre-boom-needs-an-energy-plan
+
+https://www.theguardian.com/environment/2026/mar/02/datacentres-australia-power-prices-water-supply-emissions
+
+https://www.aemo.com.au/-/media/files/stakeholder_consultation/consultations/nem-consultations/2024/2025-iasr-scenarios/final-docs/oxford-economics-australia-data-centre-energy-consumption-report.pdf
 
 ## Architecture
 
@@ -19,17 +50,6 @@ flowchart LR
     F --> J["dbt tests / quality checks"]
     B --> K["Lineage + replayability"]
 ```
-
-## Why this project exists
-
-Australia's mandatory climate disclosure regime now makes granular electricity-emissions data a real business need, not an academic nice-to-have. Large Australian businesses need to explain how emissions vary by region and time of day, while the NEM itself is changing rapidly under the 82% renewables-by-2030 transition narrative.
-
-This project is designed as the portfolio version of the data platform that Australian energy employers, retailers, consultancies, and sustainability teams are actually building:
-
-- ingest raw AEMO market data
-- conform it into auditable analytical tables
-- calculate regional emissions intensity
-- expose business-facing datasets and dashboards
 
 ## Business framing
 
