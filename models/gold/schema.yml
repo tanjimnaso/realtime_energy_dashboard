@@ -18,3 +18,31 @@ models:
         tests:
           - accepted_values:
               values: ['NSW1', 'VIC1', 'QLD1', 'SA1', 'TAS1']
+
+  - name: fct_regional_emissions_intensity
+    description: >
+      Regional grid emissions intensity per 5-minute dispatch interval.
+      Primary analytical output for Scope 2 reporting and dashboard consumption.
+    columns:
+      - name: settlement_date
+        description: "Dispatch interval end timestamp"
+        tests:
+          - not_null
+      - name: region
+        description: "NEM region code"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['NSW1', 'VIC1', 'QLD1', 'SA1', 'TAS1']
+      - name: total_generation_mwh
+        description: "Total generation in MWh across all generators in the region this interval"
+        tests:
+          - not_null
+      - name: total_tCO2e
+        description: "Total CO2-equivalent emissions in tonnes for this region-interval"
+        tests:
+          - not_null
+      - name: emissions_intensity_gCO2eq_per_kWh
+        description: "Grid emissions intensity in gCO2eq/kWh (location-based Scope 2)"
+        tests:
+          - not_null
