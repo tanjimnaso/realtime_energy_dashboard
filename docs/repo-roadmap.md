@@ -78,27 +78,36 @@ Avoid breaking the live app while restructuring.
 
 ## Priority work packages
 
-### Work package 1
+### Work package 1 — Complete
 
 - README rewrite
 - ADR set
 - repo scaffolding
 
-### Work package 2
+### Work package 2 — Complete
 
-- ingestion folder buildout
-- multi-source backfill scripts
-- raw landing conventions
+- ingestion folder buildout (SCADA importer, monthly archive, backfill helper)
+- raw CSV landing in `data/`
 
-### Work package 3
+### Work package 3 — In progress
 
-- dbt project or model scaffold
-- Bronze/Silver/Gold tables
-- tests
+**Stack decision:** dbt Core + DuckDB locally. GCP/BigQuery skipped at this stage.
+Rationale: Azure Databricks + Delta Lake is the production-shaped design target (better fit for Australian energy hiring market). dbt profile swap to cloud is deferred until local models are working.
+
+Deliverables:
+- `ingestion/bronze_writer.py` — converts `data/*.csv` to `data/bronze/*.parquet`
+- `dbt_project.yml` + `profiles/profiles.yml` (DuckDB)
+- `models/sources.yml` — Bronze Parquet as dbt sources
+- `models/silver/` — `silver_dispatch_interval`, `silver_generator_metadata`, `silver_emissions_factor`
+- `models/gold/` — `fct_regional_emissions_intensity`, `dim_generator`
+- `tests/` — singular test for emissions intensity plausibility
+- `.github/workflows/dbt-build.yml` — CI running bronze_writer + dbt build + dbt test
+
+See: [Design doc](/docs/plans/2026-03-16-dbt-duckdb-medallion-design.md)
 
 ### Work package 4
 
-- app refactor to read Gold tables
+- app refactor to read Gold DuckDB tables instead of raw CSVs
 - scenario layer replacement
 - Docker / CI hardening
 

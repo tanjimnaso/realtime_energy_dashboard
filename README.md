@@ -194,15 +194,21 @@ python migrate_to_monthly.py
 
 ## Repository roadmap
 
-The next repo-build steps are:
+**Current work (Work Package 3):** Implementing the Bronze/Silver/Gold data layers using dbt Core + DuckDB locally.
 
-1. Add ingestion scripts for price, regionsum, rooftop PV, metadata, and emissions factors.
-2. Create Bronze/Silver/Gold tables under a dbt project.
-3. Add tests for quality flags and conformance assumptions.
+Stack decision: GCP/BigQuery was considered and rejected at this stage. Azure Databricks + Delta Lake is the production-shaped design target, matching the Australian energy hiring market. dbt Core runs locally against DuckDB (free, fast) and the profile can be swapped to a cloud warehouse once models are working.
+
+The implementation adds:
+1. `ingestion/bronze_writer.py` — converts raw CSVs to Parquet in `data/bronze/`
+2. dbt project with Silver models (typed, tested) and Gold models (business facts)
+3. GitHub Actions CI running dbt build and dbt test on every push
+
+Next steps after that:
 4. Replace placeholder 2050 visuals with sourced scenario tables.
-5. Add Docker Compose and CI around linting, tests, and dbt runs.
+5. Wire `app.py` to read from Gold DuckDB tables.
+6. Add Docker Compose and CI hardening.
 
-See [Repo roadmap](/Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/docs/repo-roadmap.md).
+See [Repo roadmap](docs/repo-roadmap.md) and [Design doc](docs/plans/2026-03-16-dbt-duckdb-medallion-design.md).
 
 ## What I would change at scale
 
