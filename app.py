@@ -1455,6 +1455,9 @@ if "sel_regions" not in st.session_state:
 _, _, previous_fy_label_default = get_previous_financial_year(datetime.date.today())
 if "trend_range" not in st.session_state:
     st.session_state.trend_range = previous_fy_label_default
+_, _, current_fy_ytd_label_default = get_current_financial_year_ytd(datetime.date.today())
+if "top_chart_range" not in st.session_state:
+    st.session_state.top_chart_range = "Today"
 
 selected_date = st.session_state.selected_date
 resolution_label = st.session_state.resolution_label
@@ -1464,6 +1467,7 @@ scope_choice = st.session_state.scope_choice
 sel_regions = st.session_state.sel_regions
 _, _, current_fy_ytd_label = get_current_financial_year_ytd(selected_date)
 _, _, previous_fy_label = get_previous_financial_year(selected_date)
+top_chart_range = st.session_state.top_chart_range
 
 # Load data for the selected date and filter to chosen regions
 _day_df = load_scada_for_date(str(DATA_DIR), selected_date)
@@ -1657,27 +1661,81 @@ st.markdown("<h2 class='section-heading'>Today's dispatch shows when the grid ge
 st.markdown("<p class='section-sub'>Stacked generation and total emissions reveal how coal, gas, wind, hydro, and solar shape the selected day</p>",
             unsafe_allow_html=True)
 
-dff["period"] = dff["SETTLEMENTDATE"].dt.floor(resolution)
+top_chart_options = ["Today", "Past week", current_fy_ytd_label]
+if top_chart_range not in top_chart_options:
+    top_chart_range = "Today"
+top_chart_range = st.radio(
+    "Top chart range",
+    top_chart_options,
+    horizontal=True,
+    index=top_chart_options.index(top_chart_range),
+    label_visibility="collapsed",
+    key="top_chart_range",
+)
+
+if top_chart_range == "Today":
+    combo_source_df = dff.copy()
+    combo_period_label = resolution
+    combo_tickvals = [pd.Timestamp(selected_date), pd.Timestamp(selected_date) + pd.Timedelta(hours=12), pd.Timestamp(selected_date) + pd.Timedelta(hours=24)]
+    combo_ticktext = ["00:00", "12:00", "24:00"]
+    combo_range = [pd.Timestamp(selected_date), pd.Timestamp(selected_date) + pd.Timedelta(hours=24)]
+    chart_subtitle = "Stacked generation and total emissions reveal how coal, gas, wind, hydro, and solar shape the selected day"
+elif top_chart_range == "Past week":
+    past_week_start = selected_date - datetime.timedelta(days=6)
+    combo_source_df = load_full_history(str(DATA_DIR))
+    combo_source_df = combo_source_df[
+        combo_source_df["Region"].isin(sel_regions)
+    ].copy() if sel_regions else combo_source_df.iloc[0:0].copy()
+    combo_source_df = combo_source_df[
+        combo_source_df["SETTLEMENTDATE"].dt.date.between(past_week_start, selected_date)
+    ].copy()
+    combo_period_label = "D"
+    combo_tickvals = pd.to_datetime(sorted(combo_source_df["SETTLEMENTDATE"].dt.normalize().unique())) if not combo_source_df.empty else []
+    combo_ticktext = [pd.Timestamp(ts).strftime("%d %b") for ts in combo_tickvals]
+    combo_range = None
+    chart_subtitle = "Daily generation mix and total emissions show how the last seven days have shifted across the selected regions"
+else:
+    fy_start, fy_end, _ = get_current_financial_year_ytd(selected_date)
+    combo_source_df = load_full_history(str(DATA_DIR))
+    combo_source_df = combo_source_df[
+        combo_source_df["Region"].isin(sel_regions)
+    ].copy() if sel_regions else combo_source_df.iloc[0:0].copy()
+    combo_source_df = combo_source_df[
+        combo_source_df["SETTLEMENTDATE"].dt.date.between(fy_start, fy_end)
+    ].copy()
+    combo_period_label = "MS"
+    combo_tickvals = pd.to_datetime(sorted(combo_source_df["SETTLEMENTDATE"].dt.to_period("M").dt.to_timestamp().unique())) if not combo_source_df.empty else []
+    combo_ticktext = [pd.Timestamp(ts).strftime("%b %y") for ts in combo_tickvals]
+    combo_range = None
+    chart_subtitle = "Monthly generation mix and total emissions place the current financial year in strategic context"
+
+st.markdown(f"<p class='section-sub'>{chart_subtitle}</p>", unsafe_allow_html=True)
+
+if top_chart_range == "Today":
+    combo_source_df["period"] = combo_source_df["SETTLEMENTDATE"].dt.floor(combo_period_label)
+elif top_chart_range == "Past week":
+    combo_source_df["period"] = combo_source_df["SETTLEMENTDATE"].dt.normalize()
+else:
+    combo_source_df["period"] = combo_source_df["SETTLEMENTDATE"].dt.to_period("M").dt.to_timestamp()
 agg = (
-    dff.groupby("period")
+    combo_source_df.groupby("period")
     .agg(mwh=("mwh", "sum"), tco2e=(emission_col, "sum"))
     .reset_index()
 )
-mix = dff.groupby(["period", "Technology Type"]).agg(mwh=("mwh", "sum")).reset_index()
+mix = combo_source_df.groupby(["period", "Technology Type"]).agg(mwh=("mwh", "sum")).reset_index()
 tech_order = [t for t in TECH_COLORS if t in mix["Technology Type"].unique()]
 
-if not interval_agg.empty and period_low > 0:
+if top_chart_range == "Today" and not interval_agg.empty and period_low > 0:
     ratio = period_high / period_low
     best_t = interval_agg["intensity"].idxmin()
     worst_t = interval_agg["intensity"].idxmax()
     chart_title = f"Grid ran {ratio:.1f}x cleaner at {best_t.strftime('%H:%M')} than at {worst_t.strftime('%H:%M')} today"
+elif top_chart_range == "Past week" and not agg.empty:
+    chart_title = "The past week shows how emissions moved with the generation mix"
+elif top_chart_range == current_fy_ytd_label and not agg.empty:
+    chart_title = f"{current_fy_ytd_label} shows how the financial year is building so far"
 else:
     chart_title = "Generation mix and total emissions"
-
-day_start = pd.Timestamp(selected_date)
-day_mid = day_start + pd.Timedelta(hours=12)
-day_end = day_start + pd.Timedelta(hours=24)
-chart_tickvals = [day_start, day_mid, day_end]
 
 combo_fig = make_subplots(specs=[[{"secondary_y": True}]])
 for tech in tech_order:
@@ -1699,7 +1757,7 @@ combo_fig.add_trace(go.Scatter(
     hovertemplate="%{x|%H:%M}<br><b>%{y:,.0f}</b> t CO\u2082-e<extra></extra>",
 ), secondary_y=True)
 
-if clean_window_start is not None and clean_window_end is not None:
+if top_chart_range == "Today" and clean_window_start is not None and clean_window_end is not None:
     combo_fig.add_vrect(
         x0=clean_window_start,
         x1=clean_window_end + pd.Timedelta(minutes=5),
@@ -1720,9 +1778,9 @@ combo_fig.update_layout(
         showgrid=False,
         color=PLOT_MUTED,
         tickmode="array",
-        tickvals=chart_tickvals,
-        ticktext=["00:00", "12:00", "24:00"],
-        range=[day_start, day_end],
+        tickvals=combo_tickvals,
+        ticktext=combo_ticktext,
+        range=combo_range,
         tickangle=0,
         tickfont=dict(size=13),
     ),
