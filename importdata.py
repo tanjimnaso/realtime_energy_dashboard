@@ -27,6 +27,19 @@ OVERLAP_MINUTES = int(os.getenv("AEMO_OVERLAP_MINUTES", "15"))
 ZIP_TIMESTAMP_RE = re.compile(r"(\d{12}|\d{14})")
 
 
+def parse_settlement_series(series: pd.Series) -> pd.Series:
+    """Parse mixed SETTLEMENTDATE formats safely.
+
+    Some archive files contain timestamps with `-` separators and others with `/`.
+    Pandas can choke if it infers a single strict format from the first values, so
+    force mixed parsing when supported and fall back to generic coercion otherwise.
+    """
+    try:
+        return pd.to_datetime(series, errors="coerce", format="mixed")
+    except TypeError:
+        return pd.to_datetime(series, errors="coerce")
+
+
 def parse_zip_timestamp(link):
     """Extract an AEMO timestamp from a zip filename when present."""
     match = ZIP_TIMESTAMP_RE.search(link)
@@ -124,8 +137,8 @@ def rebuild_today_snapshot_from_archives() -> None:
         return
 
     latest_file = archive_files[-1]
-    latest_df = pd.read_csv(latest_file, parse_dates=["SETTLEMENTDATE"])
-    latest_df["SETTLEMENTDATE"] = pd.to_datetime(latest_df["SETTLEMENTDATE"], errors="coerce")
+    latest_df = pd.read_csv(latest_file)
+    latest_df["SETTLEMENTDATE"] = parse_settlement_series(latest_df["SETTLEMENTDATE"])
     latest_df = latest_df.dropna(subset=["SETTLEMENTDATE"])
     if latest_df.empty:
         print(f"{latest_file.name} contains no valid settlement timestamps; skipping today snapshot rebuild.")
@@ -147,7 +160,9 @@ def append_to_monthly_archive(df: pd.DataFrame) -> None:
     for period, month_df in df.groupby(dates.dt.to_period("M")):
         archive_path = get_archive_path(period)
         if archive_path.exists():
-            existing = pd.read_csv(archive_path, parse_dates=["SETTLEMENTDATE"])
+            existing = pd.read_csv(archive_path)
+            existing["SETTLEMENTDATE"] = parse_settlement_series(existing["SETTLEMENTDATE"])
+            existing = existing.dropna(subset=["SETTLEMENTDATE"])
             month_df = pd.concat([existing, month_df], ignore_index=True)
             month_df.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
         month_df.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
@@ -163,7 +178,7 @@ def latest_settlement_from_archives() -> pd.Timestamp | None:
         return None
     latest_file = archive_files[-1]
     df = pd.read_csv(latest_file, usecols=["SETTLEMENTDATE"])
-    ts = pd.to_datetime(df["SETTLEMENTDATE"]).max()
+    ts = parse_settlement_series(df["SETTLEMENTDATE"]).max()
     print(f"Latest saved interval (from {latest_file.name}): {ts}")
     return ts
 
