@@ -2,10 +2,10 @@
 app.py — Real-Time Energy Dashboard
 by Tanjim Islam
 ======================================================
-Data flow:
-  dispatch_scada.csv    → 5-min SCADA generation (MW) per DUID
-  duid_lookup.csv       → DUID → Technology Type, Region
-  emissions_factors.csv → Technology Type → t CO₂-e/MWh (NGA Factors 2025)
+Primary app contract:
+  Bronze Parquet  → dbt Silver/Gold in nem.duckdb → Streamlit views
+Fallback path:
+  Monthly CSV archives + reference CSVs when DuckDB Gold is unavailable
 """
 
 import datetime
@@ -948,7 +948,7 @@ def load_full_history(data_dir_str: str) -> pd.DataFrame:
 
     if not frames:
         raise FileNotFoundError(
-            "No SCADA history found. Expected dispatch_scada.csv or dispatch_scada_YYYY-MM.csv archives."
+            "No SCADA history found. Expected DuckDB Gold outputs or dispatch_scada_YYYY-MM.csv archives."
         )
 
     scada = pd.concat(frames, ignore_index=True)
@@ -1064,6 +1064,84 @@ def load_emissions_intensity_from_duckdb() -> pd.DataFrame:
     except Exception as e:
         st.error(f"Failed to load emissions data from Gold layer: {str(e)}")
         return pd.DataFrame()
+
+
+@st.cache_data(ttl=300)
+def load_dashboard_metadata(data_dir_str: str) -> dict:
+    """Return available date bounds, regions, and archive status for the dashboard."""
+    data_dir = Path(data_dir_str)
+    monthly_files = sorted(glob.glob(str(data_dir / "dispatch_scada_????-??.csv")))
+    has_monthly_archives = bool(monthly_files)
+
+    try:
+        conn = get_db_connection()
+        bounds = conn.execute(
+            """
+            SELECT
+                CAST(min(settlement_date) AS DATE) AS min_date,
+                CAST(max(settlement_date) AS DATE) AS max_date
+            FROM main_gold.fct_regional_emissions_intensity
+            """
+        ).df()
+        region_df = conn.execute(
+            """
+            SELECT DISTINCT region
+            FROM main_gold.dim_generator
+            WHERE region IS NOT NULL
+            ORDER BY region
+            """
+        ).df()
+        conn.close()
+
+        if not bounds.empty and pd.notna(bounds.loc[0, "max_date"]):
+            return {
+                "date_min": pd.Timestamp(bounds.loc[0, "min_date"]).date(),
+                "date_max": pd.Timestamp(bounds.loc[0, "max_date"]).date(),
+                "regions": region_df["region"].dropna().tolist(),
+                "has_monthly_archives": has_monthly_archives,
+            }
+    except Exception:
+        pass
+
+    if monthly_files:
+        earliest_month = Path(monthly_files[0]).stem[-7:]
+        date_min = pd.Period(earliest_month, freq="M").start_time.date()
+    elif (data_dir / "dispatch_scada.csv").exists():
+        min_df = pd.read_csv(data_dir / "dispatch_scada.csv", usecols=["SETTLEMENTDATE"], parse_dates=["SETTLEMENTDATE"])
+        date_min = min_df["SETTLEMENTDATE"].min().date()
+    else:
+        date_min = datetime.date.today()
+
+    lookup_df = pd.read_csv(data_dir / "duid_lookup.csv")
+    regions = sorted(lookup_df["Region"].dropna().unique().tolist())
+
+    return {
+        "date_min": date_min,
+        "date_max": datetime.date.today(),
+        "regions": regions,
+        "has_monthly_archives": has_monthly_archives,
+    }
+
+
+@st.cache_data(ttl=300)
+def load_emissions_factor_reference(data_dir_str: str) -> pd.DataFrame:
+    """Load emissions factors for reference tables, preferring Bronze/duckdb over raw CSV."""
+    try:
+        conn = get_db_connection()
+        df = conn.execute(
+            """
+            SELECT technology_type, scope, emission_factor_tCO2e_MWh
+            FROM bronze.emissions_factors
+            ORDER BY technology_type, scope
+            """
+        ).df()
+        conn.close()
+        if not df.empty:
+            return df
+    except Exception:
+        pass
+
+    return pd.read_csv(Path(data_dir_str) / "emissions_factors.csv")
 
 
 def combine_daily_metrics_for_regions(
@@ -1459,21 +1537,12 @@ except FileNotFoundError as e:
     st.markdown(str(e))
     st.stop()
 
-# ── Derive date range and regions without loading all SCADA data ──
-_monthly_files = sorted(glob.glob(str(DATA_DIR / "dispatch_scada_????-??.csv")))
-if _monthly_files:
-    _earliest_month = Path(_monthly_files[0]).stem[-7:]  # e.g. "2026-02"
-    date_min = pd.Period(_earliest_month, freq="M").start_time.date()
-elif (DATA_DIR / "dispatch_scada.csv").exists():
-    _min_df = pd.read_csv(DATA_DIR / "dispatch_scada.csv", usecols=["SETTLEMENTDATE"], parse_dates=["SETTLEMENTDATE"])
-    date_min = _min_df["SETTLEMENTDATE"].min().date()
-else:
-    date_min = datetime.date.today()
-date_max = datetime.date.today()
-has_monthly_archives = bool(_monthly_files)
-
-_lookup_df = pd.read_csv(DATA_DIR / "duid_lookup.csv")
-regions = sorted(_lookup_df["Region"].dropna().unique().tolist())
+# ── Derive date range and regions, preferring Gold metadata ──
+dashboard_metadata = load_dashboard_metadata(str(DATA_DIR))
+date_min = dashboard_metadata["date_min"]
+date_max = dashboard_metadata["date_max"]
+regions = dashboard_metadata["regions"]
+has_monthly_archives = dashboard_metadata["has_monthly_archives"]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1496,10 +1565,6 @@ RESOLUTIONS = {
     "5 minutes":  "5min",
     "1 hour": "1h",
 }
-INTERVAL_MINUTES = {
-    "5 minutes": 5,
-    "1 hour": 60,
-}
 ILLUSTRATIVE_CARBON_RATE = 75
 
 plotly_config = {
@@ -1520,8 +1585,8 @@ PLOT_BORDER = "#cfdbd7"
 # ─────────────────────────────────────────────────────────────
 # State & filtering
 # ─────────────────────────────────────────────────────────────
-st.session_state.selected_date = date_max
-st.session_state.resolution_label = "5 minutes"
+if "selected_date" not in st.session_state:
+    st.session_state.selected_date = date_max
 if "scope_choice" not in st.session_state:
     st.session_state.scope_choice = "Scope 1 only"
 if "sel_regions" not in st.session_state:
@@ -1534,11 +1599,17 @@ if "top_chart_range" not in st.session_state:
     st.session_state.top_chart_range = "Today"
 
 selected_date = st.session_state.selected_date
-resolution_label = st.session_state.resolution_label
+if selected_date < date_min:
+    selected_date = date_min
+    st.session_state.selected_date = date_min
+if selected_date > date_max:
+    selected_date = date_max
+    st.session_state.selected_date = date_max
+resolution_label = "5 minutes"
 resolution = RESOLUTIONS[resolution_label]
-interval_minutes = INTERVAL_MINUTES[resolution_label]
 scope_choice = st.session_state.scope_choice
-sel_regions = st.session_state.sel_regions
+sel_regions = [region for region in st.session_state.sel_regions if region in regions]
+st.session_state.sel_regions = sel_regions
 _, _, current_fy_ytd_label = get_current_financial_year_ytd(selected_date)
 _, _, previous_fy_label = get_previous_financial_year(selected_date)
 top_chart_range = st.session_state.top_chart_range
@@ -1926,8 +1997,8 @@ source_label = "Live today" if selected_date == datetime.date.today() else "Hist
 st.caption(f"Source: {source_label}")
 if not has_monthly_archives:
     st.caption(
-        "Historical archives are currently being served from dispatch_scada.csv. "
-        "Run migrate_to_monthly.py once to materialize monthly archive files."
+        "Historical archive windows are currently falling back to the available raw CSV history. "
+        "Run migrate_to_monthly.py once to materialize monthly archive files cleanly."
     )
 
 st.markdown("<h2 class='section-heading'>Recent history shows whether today's grid is unusual</h2>", unsafe_allow_html=True)
@@ -2641,7 +2712,7 @@ with st.expander("Raw interval data"):
                  use_container_width=True, hide_index=True)
 
 with st.expander("Emissions factors reference (NGA 2025)"):
-    ef_display = pd.read_csv(DATA_DIR / "emissions_factors.csv")
+    ef_display = load_emissions_factor_reference(str(DATA_DIR))
     st.dataframe(ef_display, use_container_width=True, hide_index=True)
     st.caption(
         "Source: National Greenhouse Accounts Factors 2025, DCCEEW. "
@@ -2662,10 +2733,10 @@ st.markdown("""
     <strong>Coverage.</strong> NEM regions only: QLD, NSW, VIC, SA, and TAS. This excludes WEM, NT grids, and rooftop solar.
   </p>
   <p>
-    <strong>Lineage.</strong> <code>dispatch_scada.csv</code> provides 5-minute generator dispatch by DUID, <code>duid_lookup.csv</code> maps DUIDs to technology and region, and <code>emissions_factors.csv</code> provides technology-level emissions factors.
+    <strong>Lineage.</strong> Bronze Parquet lands raw Dispatch SCADA, generator metadata, and emissions factors. dbt then materialises typed Silver tables and Gold analytical tables in <code>nem.duckdb</code>, which this dashboard reads first before falling back to raw CSV history.
   </p>
   <p>
-    <strong>Transform.</strong> Python joins those datasets, filters to positive dispatch, converts dispatch MW into interval MWh using <code>mwh = SCADAVALUE * (5 / 60)</code>, and aggregates by time window and technology.
+    <strong>Transform.</strong> Dispatch MW is converted into interval MWh using <code>mwh = SCADAVALUE * (5 / 60)</code>, then aggregated by region, interval, and technology. Gold outputs expose both generation mix and regional emissions intensity for Scope 1 and combined Scope 1 + 3 views.
   </p>
   <p>
     <strong>Sources.</strong> AEMO Dispatch SCADA:
