@@ -4,7 +4,7 @@
 
 Australia's mandatory climate disclosure regime (Scope 2 reporting under AASB S2) makes granular electricity-emissions data a real business need.
 
-Many businesses are investing into an internal product, or paying suppliers for products that can calculate their emissions from captured metering data.
+Many businesses are investing into an internal product, or paying vendors for products that can calculate their emissions from captured metering data.
 
 ### Sources:<br>
 https://www.corrs.com.au/insights/australias-data-centre-boom-needs-an-energy-plan
