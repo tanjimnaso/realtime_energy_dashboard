@@ -901,6 +901,49 @@ def _read_scada_csv(csv_path: Path) -> pd.DataFrame:
     return scada[scada["SCADAVALUE"] > 0].copy()
 
 
+def _aggregate_to_generation_mix(df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate enriched DUID-level rows into the app's interval generation-mix shape."""
+    if df.empty:
+        return pd.DataFrame(
+            columns=[
+                "SETTLEMENTDATE",
+                "Region",
+                "Technology Type",
+                "mwh",
+                "tco2e_scope1",
+                "tco2e_scope3",
+                "tco2e_total",
+            ]
+        )
+
+    grouped = (
+        df.groupby(["SETTLEMENTDATE", "Region", "Technology Type"], as_index=False)
+        .agg(
+            mwh=("mwh", "sum"),
+            tco2e_scope1=("tco2e_scope1", "sum"),
+            tco2e_scope3=("tco2e_scope3", "sum"),
+            tco2e_total=("tco2e_total", "sum"),
+        )
+        .sort_values(["SETTLEMENTDATE", "Region", "Technology Type"])
+    )
+    return grouped
+
+
+@st.cache_data(ttl=300)
+def load_live_today_generation_mix(data_dir_str: str, file_mtime: float = 0.0) -> pd.DataFrame:
+    """Load the current day's CSV snapshot and aggregate it to region × technology × interval."""
+    data_dir = Path(data_dir_str)
+    today_csv = data_dir / "dispatch_scada_today.csv"
+    if not today_csv.exists():
+        return pd.DataFrame()
+
+    scada = _read_scada_csv(today_csv)
+    if scada.empty:
+        return pd.DataFrame()
+
+    return _aggregate_to_generation_mix(_enrich(scada, data_dir))
+
+
 @st.cache_data(ttl=300)
 def load_generation_mix_from_duckdb() -> pd.DataFrame:
     """Load Gold interval generation mix from DuckDB for dashboard use."""
@@ -929,11 +972,20 @@ def load_generation_mix_from_duckdb() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-@st.cache_data(ttl=3600)
-def load_full_history(data_dir_str: str) -> pd.DataFrame:
+@st.cache_data(ttl=300)
+def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0) -> pd.DataFrame:
     """Load the full available history, preferring DuckDB Gold and falling back to raw CSV enrichment."""
     gold_history = load_generation_mix_from_duckdb()
+    live_today = load_live_today_generation_mix(data_dir_str, file_mtime=today_file_mtime)
     if not gold_history.empty:
+        if not live_today.empty:
+            gold_max = gold_history["SETTLEMENTDATE"].max()
+            live_max = live_today["SETTLEMENTDATE"].max()
+            live_date = live_today["SETTLEMENTDATE"].dt.date.max()
+            if pd.isna(gold_max) or live_max > gold_max:
+                gold_history = gold_history[gold_history["SETTLEMENTDATE"].dt.date != live_date]
+                merged = pd.concat([gold_history, live_today], ignore_index=True)
+                return merged.sort_values(["SETTLEMENTDATE", "Region", "Technology Type"]).reset_index(drop=True)
         return gold_history
 
     data_dir = Path(data_dir_str)
@@ -960,7 +1012,7 @@ def load_full_history(data_dir_str: str) -> pd.DataFrame:
 @st.cache_data(ttl=300)
 def load_today(data_dir_str: str, file_mtime: float = 0.0) -> pd.DataFrame:
     """Load today's interval dataset, preferring Gold and falling back to raw CSV."""
-    history = load_full_history(data_dir_str)
+    history = load_full_history(data_dir_str, today_file_mtime=file_mtime)
     if history.empty:
         return history
 
@@ -971,7 +1023,9 @@ def load_today(data_dir_str: str, file_mtime: float = 0.0) -> pd.DataFrame:
 @st.cache_data(ttl=3600)
 def load_month(data_dir_str: str, year_month: str) -> pd.DataFrame:
     """Load a monthly history window, preferring Gold and falling back to raw CSV."""
-    history = load_full_history(data_dir_str)
+    today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
+    mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
+    history = load_full_history(data_dir_str, today_file_mtime=mtime)
     month_mask = history["SETTLEMENTDATE"].dt.strftime("%Y-%m") == year_month
     return history[month_mask].copy()
 
@@ -1029,7 +1083,9 @@ def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
 @st.cache_data(ttl=3600)
 def load_historical_daily_metrics(data_dir_str: str) -> pd.DataFrame:
     """Aggregate historical daily metrics from monthly archives or the monolithic history file."""
-    history = load_full_history(data_dir_str)
+    today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
+    mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
+    history = load_full_history(data_dir_str, today_file_mtime=mtime)
     return aggregate_daily_metrics(history)
 
 
