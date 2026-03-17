@@ -29,12 +29,17 @@ This repo intentionally separates two products:
 This data engineering project is designed as the portfolio version of the data platform that Australian energy employers, retailers, consultancies, and sustainability teams are building:<br>
 
 **What it does:**
-- GitHub Actions fetches AEMO dispatch data every 5 minutes
-- Appends to CSV
+- Scheduler is Google Cloud Run, runs importdata.py every 5 minutes
+- Downloads NEMWEB dispatch .zip
+- Appends to daily_table.csv
 - Joins generator unit fuel type from AEMO Generation Information
 - Applies DCCEEW emissions factors to calculate emissions by fuel type
 - Streamlit dashboard visualises live grid emissions intensity, background poll for new data triggered from new writes on Github
 > st.session_state + time.sleep()
+
+- Goole Cloud Run also writes to monthly_table.csv, dbt runs nightly to build bronze, silver, gold tables.
+
+
 
 **Data sources:**
 - [AEMO Dispatch SCADA](https://nemweb.com.au/Reports/Current/Dispatch_SCADA/)
@@ -95,6 +100,7 @@ The key design decisions are documented in:
 - [ADR-0002: Use incremental batch ingestion instead of streaming](/Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/docs/adr/0002-batch-over-streaming.md)
 - [ADR-0003: Use Parquet and DuckDB for local development](/Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/docs/adr/0003-parquet-duckdb-local-dev.md)
 - [ADR-0004: Separate disclosure-grade emissions history from 1998+ market context](/Users/tanjimislam/PycharmProjects/realtime_energy_dashboard/docs/adr/0004-history-boundary-and-comparability.md)
+- GitHub Actions for scheduling isn't reliable to run every 5 minutes, moved to Google Cloud Run.
 
 
 
