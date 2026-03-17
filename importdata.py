@@ -15,6 +15,11 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 
+try:
+    from google.cloud import storage
+except ImportError:  # pragma: no cover - optional outside cloud/runtime envs
+    storage = None
+
 # ── Config ────────────────────────────────────────────────────────
 BASE_URL = "https://nemweb.com.au"
 SCADA_URL = f"{BASE_URL}/Reports/Current/Dispatch_SCADA/"
@@ -25,6 +30,56 @@ REQUEST_TIMEOUT_SECONDS = int(os.getenv("AEMO_REQUEST_TIMEOUT_SECONDS", "30"))
 LOOKBACK_ARCHIVES = int(os.getenv("AEMO_ZIP_LOOKBACK", "288"))
 OVERLAP_MINUTES = int(os.getenv("AEMO_OVERLAP_MINUTES", "15"))
 ZIP_TIMESTAMP_RE = re.compile(r"(\d{12}|\d{14})")
+GCS_BUCKET = os.getenv("GCS_BUCKET", "").strip()
+_storage_client = None
+
+
+def gcs_enabled() -> bool:
+    return bool(GCS_BUCKET)
+
+
+def get_storage_client():
+    global _storage_client
+    if _storage_client is None:
+        if storage is None:
+            raise RuntimeError("google-cloud-storage is required when GCS_BUCKET is set.")
+        _storage_client = storage.Client()
+    return _storage_client
+
+
+def get_bucket():
+    return get_storage_client().bucket(GCS_BUCKET)
+
+
+def list_monthly_archive_names() -> list[str]:
+    if gcs_enabled():
+        blobs = get_storage_client().list_blobs(GCS_BUCKET, prefix="dispatch_scada_")
+        return sorted(
+            blob.name for blob in blobs
+            if re.fullmatch(r"dispatch_scada_\d{4}-\d{2}\.csv", blob.name)
+        )
+    return sorted(path.name for path in DATA_DIR.glob("dispatch_scada_????-??.csv"))
+
+
+def read_csv_from_storage(filename: str, **kwargs) -> pd.DataFrame:
+    if gcs_enabled():
+        blob = get_bucket().blob(filename)
+        if not blob.exists():
+            raise FileNotFoundError(f"{filename} not found in gs://{GCS_BUCKET}")
+        text = blob.download_as_text()
+        return pd.read_csv(io.StringIO(text), **kwargs)
+    return pd.read_csv(DATA_DIR / filename, **kwargs)
+
+
+def write_df_to_storage(df: pd.DataFrame, filename: str) -> None:
+    csv_text = df.to_csv(index=False)
+    if gcs_enabled():
+        blob = get_bucket().blob(filename)
+        blob.upload_from_string(csv_text, content_type="text/csv")
+        print(f"Written {filename} to gs://{GCS_BUCKET}/{filename}")
+    else:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        (DATA_DIR / filename).write_text(csv_text)
 
 
 def parse_settlement_series(series: pd.Series) -> pd.Series:
@@ -131,17 +186,17 @@ def rebuild_today_snapshot_from_archives() -> None:
     This avoids truncating the today snapshot to only the most recently fetched ZIP window.
     At midnight, the latest calendar day automatically rolls forward and the file resets.
     """
-    archive_files = sorted(DATA_DIR.glob("dispatch_scada_????-??.csv"))
+    archive_files = list_monthly_archive_names()
     if not archive_files:
         print("No monthly archives available yet; skipping today snapshot rebuild.")
         return
 
     latest_file = archive_files[-1]
-    latest_df = pd.read_csv(latest_file)
+    latest_df = read_csv_from_storage(latest_file)
     latest_df["SETTLEMENTDATE"] = parse_settlement_series(latest_df["SETTLEMENTDATE"])
     latest_df = latest_df.dropna(subset=["SETTLEMENTDATE"])
     if latest_df.empty:
-        print(f"{latest_file.name} contains no valid settlement timestamps; skipping today snapshot rebuild.")
+        print(f"{latest_file} contains no valid settlement timestamps; skipping today snapshot rebuild.")
         return
 
     latest_date = latest_df["SETTLEMENTDATE"].dt.normalize().max()
@@ -149,9 +204,8 @@ def rebuild_today_snapshot_from_archives() -> None:
     today_df.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
     today_df.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
 
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    today_df.to_csv(TODAY_CSV, index=False)
-    print(f"Rebuilt {TODAY_CSV.name} with {len(today_df)} rows for {latest_date.date()} from {latest_file.name}")
+    write_df_to_storage(today_df, TODAY_CSV.name)
+    print(f"Rebuilt {TODAY_CSV.name} with {len(today_df)} rows for {latest_date.date()} from {latest_file}")
 
 
 def append_to_monthly_archive(df: pd.DataFrame) -> None:
@@ -159,27 +213,29 @@ def append_to_monthly_archive(df: pd.DataFrame) -> None:
     dates = pd.to_datetime(df["SETTLEMENTDATE"])
     for period, month_df in df.groupby(dates.dt.to_period("M")):
         archive_path = get_archive_path(period)
-        if archive_path.exists():
-            existing = pd.read_csv(archive_path)
+        archive_name = archive_path.name
+        archive_exists = get_bucket().blob(archive_name).exists() if gcs_enabled() else archive_path.exists()
+        if archive_exists:
+            existing = read_csv_from_storage(archive_name)
             existing["SETTLEMENTDATE"] = parse_settlement_series(existing["SETTLEMENTDATE"])
             existing = existing.dropna(subset=["SETTLEMENTDATE"])
             month_df = pd.concat([existing, month_df], ignore_index=True)
             month_df.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
         month_df.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
-        month_df.to_csv(archive_path, index=False)
-        size_mb = archive_path.stat().st_size / 1_048_576
-        print(f"  Archive {archive_path.name}: {len(month_df)} rows ({size_mb:.1f} MB)")
+        write_df_to_storage(month_df, archive_name)
+        size_mb = len(month_df.to_csv(index=False).encode("utf-8")) / 1_048_576
+        print(f"  Archive {archive_name}: {len(month_df)} rows ({size_mb:.1f} MB)")
 
 
 def latest_settlement_from_archives() -> pd.Timestamp | None:
     """Derive the most recent SETTLEMENTDATE from existing monthly archive files."""
-    archive_files = sorted(DATA_DIR.glob("dispatch_scada_????-??.csv"))
+    archive_files = list_monthly_archive_names()
     if not archive_files:
         return None
     latest_file = archive_files[-1]
-    df = pd.read_csv(latest_file, usecols=["SETTLEMENTDATE"])
+    df = read_csv_from_storage(latest_file, usecols=["SETTLEMENTDATE"])
     ts = parse_settlement_series(df["SETTLEMENTDATE"]).max()
-    print(f"Latest saved interval (from {latest_file.name}): {ts}")
+    print(f"Latest saved interval (from {latest_file}): {ts}")
     return ts
 
 
