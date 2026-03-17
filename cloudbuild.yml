@@ -1,13 +1,25 @@
-steps:
-  - name: gcr.io/cloud-builders/docker
-    args:
-      - build
-      - -t
-      - ${_IMAGE_URI}
-      - .
+name: Build and Push to Artifact Registry
 
-images:
-  - ${_IMAGE_URI}
+on:
+  push:
+    branches: [main]
 
-substitutions:
-  _IMAGE_URI: australia-southeast1-docker.pkg.dev/$PROJECT_ID/realtime-energy/importer:latest
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push
+        run: |
+          docker build -t us-central1-docker.pkg.dev/realtimeenergydata/aemorawartifact/aemo-app:latest .
+          docker push us-central1-docker.pkg.dev/realtimeenergydata/aemorawartifact/aemo-app:latest
