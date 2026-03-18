@@ -1717,8 +1717,8 @@ plotly_config = {
 }
 
 PLOT_BG = "#ffffff"
-PLOT_TEXT = "#223a42"
-PLOT_MUTED = "#6a7c80"
+PLOT_TEXT = "#000000"
+PLOT_MUTED = "#333333"
 PLOT_GRID = "#d9dfdd"
 PLOT_BORDER = "#cfdbd7"
 
