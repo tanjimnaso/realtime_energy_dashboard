@@ -17,7 +17,10 @@ from plotly.subplots import make_subplots
 from pathlib import Path
 import duckdb
 
-from data_bootstrap import ensure_required_data
+try:
+    from data_bootstrap import ensure_required_data
+except ImportError:
+    ensure_required_data = None
 import os
 import io
 import datetime
@@ -1666,7 +1669,10 @@ try:
     if GCS_BUCKET:
         DATA_DIR = APP_DIR / "data"
     else:
-        DATA_DIR = ensure_required_data(APP_DIR)
+        if ensure_required_data:
+            DATA_DIR = ensure_required_data(APP_DIR)
+        else:
+            DATA_DIR = APP_DIR / "data"
 except FileNotFoundError as e:
     st.error("### Data files not found")
     st.markdown(str(e))
@@ -1718,8 +1724,8 @@ plotly_config = {
 
 PLOT_BG = "#ffffff"
 PLOT_TEXT = "#000000"
-PLOT_MUTED = "#333333"
-PLOT_GRID = "#d9dfdd"
+PLOT_MUTED = "#000000"
+PLOT_GRID = "#e1e1e1"
 PLOT_BORDER = "#cfdbd7"
 
 
