@@ -1094,37 +1094,13 @@ def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0) -> pd.Da
     return _enrich(scada, data_dir)
 
 
-@st.cache_data(ttl=300)
-def load_today(data_dir_str: str, file_mtime: float = 0.0) -> pd.DataFrame:
-    """Load today's interval dataset, preferring Gold and falling back to raw CSV."""
-    history = load_full_history(data_dir_str, today_file_mtime=file_mtime)
-    if history.empty:
-        return history
-
-    latest_date = history["SETTLEMENTDATE"].dt.date.max()
-    return history[history["SETTLEMENTDATE"].dt.date == latest_date].copy()
-
-
-@st.cache_data(ttl=3600)
-def load_month(data_dir_str: str, year_month: str) -> pd.DataFrame:
-    """Load a monthly history window, preferring Gold and falling back to raw CSV."""
+def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
+    """Load and filter data for a specific calendar date by slicing the full history."""
     today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
     mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
-    history = load_full_history(data_dir_str, today_file_mtime=mtime)
-    month_mask = history["SETTLEMENTDATE"].dt.strftime("%Y-%m") == year_month
-    return history[month_mask].copy()
-
-
-def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
-    """Load and filter data for a specific calendar date."""
-    today = get_aemo_date()
-    if date == today:
-        today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
-        mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
-        df = load_today(data_dir_str, file_mtime=mtime)
-    else:
-        df = load_month(data_dir_str, date.strftime("%Y-%m"))
+    df = load_full_history(data_dir_str, today_file_mtime=mtime)
     return df[df["SETTLEMENTDATE"].dt.date == date].copy()
+
 
 
 def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
@@ -1167,7 +1143,7 @@ def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
 @st.cache_data(ttl=3600)
 def load_historical_daily_metrics(data_dir_str: str) -> pd.DataFrame:
-    """Aggregate historical daily metrics from monthly archives or the monolithic history file."""
+    """Aggregate all daily metrics continuously using the full history."""
     today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
     mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
     history = load_full_history(data_dir_str, today_file_mtime=mtime)
@@ -1687,7 +1663,7 @@ except FileNotFoundError as e:
 # ── Derive date range and regions, preferring Gold metadata ──
 dashboard_metadata = load_dashboard_metadata(str(DATA_DIR))
 date_min = dashboard_metadata["date_min"]
-date_max = dashboard_metadata["date_max"]
+date_max = get_aemo_date()  # Always allow selecting today, ignoring frozen DB limits
 regions = dashboard_metadata["regions"]
 has_monthly_archives = dashboard_metadata["has_monthly_archives"]
 
@@ -1766,14 +1742,8 @@ top_chart_range = st.session_state.top_chart_range
 _day_df = load_scada_for_date(str(DATA_DIR), selected_date)
 dff = _day_df[_day_df["Region"].isin(sel_regions)].copy() if sel_regions else _day_df.iloc[0:0].copy()
 
-# Historical daily metrics used for long-range trends
-historical_daily_metrics = load_historical_daily_metrics(str(DATA_DIR))
-today_daily_metrics = load_today_daily_metrics(str(DATA_DIR))
-if not today_daily_metrics.empty:
-    historical_daily_metrics = historical_daily_metrics[
-        historical_daily_metrics["date"] != today_daily_metrics["date"].iloc[0]
-    ]
-daily_history = pd.concat([historical_daily_metrics, today_daily_metrics], ignore_index=True)
+# Combine daily metrics used for long-range trends
+daily_history = load_historical_daily_metrics(str(DATA_DIR))
 daily_history = combine_daily_metrics_for_regions(daily_history, sel_regions, scope_choice)
 
 # ── Auto-refresh every 5 minutes when viewing today's live data ──
