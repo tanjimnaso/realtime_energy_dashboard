@@ -20,6 +20,13 @@ import duckdb
 from data_bootstrap import ensure_required_data
 import os
 import io
+import datetime
+
+def get_aemo_date() -> datetime.date:
+    return pd.Timestamp.utcnow().tz_convert("Australia/Brisbane").date()
+
+def get_aemo_now() -> pd.Timestamp:
+    return pd.Timestamp.utcnow().tz_convert("Australia/Brisbane")
 
 try:
     from google.cloud import storage
@@ -1085,7 +1092,7 @@ def load_month(data_dir_str: str, year_month: str) -> pd.DataFrame:
 
 def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
     """Load and filter data for a specific calendar date."""
-    today = datetime.date.today()
+    today = get_aemo_date()
     if date == today:
         today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
         mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
@@ -1222,14 +1229,14 @@ def load_dashboard_metadata(data_dir_str: str) -> dict:
         min_df = pd.read_csv(data_dir / "dispatch_scada.csv", usecols=["SETTLEMENTDATE"], parse_dates=["SETTLEMENTDATE"])
         date_min = min_df["SETTLEMENTDATE"].min().date()
     else:
-        date_min = datetime.date.today()
+        date_min = get_aemo_date()
 
     lookup_df = read_csv_from_any(data_dir / "duid_lookup.csv")
     regions = sorted(lookup_df["Region"].dropna().unique().tolist())
 
     return {
         "date_min": date_min,
-        "date_max": datetime.date.today(),
+        "date_max": get_aemo_date(),
         "regions": regions,
         "has_monthly_archives": has_monthly_archives,
     }
@@ -1566,7 +1573,7 @@ def build_reference_intraday_profile(
         .agg(intensity=("intensity", "mean"))
         .reset_index()
     )
-    base_day = pd.Timestamp(datetime.date.today())
+    base_day = pd.Timestamp(get_aemo_date())
     slot_minutes = 5 if resolution == "5min" else 60
     profile["period"] = base_day + pd.to_timedelta(profile["slot"] * slot_minutes, unit="m")
     return profile
@@ -1706,14 +1713,15 @@ if "scope_choice" not in st.session_state:
     st.session_state.scope_choice = "Scope 1 only"
 if "sel_regions" not in st.session_state:
     st.session_state.sel_regions = regions.copy()
-_, _, previous_fy_label_default = get_previous_financial_year(datetime.date.today())
+_, _, previous_fy_label_default = get_previous_financial_year(get_aemo_date())
 if "trend_range" not in st.session_state:
     st.session_state.trend_range = previous_fy_label_default
-_, _, current_fy_ytd_label_default = get_current_financial_year_ytd(datetime.date.today())
+_, _, current_fy_ytd_label_default = get_current_financial_year_ytd(get_aemo_date())
 if "top_chart_range" not in st.session_state:
     st.session_state.top_chart_range = "Today"
 
 selected_date = st.session_state.selected_date
+is_live_today = selected_date == get_aemo_date()
 if selected_date < date_min:
     selected_date = date_min
     st.session_state.selected_date = date_min
@@ -1748,7 +1756,7 @@ import time as _time
 _now = _time.monotonic()
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = _now
-elif selected_date == datetime.date.today() and (_now - st.session_state.last_refresh) >= 300:
+elif is_live_today and (_now - st.session_state.last_refresh) >= 300:
     st.session_state.last_refresh = _now
     st.rerun()
 
@@ -2108,7 +2116,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-source_label = "Live today" if selected_date == datetime.date.today() else "Historical archive"
+source_label = "Live today" if is_live_today else "Historical archive"
 st.caption(f"Source: {source_label}")
 if not has_monthly_archives:
     st.caption(
@@ -2211,7 +2219,7 @@ if not trend_df.empty:
 else:
     st.info("No historical daily trend data is available for the current selection.")
 
-if selected_date == datetime.date.today():
+if is_live_today:
     st.markdown("<h2 class='section-heading'>The remainder of today is projected from analog grid days</h2>", unsafe_allow_html=True)
     st.markdown(
         "<p class='section-sub'>Observed intensity so far is extended with recent analog days, prior-day structure, and same-date-last-year context</p>",
