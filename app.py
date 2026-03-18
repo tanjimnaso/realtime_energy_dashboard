@@ -944,7 +944,7 @@ def _enrich(scada: pd.DataFrame, data_dir: Path) -> pd.DataFrame:
 
 def _read_scada_csv(csv_path: Path) -> pd.DataFrame:
     scada = read_csv_from_any(csv_path, parse_dates=["SETTLEMENTDATE"])
-    scada["SETTLEMENTDATE"] = pd.to_datetime(scada["SETTLEMENTDATE"], errors="coerce")
+    scada["SETTLEMENTDATE"] = pd.to_datetime(scada["SETTLEMENTDATE"], errors="coerce", format="mixed")
     scada = scada.dropna(subset=["SETTLEMENTDATE"])
     return scada[scada["SCADAVALUE"] > 0].copy()
 
@@ -1018,7 +1018,7 @@ def load_generation_mix_from_duckdb() -> pd.DataFrame:
         conn.close()
         if df.empty:
             return df
-        df["SETTLEMENTDATE"] = pd.to_datetime(df["SETTLEMENTDATE"], errors="coerce")
+        df["SETTLEMENTDATE"] = pd.to_datetime(df["SETTLEMENTDATE"], errors="coerce", format="mixed")
         df = df.dropna(subset=["SETTLEMENTDATE"])
         return df.rename(columns={"scope1_tco2e": "tco2e_scope1", "scope3_tco2e": "tco2e_scope3"})
     except Exception:
@@ -1113,7 +1113,7 @@ def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     work = df.copy()
-    work["SETTLEMENTDATE"] = pd.to_datetime(work["SETTLEMENTDATE"], errors="coerce")
+    work["SETTLEMENTDATE"] = pd.to_datetime(work["SETTLEMENTDATE"], errors="coerce", format="mixed")
     work = work.dropna(subset=["SETTLEMENTDATE"])
     if work.empty:
         return pd.DataFrame(
@@ -2340,7 +2340,7 @@ if is_live_today:
                 tickmode="array",
                 tickvals=pd.date_range(
                     start=pd.Timestamp(selected_date),
-                    end=pd.Timestamp(selected_date) + pd.Timedelta(hours=22),
+                    end=pd.Timestamp(selected_date) + pd.Timedelta(hours=23),
                     freq="2h",
                 ),
                 ticktext=[f"{h:02d}:00" for h in range(0, 24, 2)],

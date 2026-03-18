@@ -257,6 +257,10 @@ def main():
         print("Nothing new to save.")
         return
 
+    # Ensure consistent date parsing for all new data
+    new_data["SETTLEMENTDATE"] = parse_settlement_series(new_data["SETTLEMENTDATE"])
+    new_data = new_data.dropna(subset=["SETTLEMENTDATE"])
+
     before = len(new_data)
     new_data.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
     print(f"Dropped {before - len(new_data)} duplicate rows")
