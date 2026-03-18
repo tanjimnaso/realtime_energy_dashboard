@@ -29,15 +29,16 @@ This repo intentionally separates two products:
 This data engineering project is designed as the portfolio version of the data platform that Australian energy employers, retailers, consultancies, and sustainability teams are building:<br>
 
 **What it does:**
-- Scheduler is Google Cloud Run, runs importdata.py every 5 minutes
+- Scheduler/trigger is Google Cloud Run 'aemodata-importer-job,' runs importdata.py every 5 minutes
 - Downloads NEMWEB dispatch .zip
 - Appends to daily_table.csv
 - Joins generator unit fuel type from AEMO Generation Information
 - Applies DCCEEW emissions factors to calculate emissions by fuel type
+- Stored in Cloud bucket, 'realtime_energy_dashboard'
 - Streamlit dashboard visualises live grid emissions intensity, background poll for new data triggered from new writes on Github
 > st.session_state + time.sleep()
 
-- Goole Cloud Run also writes to monthly_table.csv, dbt runs nightly to build bronze, silver, gold tables.
+- Google Cloud Run also runs dbt nightly, RAW/Bronze to Silver, Gold outputting monthly_table.csv.
 
 
 
