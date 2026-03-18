@@ -1953,17 +1953,10 @@ st.markdown("<h2 class='section-heading'>Today's dispatch shows when the grid ge
 st.markdown("<p class='section-sub'>Stacked generation and total emissions reveal how coal, gas, wind, hydro, and solar shape the selected day</p>",
             unsafe_allow_html=True)
 
+# (Radio control moved down to grouped controls row for better hierarchy)
 top_chart_options = ["Today", "Past week", current_fy_ytd_label]
 if top_chart_range not in top_chart_options:
     top_chart_range = "Today"
-top_chart_range = st.radio(
-    "Top chart range",
-    top_chart_options,
-    horizontal=True,
-    index=top_chart_options.index(top_chart_range),
-    label_visibility="collapsed",
-    key="top_chart_range",
-)
 
 if top_chart_range == "Today":
     combo_source_df = dff.copy()
@@ -2116,15 +2109,19 @@ combo_fig.update_yaxes(
 combo_fig.update_xaxes(fixedrange=True)
 combo_fig.update_yaxes(fixedrange=True)
 
-st.markdown(f"<div class='chart-title'>{chart_title}</div>", unsafe_allow_html=True)
-c3, c4 = st.columns([1.35, 2.4], gap="medium")
-with c3:
+st.markdown(f"<div class='chart-title' style='margin-bottom: 0.5rem;'>{chart_title}</div>", unsafe_allow_html=True)
+
+# Grouped controls on one horizontal row
+c1, c2, c3 = st.columns([1.0, 1.2, 2.5], gap="small")
+with c1:
+    st.radio("Range", top_chart_options, key="top_chart_range")
+with c2:
     st.radio("Emissions scope", ["Scope 1 only", "Scope 1 + 3 (combined)"],
              key="scope_choice",
-             help="Scope 1 = direct combustion. Scope 3 = upstream fuel extraction (coal only in NGA 2025).",
-             horizontal=True)
-with c4:
+             help="Scope 1 = direct combustion. Scope 3 = upstream fuel extraction (coal only in NGA 2025).")
+with c3:
     st.multiselect("Regions", regions, key="sel_regions")
+
 st.markdown(
     "<div class='chart-axis-notes'><span>Left, MWh</span><span>Right, t CO&#8322;-e</span></div>",
     unsafe_allow_html=True,
@@ -2141,7 +2138,7 @@ st.markdown(
 )
 
 source_label = "Live today" if is_live_today else "Historical archive"
-st.caption(f"Source: {source_label}")
+st.caption(f"Source: {source_label}  |  Note: AEMO NEMWEB dispatch SCADA is typically published with a ~1 hour delay.")
 if not has_monthly_archives:
     st.caption(
         "Historical archive windows are currently falling back to the available raw CSV history. "
