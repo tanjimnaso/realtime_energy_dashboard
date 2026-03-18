@@ -18,6 +18,47 @@ from pathlib import Path
 import duckdb
 
 from data_bootstrap import ensure_required_data
+import os
+import io
+
+try:
+    from google.cloud import storage
+except ImportError:
+    storage = None
+
+# GCS Config
+GCS_BUCKET = os.getenv("GCS_BUCKET", "").strip()
+_gcs_client = None
+
+def get_gcs_client():
+    global _gcs_client
+    if _gcs_client is None:
+        if storage is None:
+            raise RuntimeError("google-cloud-storage not installed but GCS_BUCKET set.")
+        _gcs_client = storage.Client()
+    return _gcs_client
+
+def get_bucket():
+    return get_gcs_client().bucket(GCS_BUCKET)
+
+def read_csv_from_any(path_or_name: str | Path, **kwargs) -> pd.DataFrame:
+    if GCS_BUCKET:
+        filename = Path(path_or_name).name
+        blob = get_bucket().blob(filename)
+        if blob.exists():
+            text = blob.download_as_text()
+            return pd.read_csv(io.StringIO(text), **kwargs)
+    return pd.read_csv(path_or_name, **kwargs)
+
+def list_monthly_archives_from_any(data_dir: Path) -> list[str]:
+    if GCS_BUCKET:
+        blobs = get_gcs_client().list_blobs(GCS_BUCKET, prefix="dispatch_scada_")
+        import re
+        return sorted(
+            blob.name for blob in blobs
+            if re.fullmatch(r"dispatch_scada_\d{4}-\d{2}\.csv", blob.name)
+        )
+    return sorted([str(p) for p in data_dir.glob("dispatch_scada_????-??.csv")])
 
 # ─────────────────────────────────────────────────────────────
 # DuckDB Connection
@@ -861,11 +902,11 @@ st.markdown("""
 def _enrich(scada: pd.DataFrame, data_dir: Path) -> pd.DataFrame:
     """Join SCADA data with DUID lookup and emissions factors, add computed columns."""
     lookup = (
-        pd.read_csv(data_dir / "duid_lookup.csv")
+        read_csv_from_any(data_dir / "duid_lookup.csv")
         [["DUID", "Unit Name", "Technology Type", "Region"]]
         .drop_duplicates("DUID")
     )
-    ef_raw = pd.read_csv(data_dir / "emissions_factors.csv")
+    ef_raw = read_csv_from_any(data_dir / "emissions_factors.csv")
     ef_s1 = (
         ef_raw[ef_raw["scope"] == "scope_1"]
         [["technology_type", "emission_factor_tCO2e_MWh"]]
@@ -895,7 +936,7 @@ def _enrich(scada: pd.DataFrame, data_dir: Path) -> pd.DataFrame:
 
 
 def _read_scada_csv(csv_path: Path) -> pd.DataFrame:
-    scada = pd.read_csv(csv_path, parse_dates=["SETTLEMENTDATE"])
+    scada = read_csv_from_any(csv_path, parse_dates=["SETTLEMENTDATE"])
     scada["SETTLEMENTDATE"] = pd.to_datetime(scada["SETTLEMENTDATE"], errors="coerce")
     scada = scada.dropna(subset=["SETTLEMENTDATE"])
     return scada[scada["SCADAVALUE"] > 0].copy()
@@ -934,7 +975,12 @@ def load_live_today_generation_mix(data_dir_str: str, file_mtime: float = 0.0) -
     """Load the current day's CSV snapshot and aggregate it to region × technology × interval."""
     data_dir = Path(data_dir_str)
     today_csv = data_dir / "dispatch_scada_today.csv"
-    if not today_csv.exists():
+    
+    if GCS_BUCKET:
+        # Check bucket existence via metadata/exception or simply blob.exists
+        if not get_bucket().blob("dispatch_scada_today.csv").exists():
+            return pd.DataFrame()
+    elif not today_csv.exists():
         return pd.DataFrame()
 
     scada = _read_scada_csv(today_csv)
@@ -990,13 +1036,20 @@ def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0) -> pd.Da
 
     data_dir = Path(data_dir_str)
     full_csv = data_dir / "dispatch_scada.csv"
-    monthly_paths = sorted(data_dir.glob("dispatch_scada_????-??.csv"))
+    monthly_paths = list_monthly_archives_from_any(data_dir)
 
     frames = []
-    if full_csv.exists():
-        frames.append(_read_scada_csv(full_csv))
-    elif monthly_paths:
-        frames = [_read_scada_csv(path) for path in monthly_paths]
+    if GCS_BUCKET:
+        # Check for full_csv in GCS if needed, but usually we use monthly
+        if get_bucket().blob("dispatch_scada.csv").exists():
+            frames.append(_read_scada_csv(Path("dispatch_scada.csv")))
+        for path in monthly_paths:
+            frames.append(_read_scada_csv(Path(path)))
+    else:
+        if full_csv.exists():
+            frames.append(_read_scada_csv(full_csv))
+        for path in monthly_paths:
+            frames.append(_read_scada_csv(Path(path)))
 
     if not frames:
         raise FileNotFoundError(
@@ -1126,7 +1179,7 @@ def load_emissions_intensity_from_duckdb() -> pd.DataFrame:
 def load_dashboard_metadata(data_dir_str: str) -> dict:
     """Return available date bounds, regions, and archive status for the dashboard."""
     data_dir = Path(data_dir_str)
-    monthly_files = sorted(glob.glob(str(data_dir / "dispatch_scada_????-??.csv")))
+    monthly_files = list_monthly_archives_from_any(data_dir)
     has_monthly_archives = bool(monthly_files)
 
     try:
@@ -1162,13 +1215,16 @@ def load_dashboard_metadata(data_dir_str: str) -> dict:
     if monthly_files:
         earliest_month = Path(monthly_files[0]).stem[-7:]
         date_min = pd.Period(earliest_month, freq="M").start_time.date()
-    elif (data_dir / "dispatch_scada.csv").exists():
+    elif GCS_BUCKET and get_bucket().blob("dispatch_scada.csv").exists():
+        min_df = read_csv_from_any("dispatch_scada.csv", usecols=["SETTLEMENTDATE"], parse_dates=["SETTLEMENTDATE"])
+        date_min = min_df["SETTLEMENTDATE"].min().date()
+    elif not GCS_BUCKET and (data_dir / "dispatch_scada.csv").exists():
         min_df = pd.read_csv(data_dir / "dispatch_scada.csv", usecols=["SETTLEMENTDATE"], parse_dates=["SETTLEMENTDATE"])
         date_min = min_df["SETTLEMENTDATE"].min().date()
     else:
         date_min = datetime.date.today()
 
-    lookup_df = pd.read_csv(data_dir / "duid_lookup.csv")
+    lookup_df = read_csv_from_any(data_dir / "duid_lookup.csv")
     regions = sorted(lookup_df["Region"].dropna().unique().tolist())
 
     return {
@@ -1197,7 +1253,7 @@ def load_emissions_factor_reference(data_dir_str: str) -> pd.DataFrame:
     except Exception:
         pass
 
-    return pd.read_csv(Path(data_dir_str) / "emissions_factors.csv")
+    return read_csv_from_any(Path(data_dir_str) / "emissions_factors.csv")
 
 
 def combine_daily_metrics_for_regions(
@@ -1587,7 +1643,10 @@ def build_placeholder_outlook_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 try:
     APP_DIR = Path(__file__).resolve().parent
-    DATA_DIR = ensure_required_data(APP_DIR)
+    if GCS_BUCKET:
+        DATA_DIR = APP_DIR / "data"
+    else:
+        DATA_DIR = ensure_required_data(APP_DIR)
 except FileNotFoundError as e:
     st.error("### Data files not found")
     st.markdown(str(e))
