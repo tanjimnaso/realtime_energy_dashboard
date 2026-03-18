@@ -1672,16 +1672,6 @@ except FileNotFoundError as e:
     st.markdown(str(e))
     st.stop()
 
-with st.sidebar:
-    st.markdown("---")
-    st.markdown("### Data Status")
-    mode = "🌩️ Cloud Bucket (GCS)" if GCS_BUCKET else "📁 Local Filesystem"
-    st.info(f"Source: **{mode}**")
-    if not daily_history.empty:
-        max_ts = daily_history["date"].max()
-        st.success(f"Latest Data: **{max_ts}**")
-    
-    st.markdown("---")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1773,6 +1763,17 @@ dff = _day_df[_day_df["Region"].isin(sel_regions)].copy() if sel_regions else _d
 # Combine daily metrics used for long-range trends
 daily_history = load_historical_daily_metrics(str(DATA_DIR))
 daily_history = combine_daily_metrics_for_regions(daily_history, sel_regions, scope_choice)
+
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("### Data Status")
+    mode = "🌩️ Cloud Bucket (GCS)" if GCS_BUCKET else "📁 Local Filesystem"
+    st.info(f"Source: **{mode}**")
+    if not daily_history.empty:
+        # Get the max date from the actual interval data for max accuracy
+        max_dt = daily_history["date"].max()
+        st.success(f"Latest Data: **{max_dt}**")
+    st.markdown("---")
 
 # ── Auto-refresh every 5 minutes when viewing today's live data ──
 import time as _time
