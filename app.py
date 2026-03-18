@@ -2073,7 +2073,7 @@ combo_fig.update_layout(
         ticktext=combo_ticktext,
         range=combo_range,
         tickangle=0,
-        tickfont=dict(size=13),
+        tickfont=dict(color=PLOT_MUTED, size=13),
     ),
     plot_bgcolor=PLOT_BG,
     paper_bgcolor=PLOT_BG,
@@ -2086,7 +2086,7 @@ combo_fig.update_layout(
         y=-0.08,
         xanchor="center",
         x=0.5,
-        font=dict(size=13),
+        font=dict(color=PLOT_TEXT, size=13),
     ),
     margin=dict(l=0, r=0, t=8, b=42),
     hovermode="x unified",
@@ -2098,7 +2098,7 @@ combo_fig.update_yaxes(
     gridcolor=PLOT_GRID,
     zeroline=False,
     color=PLOT_MUTED,
-    tickfont=dict(size=13),
+    tickfont=dict(color=PLOT_MUTED, size=13),
     automargin=True,
     secondary_y=False,
 )
@@ -2108,7 +2108,7 @@ combo_fig.update_yaxes(
     zeroline=False,
     range=[0, max(100, float(agg["tco2e"].max()) * 1.15 if not agg.empty else 100)],
     color=PLOT_MUTED,
-    tickfont=dict(size=13),
+    tickfont=dict(color=PLOT_MUTED, size=13),
     automargin=True,
     secondary_y=True,
 )
@@ -2132,7 +2132,7 @@ st.markdown(
     "<div class='chart-axis-notes'><span>Left, MWh</span><span>Right, t CO&#8322;-e</span></div>",
     unsafe_allow_html=True,
 )
-st.plotly_chart(combo_fig, use_container_width=True, config=plotly_config)
+st.plotly_chart(combo_fig, use_container_width=True, config=plotly_config, theme=None)
 
 
 # ── Controls ────────────────────────────────────────────────
@@ -2241,7 +2241,7 @@ if not trend_df.empty:
     trend_fig.update_xaxes(fixedrange=True)
     trend_fig.update_yaxes(fixedrange=True)
 
-    st.plotly_chart(trend_fig, use_container_width=True, config=plotly_config)
+    st.plotly_chart(trend_fig, use_container_width=True, config=plotly_config, theme=None)
     st.caption(f"Showing: {trend_range_label}")
 else:
     st.info("No historical daily trend data is available for the current selection.")
@@ -2376,7 +2376,7 @@ if is_live_today:
         )
         forecast_fig.update_xaxes(fixedrange=True)
         forecast_fig.update_yaxes(fixedrange=True)
-        st.plotly_chart(forecast_fig, use_container_width=True, config=plotly_config)
+        st.plotly_chart(forecast_fig, use_container_width=True, config=plotly_config, theme=None)
         st.caption(
             "Forecast uses weighted analog days based on observed shape so far, weekday/weekend pattern, "
             "seasonality, same-date-last-year similarity, and a pluggable weather adapter with neutral fallback."
@@ -2452,7 +2452,7 @@ with scenario_chart_col:
     )
     gen_fig.update_xaxes(fixedrange=True)
     gen_fig.update_yaxes(fixedrange=True)
-    st.plotly_chart(gen_fig, use_container_width=True, config=plotly_config)
+    st.plotly_chart(gen_fig, use_container_width=True, config=plotly_config, theme=None)
     st.markdown(f"""
     <div class="section-text" style="margin-top: 0.6rem;">
     <strong>{scenario_choice}</strong> is shown as a simple placeholder pathway. In the eventual data-engineered version, this chart would be sourced from official planning artefacts and scenario assumptions, then reconciled into expected generation by technology. 
@@ -2500,7 +2500,7 @@ with price_chart_col:
     )
     price_fig.update_xaxes(fixedrange=True)
     price_fig.update_yaxes(fixedrange=True)
-    st.plotly_chart(price_fig, use_container_width=True, config=plotly_config)
+    st.plotly_chart(price_fig, use_container_width=True, config=plotly_config, theme=None)
     st.markdown("""
     <div class="section-text" style="margin-top: 0.6rem;">
     This second chart is not a tariff quote. It is a placeholder for a later <strong>business cost benchmark</strong> layer that could combine wholesale expectations, network pressure, and transition-delivery assumptions into an illustrative range. 
@@ -2587,7 +2587,7 @@ with charts_left:
     )
     fuel_fig.update_xaxes(fixedrange=True)
     fuel_fig.update_yaxes(fixedrange=True)
-    st.plotly_chart(fuel_fig, use_container_width=True, config=plotly_config)
+    st.plotly_chart(fuel_fig, use_container_width=True, config=plotly_config, theme=None)
 
 with charts_right:
     st.markdown("<h2 class='section-heading'>Midday usually runs cleaner; the evening ramp lifts intensity</h2>", unsafe_allow_html=True)
@@ -2659,7 +2659,7 @@ with charts_right:
                     font=dict(size=11, color="#8B3A3A"), ax=0, ay=-30,
                 )
 
-        st.plotly_chart(duck_fig, use_container_width=True, config=plotly_config)
+        st.plotly_chart(duck_fig, use_container_width=True, config=plotly_config, theme=None)
 
         st.markdown("""
         <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1rem;">
