@@ -51,11 +51,25 @@ def get_bucket():
 def read_csv_from_any(path_or_name: str | Path, **kwargs) -> pd.DataFrame:
     if GCS_BUCKET:
         filename = Path(path_or_name).name
-        blob = get_bucket().blob(filename)
-        if blob.exists():
-            text = blob.download_as_text()
-            return pd.read_csv(io.StringIO(text), **kwargs)
+        try:
+            blob = get_bucket().get_blob(filename)
+            if blob:
+                text = blob.download_as_text()
+                return pd.read_csv(io.StringIO(text), **kwargs)
+        except Exception:
+            pass
     return pd.read_csv(path_or_name, **kwargs)
+
+
+def get_gcs_file_hash(filename: str) -> str:
+    """Return the CRC32C hash of a GCS file to use as a cache key part."""
+    if not GCS_BUCKET:
+        return "local"
+    try:
+        blob = get_bucket().get_blob(filename)
+        return blob.crc32c if blob else "missing"
+    except Exception:
+        return "error"
 
 def list_monthly_archives_from_any(data_dir: Path) -> list[str]:
     if GCS_BUCKET:
@@ -978,18 +992,12 @@ def _aggregate_to_generation_mix(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
-def load_live_today_generation_mix(data_dir_str: str, file_mtime: float = 0.0) -> pd.DataFrame:
+def load_live_today_generation_mix(data_dir_str: str, file_mtime: float = 0.0, gcs_hash: str = "") -> pd.DataFrame:
     """Load the current day's CSV snapshot and aggregate it to region × technology × interval."""
+    # gcs_hash is passed to ensure cache invalidation when the bucket file changes.
     data_dir = Path(data_dir_str)
     today_csv = data_dir / "dispatch_scada_today.csv"
     
-    if GCS_BUCKET:
-        # Check bucket existence via metadata/exception or simply blob.exists
-        if not get_bucket().blob("dispatch_scada_today.csv").exists():
-            return pd.DataFrame()
-    elif not today_csv.exists():
-        return pd.DataFrame()
-
     scada = _read_scada_csv(today_csv)
     if scada.empty:
         return pd.DataFrame()
@@ -1026,10 +1034,12 @@ def load_generation_mix_from_duckdb() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
-def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0) -> pd.DataFrame:
-    """Load the full available history, preferring DuckDB Gold and falling back to raw CSV enrichment."""
+def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0, gcs_hash: str = "") -> pd.DataFrame:
+    """Load the full available history, preferring DuckDB Gold and falling back to raw CSV enrichment.
+    The gcs_hash argument ensures that Streamlit refreshes the cache when the bucket updates.
+    """
     gold_history = load_generation_mix_from_duckdb()
-    live_today = load_live_today_generation_mix(data_dir_str, file_mtime=today_file_mtime)
+    live_today = load_live_today_generation_mix(data_dir_str, file_mtime=today_file_mtime, gcs_hash=gcs_hash)
     if not gold_history.empty:
         gold_max = gold_history["SETTLEMENTDATE"].max()
         
@@ -1098,7 +1108,8 @@ def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
     """Load and filter data for a specific calendar date by slicing the full history."""
     today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
     mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
-    df = load_full_history(data_dir_str, today_file_mtime=mtime)
+    g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+    df = load_full_history(data_dir_str, today_file_mtime=mtime, gcs_hash=g_hash)
     return df[df["SETTLEMENTDATE"].dt.date == date].copy()
 
 
@@ -1141,12 +1152,13 @@ def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
     return daily.sort_values(["date", "Region"]).reset_index(drop=True)
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=300)
 def load_historical_daily_metrics(data_dir_str: str) -> pd.DataFrame:
     """Aggregate all daily metrics continuously using the full history."""
     today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
     mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
-    history = load_full_history(data_dir_str, today_file_mtime=mtime)
+    g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+    history = load_full_history(data_dir_str, today_file_mtime=mtime, gcs_hash=g_hash)
     return aggregate_daily_metrics(history)
 
 
@@ -1660,6 +1672,22 @@ except FileNotFoundError as e:
     st.markdown(str(e))
     st.stop()
 
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("### Data Status")
+    mode = "🌩️ Cloud Bucket (GCS)" if GCS_BUCKET else "📁 Local Filesystem"
+    st.info(f"Source: **{mode}**")
+    if not daily_history.empty:
+        max_ts = daily_history["date"].max()
+        st.success(f"Latest Data: **{max_ts}**")
+    
+    st.markdown("---")
+
+
+# ─────────────────────────────────────────────────────────────
+# Sidebar configuration
+# ─────────────────────────────────────────────────────────────
+st.sidebar.markdown("<h2 class='sidebar-header'>Configuration</h2>", unsafe_allow_html=True)
 # ── Derive date range and regions, preferring Gold metadata ──
 dashboard_metadata = load_dashboard_metadata(str(DATA_DIR))
 date_min = dashboard_metadata["date_min"]
