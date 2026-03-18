@@ -1031,15 +1031,40 @@ def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0) -> pd.Da
     gold_history = load_generation_mix_from_duckdb()
     live_today = load_live_today_generation_mix(data_dir_str, file_mtime=today_file_mtime)
     if not gold_history.empty:
+        gold_max = gold_history["SETTLEMENTDATE"].max()
+        
+        # Fill gap from the most recent monthly archive if DuckDB is lagging
+        data_dir = Path(data_dir_str)
+        monthly_paths = list_monthly_archives_from_any(data_dir)
+        gap_data = pd.DataFrame()
+        
+        if monthly_paths and not pd.isna(gold_max):
+            latest_archive = monthly_paths[-1]
+            raw_arc = _read_scada_csv(Path(latest_archive))
+            if not raw_arc.empty:
+                raw_arc = raw_arc[raw_arc["SETTLEMENTDATE"] > gold_max]
+                if not live_today.empty:
+                    # Exclude the current live day from the gap archive since live_today covers it
+                    live_date = live_today["SETTLEMENTDATE"].dt.date.max()
+                    raw_arc = raw_arc[raw_arc["SETTLEMENTDATE"].dt.date != live_date]
+                if not raw_arc.empty:
+                    gap_data = _aggregate_to_generation_mix(_enrich(raw_arc, data_dir))
+
+        frames = [gold_history]
+        if not gap_data.empty:
+            frames.append(gap_data)
         if not live_today.empty:
-            gold_max = gold_history["SETTLEMENTDATE"].max()
-            live_max = live_today["SETTLEMENTDATE"].max()
+            # We also drop live_today's date from gold_history just in case of overlap
             live_date = live_today["SETTLEMENTDATE"].dt.date.max()
-            if pd.isna(gold_max) or live_max > gold_max:
-                gold_history = gold_history[gold_history["SETTLEMENTDATE"].dt.date != live_date]
-                merged = pd.concat([gold_history, live_today], ignore_index=True)
-                return merged.sort_values(["SETTLEMENTDATE", "Region", "Technology Type"]).reset_index(drop=True)
-        return gold_history
+            gold_history = gold_history[gold_history["SETTLEMENTDATE"].dt.date != live_date]
+            frames = [gold_history] # Re-seat the frames block
+            if not gap_data.empty:
+                frames.append(gap_data)
+            frames.append(live_today)
+
+        merged = pd.concat(frames, ignore_index=True)
+        merged.drop_duplicates(subset=["SETTLEMENTDATE", "Region", "Technology Type"], keep="last", inplace=True)
+        return merged.sort_values(["SETTLEMENTDATE", "Region", "Technology Type"]).reset_index(drop=True)
 
     data_dir = Path(data_dir_str)
     full_csv = data_dir / "dispatch_scada.csv"
