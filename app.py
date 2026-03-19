@@ -65,12 +65,18 @@ def read_csv_from_any(path_or_name: str | Path, **kwargs) -> pd.DataFrame:
 
 
 def get_gcs_file_hash(filename: str) -> str:
-    """Return the CRC32C hash of a GCS file to use as a cache key part."""
+    """Return the CRC32C hash of a GCS file to use as a cache key part.
+    
+    Calls reload() to force a fresh metadata fetch from GCS, bypassing any
+    client-side caching of blob attributes (which would return a stale CRC
+    and prevent Streamlit from detecting that the file has been updated).
+    """
     if not GCS_BUCKET:
         return "local"
     try:
-        blob = get_bucket().get_blob(filename)
-        return blob.crc32c if blob else "missing"
+        blob = get_bucket().blob(filename)
+        blob.reload()  # Force fresh metadata from GCS — do NOT use get_blob() here
+        return blob.crc32c if blob.exists() else "missing"
     except Exception:
         return "error"
 
