@@ -116,6 +116,14 @@ def get_duckdb_cache_key(db_path: str = "nem.duckdb") -> str:
     stat = path.stat()
     return f"{stat.st_mtime_ns}:{stat.st_size}"
 
+
+def get_combined_freshness_token(data_dir: Path) -> str:
+    """Return a concatenated token of GCS hashes, archive metadata, and DuckDB stats to bust Streamlit cache."""
+    g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+    latest_archive_token = get_latest_archive_cache_key(data_dir)
+    db_token = get_duckdb_cache_key()
+    return f"{g_hash}:{latest_archive_token}:{db_token}"
+
 def list_monthly_archives_from_any(data_dir: Path) -> list[str]:
     if GCS_BUCKET:
         blobs = get_gcs_client().list_blobs(GCS_BUCKET, prefix="dispatch_scada_")
@@ -1213,7 +1221,7 @@ def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
-def load_historical_daily_metrics(data_dir_str: str) -> pd.DataFrame:
+def load_historical_daily_metrics(data_dir_str: str, freshness_token: str = "") -> pd.DataFrame:
     """Aggregate all daily metrics continuously using the full history."""
     data_dir = Path(data_dir_str)
     today_csv = data_dir / "dispatch_scada_today.csv"
@@ -1232,23 +1240,24 @@ def load_historical_daily_metrics(data_dir_str: str) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
-def get_latest_available_data_date(data_dir_str: str) -> datetime.date:
+def get_latest_available_data_date(data_dir_str: str, freshness_token: str = "") -> datetime.date:
     """Return the newest calendar date actually present in the loaded history."""
-    daily_metrics = load_historical_daily_metrics(data_dir_str)
+    daily_metrics = load_historical_daily_metrics(data_dir_str, freshness_token=freshness_token)
     if daily_metrics.empty:
         return get_aemo_date()
     return pd.Timestamp(daily_metrics["date"].max()).date()
 
 
 @st.cache_data(ttl=300)
-def load_today_daily_metrics(data_dir_str: str) -> pd.DataFrame:
+def load_today_daily_metrics(data_dir_str: str, freshness_token: str = "") -> pd.DataFrame:
     """Aggregate today's live file into daily metrics."""
-    today_df = load_today(data_dir_str)
+    # Note: load_today was likely intended to be load_live_today_generation_mix
+    today_df = load_live_today_generation_mix(data_dir_str, gcs_hash=freshness_token.split(":")[0])
     return aggregate_daily_metrics(today_df)
 
 
 @st.cache_data(ttl=300)
-def load_emissions_intensity_from_duckdb() -> pd.DataFrame:
+def load_emissions_intensity_from_duckdb(duckdb_cache_key: str = "") -> pd.DataFrame:
     """Load regional emissions intensity from Gold layer (main_gold.fct_regional_emissions_intensity)."""
     try:
         conn = get_db_connection()
@@ -1274,7 +1283,7 @@ def load_emissions_intensity_from_duckdb() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
-def load_dashboard_metadata(data_dir_str: str) -> dict:
+def load_dashboard_metadata(data_dir_str: str, freshness_token: str = "") -> dict:
     """Return available date bounds, regions, and archive status for the dashboard."""
     data_dir = Path(data_dir_str)
     monthly_files = list_monthly_archives_from_any(data_dir)
@@ -1334,7 +1343,7 @@ def load_dashboard_metadata(data_dir_str: str) -> dict:
 
 
 @st.cache_data(ttl=300)
-def load_emissions_factor_reference(data_dir_str: str) -> pd.DataFrame:
+def load_emissions_factor_reference(data_dir_str: str, freshness_token: str = "") -> pd.DataFrame:
     """Load emissions factors for reference tables, preferring Bronze/duckdb over raw CSV."""
     try:
         conn = get_db_connection()
@@ -1755,14 +1764,21 @@ except FileNotFoundError as e:
 
 
 
+# ── Calculate freshness tokens to bust Streamlit's @st.cache_data ──
+g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+arc_token = get_latest_archive_cache_key(DATA_DIR)
+db_token = get_duckdb_cache_key()
+# Combined token for functions that take it as a single arg
+ftoken = f"{g_hash}:{arc_token}:{db_token}"
+
 # ─────────────────────────────────────────────────────────────
 # Sidebar configuration
 # ─────────────────────────────────────────────────────────────
 st.sidebar.markdown("<h2 class='sidebar-header'>Configuration</h2>", unsafe_allow_html=True)
 # ── Derive date range and regions, preferring Gold metadata ──
-dashboard_metadata = load_dashboard_metadata(str(DATA_DIR))
+dashboard_metadata = load_dashboard_metadata(str(DATA_DIR), freshness_token=ftoken)
 date_min = dashboard_metadata["date_min"]
-latest_available_date = get_latest_available_data_date(str(DATA_DIR))
+latest_available_date = get_latest_available_data_date(str(DATA_DIR), freshness_token=ftoken)
 date_max = min(get_aemo_date(), latest_available_date)
 regions = dashboard_metadata["regions"]
 has_monthly_archives = dashboard_metadata["has_monthly_archives"]
@@ -1845,7 +1861,7 @@ _day_df = load_scada_for_date(str(DATA_DIR), selected_date)
 dff = _day_df[_day_df["Region"].isin(sel_regions)].copy() if sel_regions else _day_df.iloc[0:0].copy()
 
 # Combine daily metrics used for long-range trends
-daily_history = load_historical_daily_metrics(str(DATA_DIR))
+daily_history = load_historical_daily_metrics(str(DATA_DIR), freshness_token=ftoken)
 daily_history = combine_daily_metrics_for_regions(daily_history, sel_regions, scope_choice)
 
 with st.sidebar:
@@ -2056,7 +2072,12 @@ if top_chart_range == "Today":
     chart_subtitle = "Stacked generation and total emissions reveal how coal, gas, wind, hydro, and solar shape the selected day"
 elif top_chart_range == "Past week":
     past_week_start = selected_date - datetime.timedelta(days=6)
-    combo_source_df = load_full_history(str(DATA_DIR))
+    combo_source_df = load_full_history(
+        str(DATA_DIR), 
+        gcs_hash=g_hash, 
+        latest_archive_cache_key=arc_token, 
+        duckdb_cache_key=db_token
+    )
     combo_source_df = combo_source_df[
         combo_source_df["Region"].isin(sel_regions)
     ].copy() if sel_regions else combo_source_df.iloc[0:0].copy()
@@ -2070,7 +2091,12 @@ elif top_chart_range == "Past week":
     chart_subtitle = "Daily generation mix and total emissions show how the last seven days have shifted across the selected regions"
 else:
     fy_start, fy_end, _ = get_current_financial_year_ytd(selected_date)
-    combo_source_df = load_full_history(str(DATA_DIR))
+    combo_source_df = load_full_history(
+        str(DATA_DIR), 
+        gcs_hash=g_hash, 
+        latest_archive_cache_key=arc_token, 
+        duckdb_cache_key=db_token
+    )
     combo_source_df = combo_source_df[
         combo_source_df["Region"].isin(sel_regions)
     ].copy() if sel_regions else combo_source_df.iloc[0:0].copy()
@@ -2336,7 +2362,12 @@ if is_live_today:
         unsafe_allow_html=True,
     )
 
-    full_history = load_full_history(str(DATA_DIR))
+    full_history = load_full_history(
+        str(DATA_DIR), 
+        gcs_hash=g_hash, 
+        latest_archive_cache_key=arc_token, 
+        duckdb_cache_key=db_token
+    )
     observed_profile, forecast_profile = build_analog_forecast(
         full_history,
         sel_regions,
@@ -2945,7 +2976,7 @@ with st.expander("Raw interval data"):
                  use_container_width=True, hide_index=True)
 
 with st.expander("Emissions factors reference (NGA 2025)"):
-    ef_display = load_emissions_factor_reference(str(DATA_DIR))
+    ef_display = load_emissions_factor_reference(str(DATA_DIR), freshness_token=ftoken)
     st.dataframe(ef_display, use_container_width=True, hide_index=True)
     st.caption(
         "Source: National Greenhouse Accounts Factors 2025, DCCEEW. "
@@ -2987,6 +3018,10 @@ st.divider()
 col1, col2 = st.columns([3, 1])
 with col2:
     st.caption(f"🔄 Last refreshed: {format_refresh_time()}")
+    if st.button("Force Refresh Data", use_container_width=True):
+        st.cache_data.clear()
+        st.session_state.last_refresh = 0 # Force immediate rerun
+        st.rerun()
 
 # ── Footer ───────────────────────────────────────────────────
 st.markdown("""
