@@ -1809,6 +1809,9 @@ PLOT_BORDER = "#cfdbd7"
 # ─────────────────────────────────────────────────────────────
 if "selected_date" not in st.session_state:
     st.session_state.selected_date = date_max
+elif st.session_state.selected_date != date_max:
+    # Keep the hidden selected day aligned with the newest available data.
+    st.session_state.selected_date = date_max
 if "scope_choice" not in st.session_state:
     st.session_state.scope_choice = "Scope 1 only"
 if "sel_regions" not in st.session_state:
