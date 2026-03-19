@@ -65,18 +65,19 @@ def read_csv_from_any(path_or_name: str | Path, **kwargs) -> pd.DataFrame:
 
 
 def get_gcs_file_hash(filename: str) -> str:
-    """Return the CRC32C hash of a GCS file to use as a cache key part.
+    """Return the last updated timestamp of a GCS file to use as a cache key part.
     
-    Calls reload() to force a fresh metadata fetch from GCS, bypassing any
-    client-side caching of blob attributes (which would return a stale CRC
-    and prevent Streamlit from detecting that the file has been updated).
+    Using the updated timestamp reliably busts Streamlit's cache when
+    Cloud Run overwrites the CSV.
     """
     if not GCS_BUCKET:
         return "local"
     try:
-        blob = get_bucket().blob(filename)
-        blob.reload()  # Force fresh metadata from GCS — do NOT use get_blob() here
-        return blob.crc32c if blob.exists() else "missing"
+        # get_blob forces a fresh API call for metadata
+        blob = get_bucket().get_blob(filename)
+        if blob and blob.updated:
+            return blob.updated.isoformat()
+        return "missing"
     except Exception:
         return "error"
 
@@ -89,14 +90,11 @@ def get_latest_archive_cache_key(data_dir: Path) -> str:
 
     latest_archive = monthly_archives[-1]
     if GCS_BUCKET:
-        blob = get_bucket().blob(latest_archive)
         try:
-            blob.reload()
-            crc = blob.crc32c or "nocrc"
-            generation = getattr(blob, "generation", "nogeneration")
-            updated = getattr(blob, "updated", None)
-            updated_token = updated.isoformat() if updated else "noupdated"
-            return f"{latest_archive}:{crc}:{generation}:{updated_token}"
+            blob = get_bucket().get_blob(latest_archive)
+            if blob and blob.updated:
+                return f"{latest_archive}:{blob.updated.isoformat()}"
+            return f"{latest_archive}:missing"
         except Exception:
             return f"{latest_archive}:error"
 
