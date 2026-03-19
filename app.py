@@ -1231,6 +1231,15 @@ def load_historical_daily_metrics(data_dir_str: str) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
+def get_latest_available_data_date(data_dir_str: str) -> datetime.date:
+    """Return the newest calendar date actually present in the loaded history."""
+    daily_metrics = load_historical_daily_metrics(data_dir_str)
+    if daily_metrics.empty:
+        return get_aemo_date()
+    return pd.Timestamp(daily_metrics["date"].max()).date()
+
+
+@st.cache_data(ttl=300)
 def load_today_daily_metrics(data_dir_str: str) -> pd.DataFrame:
     """Aggregate today's live file into daily metrics."""
     today_df = load_today(data_dir_str)
@@ -1752,7 +1761,8 @@ st.sidebar.markdown("<h2 class='sidebar-header'>Configuration</h2>", unsafe_allo
 # ── Derive date range and regions, preferring Gold metadata ──
 dashboard_metadata = load_dashboard_metadata(str(DATA_DIR))
 date_min = dashboard_metadata["date_min"]
-date_max = get_aemo_date()  # Always allow selecting today, ignoring frozen DB limits
+latest_available_date = get_latest_available_data_date(str(DATA_DIR))
+date_max = min(get_aemo_date(), latest_available_date)
 regions = dashboard_metadata["regions"]
 has_monthly_archives = dashboard_metadata["has_monthly_archives"]
 
@@ -1811,7 +1821,7 @@ if "top_chart_range" not in st.session_state:
     st.session_state.top_chart_range = "Today"
 
 selected_date = st.session_state.selected_date
-is_live_today = selected_date == get_aemo_date()
+is_live_today = selected_date == get_aemo_date() and latest_available_date == get_aemo_date()
 if selected_date < date_min:
     selected_date = date_min
     st.session_state.selected_date = date_min
@@ -1844,6 +1854,11 @@ with st.sidebar:
         # Get the max date from the actual interval data for max accuracy
         max_dt = daily_history["date"].max()
         st.success(f"Latest Data: **{max_dt}**")
+        if pd.Timestamp(max_dt).date() < get_aemo_date():
+            st.warning(
+                f"Latest available data is for **{max_dt}**. "
+                "The current AEMO day has not landed yet, so the dashboard is showing the newest available day."
+            )
     st.markdown("---")
 
 # ── Auto-refresh every 5 minutes when viewing today's live data ──
@@ -2208,7 +2223,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-source_label = "Live today" if is_live_today else "Historical archive"
+source_label = "Live today" if is_live_today else "Latest available archive"
 st.caption(f"Source: {source_label}  |  Note: AEMO NEMWEB dispatch SCADA is typically published with a ~1 hour delay.")
 if not has_monthly_archives:
     st.caption(
