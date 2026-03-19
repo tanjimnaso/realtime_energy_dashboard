@@ -79,6 +79,42 @@ def get_gcs_file_hash(filename: str) -> str:
     except Exception:
         return "error"
 
+
+def get_latest_archive_cache_key(data_dir: Path) -> str:
+    """Return a freshness token for the newest monthly SCADA archive."""
+    monthly_archives = list_monthly_archives_from_any(data_dir)
+    if not monthly_archives:
+        return "missing"
+
+    latest_archive = monthly_archives[-1]
+    if GCS_BUCKET:
+        blob = get_bucket().blob(latest_archive)
+        try:
+            blob.reload()
+            crc = blob.crc32c or "nocrc"
+            generation = getattr(blob, "generation", "nogeneration")
+            updated = getattr(blob, "updated", None)
+            updated_token = updated.isoformat() if updated else "noupdated"
+            return f"{latest_archive}:{crc}:{generation}:{updated_token}"
+        except Exception:
+            return f"{latest_archive}:error"
+
+    latest_path = Path(latest_archive)
+    if not latest_path.exists():
+        latest_path = data_dir / Path(latest_archive).name
+    if not latest_path.exists():
+        return f"{latest_archive}:missing"
+    return f"{latest_path.name}:{latest_path.stat().st_mtime_ns}"
+
+
+def get_duckdb_cache_key(db_path: str = "nem.duckdb") -> str:
+    """Return a freshness token for the DuckDB file."""
+    path = Path(db_path)
+    if not path.exists():
+        return "missing"
+    stat = path.stat()
+    return f"{stat.st_mtime_ns}:{stat.st_size}"
+
 def list_monthly_archives_from_any(data_dir: Path) -> list[str]:
     if GCS_BUCKET:
         blobs = get_gcs_client().list_blobs(GCS_BUCKET, prefix="dispatch_scada_")
@@ -1014,7 +1050,7 @@ def load_live_today_generation_mix(data_dir_str: str, file_mtime: float = 0.0, g
 
 
 @st.cache_data(ttl=300)
-def load_generation_mix_from_duckdb() -> pd.DataFrame:
+def load_generation_mix_from_duckdb(duckdb_cache_key: str = "") -> pd.DataFrame:
     """Load Gold interval generation mix from DuckDB for dashboard use."""
     try:
         conn = get_db_connection()
@@ -1042,11 +1078,17 @@ def load_generation_mix_from_duckdb() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=270)  # 270s so cache expires before the 5-min rerun fires
-def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0, gcs_hash: str = "") -> pd.DataFrame:
+def load_full_history(
+    data_dir_str: str,
+    today_file_mtime: float = 0.0,
+    gcs_hash: str = "",
+    latest_archive_cache_key: str = "",
+    duckdb_cache_key: str = "",
+) -> pd.DataFrame:
     """Load the full available history, preferring DuckDB Gold and falling back to raw CSV enrichment.
     The gcs_hash argument ensures that Streamlit refreshes the cache when the bucket updates.
     """
-    gold_history = load_generation_mix_from_duckdb()
+    gold_history = load_generation_mix_from_duckdb(duckdb_cache_key=duckdb_cache_key)
     live_today = load_live_today_generation_mix(data_dir_str, file_mtime=today_file_mtime, gcs_hash=gcs_hash)
     if not gold_history.empty:
         gold_max = gold_history["SETTLEMENTDATE"].max()
@@ -1114,10 +1156,19 @@ def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0, gcs_hash
 
 def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
     """Load and filter data for a specific calendar date by slicing the full history."""
-    today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
+    data_dir = Path(data_dir_str)
+    today_csv = data_dir / "dispatch_scada_today.csv"
     mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
     g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
-    df = load_full_history(data_dir_str, today_file_mtime=mtime, gcs_hash=g_hash)
+    latest_archive_cache_key = get_latest_archive_cache_key(data_dir)
+    duckdb_cache_key = get_duckdb_cache_key()
+    df = load_full_history(
+        data_dir_str,
+        today_file_mtime=mtime,
+        gcs_hash=g_hash,
+        latest_archive_cache_key=latest_archive_cache_key,
+        duckdb_cache_key=duckdb_cache_key,
+    )
     return df[df["SETTLEMENTDATE"].dt.date == date].copy()
 
 
@@ -1163,10 +1214,19 @@ def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
 @st.cache_data(ttl=300)
 def load_historical_daily_metrics(data_dir_str: str) -> pd.DataFrame:
     """Aggregate all daily metrics continuously using the full history."""
-    today_csv = Path(data_dir_str) / "dispatch_scada_today.csv"
+    data_dir = Path(data_dir_str)
+    today_csv = data_dir / "dispatch_scada_today.csv"
     mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
     g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
-    history = load_full_history(data_dir_str, today_file_mtime=mtime, gcs_hash=g_hash)
+    latest_archive_cache_key = get_latest_archive_cache_key(data_dir)
+    duckdb_cache_key = get_duckdb_cache_key()
+    history = load_full_history(
+        data_dir_str,
+        today_file_mtime=mtime,
+        gcs_hash=g_hash,
+        latest_archive_cache_key=latest_archive_cache_key,
+        duckdb_cache_key=duckdb_cache_key,
+    )
     return aggregate_daily_metrics(history)
 
 
