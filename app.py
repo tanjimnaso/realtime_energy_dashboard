@@ -54,13 +54,12 @@ def get_bucket():
 def read_csv_from_any(path_or_name: str | Path, **kwargs) -> pd.DataFrame:
     if GCS_BUCKET:
         filename = Path(path_or_name).name
-        try:
-            blob = get_bucket().get_blob(filename)
-            if blob:
-                text = blob.download_as_text()
-                return pd.read_csv(io.StringIO(text), **kwargs)
-        except Exception:
-            pass
+        # Do NOT catch exceptions here — if GCS is configured as the data source
+        # we must never silently fall back to the local (stale) baked-in file.
+        blob = get_bucket().blob(filename)
+        blob.reload()  # Force fresh metadata; avoid stale client-side cache
+        text = blob.download_as_text()
+        return pd.read_csv(io.StringIO(text), **kwargs)
     return pd.read_csv(path_or_name, **kwargs)
 
 
@@ -1000,7 +999,7 @@ def _aggregate_to_generation_mix(df: pd.DataFrame) -> pd.DataFrame:
     return grouped
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=270)  # 270s so cache expires before the 5-min rerun fires
 def load_live_today_generation_mix(data_dir_str: str, file_mtime: float = 0.0, gcs_hash: str = "") -> pd.DataFrame:
     """Load the current day's CSV snapshot and aggregate it to region × technology × interval."""
     # gcs_hash is passed to ensure cache invalidation when the bucket file changes.
@@ -1042,7 +1041,7 @@ def load_generation_mix_from_duckdb() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=270)  # 270s so cache expires before the 5-min rerun fires
 def load_full_history(data_dir_str: str, today_file_mtime: float = 0.0, gcs_hash: str = "") -> pd.DataFrame:
     """Load the full available history, preferring DuckDB Gold and falling back to raw CSV enrichment.
     The gcs_hash argument ensures that Streamlit refreshes the cache when the bucket updates.
