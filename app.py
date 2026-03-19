@@ -39,6 +39,7 @@ except ImportError:
 # GCS Config
 GCS_BUCKET = os.getenv("GCS_BUCKET", "").strip()
 _gcs_client = None
+ZERO_EMISSION = {"Wind", "Solar PV", "Hydro", "Battery Storage"}
 
 def get_gcs_client():
     global _gcs_client
@@ -1781,7 +1782,6 @@ TECH_COLORS = {
     "Battery Storage": "#7B5EA7",
     "Unknown":         "#6B7280",
 }
-ZERO_EMISSION = {"Wind", "Solar PV", "Hydro", "Battery Storage"}
 
 RESOLUTIONS = {
     "5 minutes":  "5min",
