@@ -1134,19 +1134,23 @@ def load_full_history(
         return merged.sort_values(["SETTLEMENTDATE", "Region", "Technology Type"]).reset_index(drop=True)
 
     data_dir = Path(data_dir_str)
-    full_csv = data_dir / "dispatch_scada.csv"
     monthly_paths = list_monthly_archives_from_any(data_dir)
 
     frames = []
+    # Primary "daily CSV only" source for today's data
+    today_csv = data_dir / "dispatch_scada_today.csv"
     if GCS_BUCKET:
-        # Check for full_csv in GCS if needed, but usually we use monthly
-        if get_bucket().blob("dispatch_scada.csv").exists():
-            frames.append(_read_scada_csv(Path("dispatch_scada.csv")))
+        # Check if today_csv exists in GCS
+        try:
+            if get_bucket().blob("dispatch_scada_today.csv").exists():
+                frames.append(_read_scada_csv(Path("dispatch_scada_today.csv")))
+        except Exception:
+            pass
         for path in monthly_paths:
             frames.append(_read_scada_csv(Path(path)))
     else:
-        if full_csv.exists():
-            frames.append(_read_scada_csv(full_csv))
+        if today_csv.exists():
+            frames.append(_read_scada_csv(today_csv))
         for path in monthly_paths:
             frames.append(_read_scada_csv(Path(path)))
 
@@ -1158,14 +1162,26 @@ def load_full_history(
     scada = pd.concat(frames, ignore_index=True)
     scada.drop_duplicates(subset=["SETTLEMENTDATE", "DUID"], inplace=True)
     scada.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
-    return _enrich(scada, data_dir)
+    
+    # Enrich and then aggregate to generation mix shape to match the DuckDB path
+    enriched = _enrich(scada, data_dir)
+    return _aggregate_to_generation_mix(enriched)
 
 
 def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
-    """Load and filter data for a specific calendar date by slicing the full history."""
+    """Load and filter data for a specific calendar date. Fast-path for today."""
     data_dir = Path(data_dir_str)
-    today_csv = data_dir / "dispatch_scada_today.csv"
-    mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
+    
+    # FAST PATH: Loading today's live data
+    # We use get_aemo_date() to verify if the requested date is the active AEMO day.
+    if date == get_aemo_date():
+        today_csv = data_dir / "dispatch_scada_today.csv"
+        mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
+        g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+        return load_live_today_generation_mix(data_dir_str, file_mtime=mtime, gcs_hash=g_hash)
+
+    # HISTORICAL PATH
+    mtime = 0.0
     g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
     latest_archive_cache_key = get_latest_archive_cache_key(data_dir)
     duckdb_cache_key = get_duckdb_cache_key()
@@ -1176,7 +1192,9 @@ def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
         latest_archive_cache_key=latest_archive_cache_key,
         duckdb_cache_key=duckdb_cache_key,
     )
-    return df[df["SETTLEMENTDATE"].dt.date == date].copy()
+    # Ensure SETTLEMENTDATE is in date objects for filtering
+    mask = pd.to_datetime(df["SETTLEMENTDATE"]).dt.date == date
+    return df[mask].copy()
 
 
 
