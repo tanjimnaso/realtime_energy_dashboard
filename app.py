@@ -37,7 +37,10 @@ except ImportError:
     storage = None
 
 # GCS Config
-GCS_BUCKET = os.getenv("GCS_BUCKET", "").strip()
+try:
+    GCS_BUCKET = st.secrets.get("GCS_BUCKET", os.getenv("GCS_BUCKET", "")).strip()
+except Exception:
+    GCS_BUCKET = os.getenv("GCS_BUCKET", "").strip()
 _gcs_client = None
 ZERO_EMISSION = {"Wind", "Solar PV", "Hydro", "Battery Storage"}
 
@@ -2080,7 +2083,12 @@ if top_chart_range not in top_chart_options:
     top_chart_range = "Today"
 
 if top_chart_range == "Today":
-    combo_source_df = dff.copy()
+    # Ensure "Today" exclusively uses the daily live CSV file
+    combo_source_df = load_live_today_generation_mix(str(DATA_DIR), gcs_hash=g_hash)
+    if sel_regions:
+        combo_source_df = combo_source_df[combo_source_df["Region"].isin(sel_regions)].copy()
+    else:
+        combo_source_df = combo_source_df.iloc[0:0].copy()
     combo_period_label = resolution
     combo_tickvals = [pd.Timestamp(selected_date), pd.Timestamp(selected_date) + pd.Timedelta(hours=12), pd.Timestamp(selected_date) + pd.Timedelta(hours=24)]
     combo_ticktext = ["00:00", "12:00", "24:00"]
