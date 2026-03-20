@@ -218,7 +218,8 @@ def render_debug_sidebar(data_dir: Path):
     # 2. GCS Metadata
     if GCS_BUCKET:
         try:
-            blob = get_bucket().get_blob("dispatch_scada_today.csv")
+            bucket = get_bucket()
+            blob = bucket.get_blob("dispatch_scada_today.csv") if bucket else None
             if blob:
                 st.sidebar.write(f"**GCS Today CSV**")
                 st.sidebar.write(f"- Updated: {blob.updated}")
@@ -1248,7 +1249,8 @@ def load_full_history(
     if GCS_BUCKET:
         # Check if today_csv exists in GCS
         try:
-            if get_bucket().blob("dispatch_scada_today.csv").exists():
+            bucket = get_bucket()
+            if bucket and bucket.blob("dispatch_scada_today.csv").exists():
                 frames.append(_read_scada_csv(Path("dispatch_scada_today.csv")))
         except Exception:
             pass
@@ -1444,7 +1446,7 @@ def load_dashboard_metadata(data_dir_str: str, freshness_token: str = "") -> dic
     if monthly_files:
         earliest_month = Path(monthly_files[0]).stem[-7:]
         date_min = pd.Period(earliest_month, freq="M").start_time.date()
-    elif GCS_BUCKET and get_bucket().blob("dispatch_scada.csv").exists():
+    elif GCS_BUCKET and (bucket := get_bucket()) and bucket.blob("dispatch_scada.csv").exists():
         min_df = read_csv_from_any("dispatch_scada.csv", usecols=["SETTLEMENTDATE"], parse_dates=["SETTLEMENTDATE"])
         date_min = min_df["SETTLEMENTDATE"].min().date()
     elif not GCS_BUCKET and (data_dir / "dispatch_scada.csv").exists():
