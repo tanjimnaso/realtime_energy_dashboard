@@ -1,8 +1,6 @@
-.DS_Store
 __pycache__/
 .runtime_data/
 nem.duckdb.wal
 target/
 dbt_packages/
 .venv/
-\n.gcloud_config/
