@@ -172,6 +172,72 @@ def format_refresh_time():
     return datetime.fromtimestamp(st.session_state.last_refresh_time).strftime("%H:%M:%S")
 
 # ─────────────────────────────────────────────────────────────
+# Debug Sidebar
+# ─────────────────────────────────────────────────────────────
+def render_debug_sidebar(data_dir: Path):
+    st.sidebar.markdown("### 🛠️ Debug Info")
+    
+    # 1. Freshness Token
+    token = get_combined_freshness_token(data_dir)
+    st.sidebar.code(f"Token: {token}", language="text")
+    
+    # 2. GCS Metadata
+    if GCS_BUCKET:
+        try:
+            blob = get_bucket().get_blob("dispatch_scada_today.csv")
+            if blob:
+                st.sidebar.write(f"**GCS Today CSV**")
+                st.sidebar.write(f"- Updated: {blob.updated}")
+                st.sidebar.write(f"- Size: {blob.size / 1024:.1f} KB")
+            else:
+                st.sidebar.warning("GCS Today CSV missing")
+        except Exception as e:
+            st.sidebar.error(f"GCS Error: {e}")
+            
+    # 3. DuckDB Metadata
+    db_path = Path("nem.duckdb")
+    if db_path.exists():
+        stat = db_path.stat()
+        st.sidebar.write(f"**DuckDB (Gold)**")
+        st.sidebar.write(f"- Modified: {datetime.datetime.fromtimestamp(stat.st_mtime)}")
+        st.sidebar.write(f"- Size: {stat.st_size / (1024*1024):.1f} MB")
+        try:
+            conn = duckdb.connect(str(db_path), read_only=True)
+            tables = conn.execute("SHOW TABLES").fetchall()
+            st.sidebar.write(f"- Tables: {[t[0] for t in tables]}")
+            if ("silver_dispatch_interval",) in tables or ("main_silver", "silver_dispatch_interval") in tables:
+                row_count = conn.execute("SELECT count(*) FROM silver_dispatch_interval").fetchone()[0]
+                max_date = conn.execute("SELECT max(SETTLEMENTDATE) FROM silver_dispatch_interval").fetchone()[0]
+                st.sidebar.write(f"- Rows (Silver): {row_count:,}")
+                st.sidebar.write(f"- Max Date (Silver): {max_date}")
+            conn.close()
+        except Exception as e:
+            st.sidebar.error(f"DuckDB Query Error: {e}")
+    else:
+        st.sidebar.warning("DuckDB missing")
+
+    # 4. App Context
+    st.sidebar.write(f"**Context**")
+    st.sidebar.write(f"- AEMO Now: {get_aemo_now().strftime('%H:%M:%S')}")
+    st.sidebar.write(f"- AEMO Date: {get_aemo_date()}")
+    
+    # 5. Raw Data Check (Sample)
+    try:
+        raw_df = read_csv_from_any("dispatch_scada_today.csv", nrows=5)
+        st.sidebar.write("**Raw CSV Preview**")
+        st.sidebar.dataframe(raw_df, height=150)
+        st.sidebar.write(f"- Columns: {raw_df.columns.tolist()}")
+    except Exception as e:
+        st.sidebar.error(f"Sample Read Error: {e}")
+
+    if st.sidebar.button("Force Refresh (Clear Cache)"):
+        st.cache_data.clear()
+        st.rerun()
+
+# Call debug sidebar early
+render_debug_sidebar(Path("data"))
+
+# ─────────────────────────────────────────────────────────────
 # CSS Design System
 # ─────────────────────────────────────────────────────────────
 st.markdown("""
@@ -257,9 +323,9 @@ st.markdown("""
     padding-right: 2.5rem !important;
   }
 
-  /* Hide sidebar */
-  section[data-testid="stSidebar"] { display: none !important; }
-  div[data-testid="collapsedControl"] { display: none !important; }
+  /* Sidebar allowed for debugging */
+  /* section[data-testid="stSidebar"] { display: none !important; } */
+  /* div[data-testid="collapsedControl"] { display: none !important; } */
 
   /* ── Header band ── */
   .header-band {
