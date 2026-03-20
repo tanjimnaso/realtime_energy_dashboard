@@ -284,11 +284,11 @@ st.markdown("""
     --background: #ffffff;
     --foreground: #020617;
     --card: #ffffff;
-    --muted: #f8fafc;
-    --muted-foreground: #64748b;
-    --accent: #3b82f6; /* Portfolio Blue */
-    --accent-glow: rgba(59, 130, 246, 0.08);
-    --border: rgba(226, 232, 240, 1);
+    --muted: #f1f5f9;
+    --muted-foreground: #334155; /* Darker Slate for High Readability */
+    --accent: #2563eb; /* High-contrast Vibrant Blue */
+    --accent-glow: rgba(37, 99, 235, 0.05);
+    --border: rgba(226, 232, 240, 0.8);
     --radius: 12px;
   }
 
