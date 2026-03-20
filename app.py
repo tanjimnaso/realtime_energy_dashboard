@@ -9,11 +9,12 @@ Fallback path:
 """
 
 import datetime
-import glob
+import io
+import os
+import time
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from pathlib import Path
 import duckdb
 
@@ -21,9 +22,6 @@ try:
     from data_bootstrap import ensure_required_data
 except ImportError:
     ensure_required_data = None
-import os
-import io
-import datetime
 
 def get_aemo_date() -> datetime.date:
     return pd.Timestamp.utcnow().tz_convert("Australia/Brisbane").date()
@@ -39,10 +37,24 @@ except ImportError:
 # GCS Config
 try:
     GCS_BUCKET = st.secrets.get("GCS_BUCKET", os.getenv("GCS_BUCKET", "")).strip()
+    GCS_PROJECT = st.secrets.get("GCS_PROJECT", os.getenv("GCS_PROJECT", "")).strip() or None
 except Exception:
     GCS_BUCKET = os.getenv("GCS_BUCKET", "").strip()
+    GCS_PROJECT = os.getenv("GCS_PROJECT", "").strip() or None
 _gcs_client = None
 ZERO_EMISSION = {"Wind", "Solar PV", "Hydro", "Battery Storage"}
+
+# ── File name constants ──────────────────────────────────────────────────────
+SCADA_TODAY_CSV = "dispatch_scada_today.csv"
+DUID_LOOKUP_CSV = "duid_lookup.csv"
+EMISSIONS_FACTORS_CSV = "emissions_factors.csv"
+DUCKDB_PATH = "nem.duckdb"
+
+# ── Timing constants (seconds) ───────────────────────────────────────────────
+REFRESH_INTERVAL_SEC = 300  # 5-minute live data cadence
+CACHE_TTL_SEC = 300         # Standard cache lifetime
+CACHE_TTL_LIVE_SEC = 270    # Live-data cache — expires just before the 5-min rerun fires
+
 
 def get_gcs_client():
     global _gcs_client
@@ -50,8 +62,8 @@ def get_gcs_client():
         if storage is None:
             raise RuntimeError("google-cloud-storage not installed but GCS_BUCKET set.")
         try:
-            # Try to initialize with default credentials
-            _gcs_client = storage.Client()
+            # Try to initialize with default credentials; pass project if configured
+            _gcs_client = storage.Client(project=GCS_PROJECT)
         except Exception as e:
             # If ADC fails (EnvironmentError), we store the error to show in the sidebar
             # and allow the app to boot in local mode.
@@ -77,8 +89,9 @@ def read_csv_from_any(path_or_name: str | Path, **kwargs) -> pd.DataFrame:
                 blob.reload()
                 text = blob.download_as_text()
                 return pd.read_csv(io.StringIO(text), **kwargs)
-        except Exception:
-            # If GCS fails during a read, fall back to local to at least show SOMETHING
+        except Exception as e:
+            # GCS read failed — fall back to local and surface the error in the sidebar
+            st.session_state["gcs_read_error"] = f"GCS read failed for {filename}: {e}"
             pass
     return pd.read_csv(path_or_name, **kwargs)
 
@@ -127,7 +140,7 @@ def get_latest_archive_cache_key(data_dir: Path) -> str:
     return f"{latest_path.name}:{latest_path.stat().st_mtime_ns}"
 
 
-def get_duckdb_cache_key(db_path: str = "nem.duckdb") -> str:
+def get_duckdb_cache_key(db_path: str = DUCKDB_PATH) -> str:
     """Return a freshness token for the DuckDB file."""
     path = Path(db_path)
     if not path.exists():
@@ -138,7 +151,7 @@ def get_duckdb_cache_key(db_path: str = "nem.duckdb") -> str:
 
 def get_combined_freshness_token(data_dir: Path) -> str:
     """Return a concatenated token of GCS hashes, archive metadata, and DuckDB stats to bust Streamlit cache."""
-    g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+    g_hash = get_gcs_file_hash(SCADA_TODAY_CSV)
     latest_archive_token = get_latest_archive_cache_key(data_dir)
     db_token = get_duckdb_cache_key()
     return f"{g_hash}:{latest_archive_token}:{db_token}"
@@ -160,7 +173,7 @@ def list_monthly_archives_from_any(data_dir: Path) -> list[str]:
 # ─────────────────────────────────────────────────────────────
 def get_db_connection():
     """Connect to nem.duckdb and return connection object."""
-    return duckdb.connect("nem.duckdb", read_only=True)
+    return duckdb.connect(DUCKDB_PATH, read_only=True)
 
 # ─────────────────────────────────────────────────────────────
 # Page config
@@ -173,23 +186,21 @@ st.set_page_config(
 # ─────────────────────────────────────────────────────────────
 # Background Polling for Live Data
 # ─────────────────────────────────────────────────────────────
-import time
 
-# Initialize polling state
+# last_refresh_time: wall-clock epoch float used for display ("Last updated at HH:MM:SS")
+# and to trigger a full page rerun every REFRESH_INTERVAL_SEC seconds.
 if "last_refresh_time" not in st.session_state:
     st.session_state.last_refresh_time = time.time()
 
-# Background polling: rerun every 300 seconds (5 minutes, matches data update cadence)
 current_time = time.time()
-if current_time - st.session_state.last_refresh_time > 300:
+if current_time - st.session_state.last_refresh_time > REFRESH_INTERVAL_SEC:
     st.session_state.last_refresh_time = current_time
     st.rerun()
 
 # Timestamp display function
 def format_refresh_time():
     """Return formatted last refresh timestamp for display."""
-    from datetime import datetime
-    return datetime.fromtimestamp(st.session_state.last_refresh_time).strftime("%H:%M:%S")
+    return datetime.datetime.fromtimestamp(st.session_state.last_refresh_time).strftime("%H:%M:%S")
 
 # ─────────────────────────────────────────────────────────────
 # Debug Sidebar
@@ -208,6 +219,12 @@ def render_debug_sidebar(data_dir: Path):
             if "gcs_error" in st.session_state:
                 st.sidebar.code(st.session_state["gcs_error"], language="text")
             st.sidebar.warning("Falling back to Local mode.")
+        if "gcs_read_error" in st.session_state:
+            st.sidebar.warning(f"⚠️ {st.session_state['gcs_read_error']}")
+        if "duckdb_metadata_error" in st.session_state:
+            st.sidebar.warning(f"⚠️ {st.session_state['duckdb_metadata_error']}")
+        if "duckdb_ef_error" in st.session_state:
+            st.sidebar.warning(f"⚠️ {st.session_state['duckdb_ef_error']}")
         else:
             st.sidebar.success(f"✅ GCS Connected: {GCS_BUCKET}")
 
@@ -219,7 +236,7 @@ def render_debug_sidebar(data_dir: Path):
     if GCS_BUCKET:
         try:
             bucket = get_bucket()
-            blob = bucket.get_blob("dispatch_scada_today.csv") if bucket else None
+            blob = bucket.get_blob(SCADA_TODAY_CSV) if bucket else None
             if blob:
                 st.sidebar.write(f"**GCS Today CSV**")
                 st.sidebar.write(f"- Updated: {blob.updated}")
@@ -230,7 +247,7 @@ def render_debug_sidebar(data_dir: Path):
             st.sidebar.error(f"GCS Error: {e}")
             
     # 3. DuckDB Metadata
-    db_path = Path("nem.duckdb")
+    db_path = Path(DUCKDB_PATH)
     if db_path.exists():
         stat = db_path.stat()
         st.sidebar.write(f"**DuckDB (Gold)**")
@@ -260,7 +277,7 @@ def render_debug_sidebar(data_dir: Path):
     
     # 5. Raw Data Check (Sample)
     try:
-        today_file = data_dir / "dispatch_scada_today.csv"
+        today_file = data_dir / SCADA_TODAY_CSV
         raw_df = read_csv_from_any(today_file, nrows=5)
         st.sidebar.write(f"**Raw CSV Preview** ({today_file.name})")
         st.sidebar.dataframe(raw_df, height=150)
@@ -1081,11 +1098,11 @@ st.markdown("""
 def _enrich(scada: pd.DataFrame, data_dir: Path) -> pd.DataFrame:
     """Join SCADA data with DUID lookup and emissions factors, add computed columns."""
     lookup = (
-        read_csv_from_any(data_dir / "duid_lookup.csv")
+        read_csv_from_any(data_dir / DUID_LOOKUP_CSV)
         [["DUID", "Unit Name", "Technology Type", "Region"]]
         .drop_duplicates("DUID")
     )
-    ef_raw = read_csv_from_any(data_dir / "emissions_factors.csv")
+    ef_raw = read_csv_from_any(data_dir / EMISSIONS_FACTORS_CSV)
     ef_s1 = (
         ef_raw[ef_raw["scope"] == "scope_1"]
         [["technology_type", "emission_factor_tCO2e_MWh"]]
@@ -1149,12 +1166,12 @@ def _aggregate_to_generation_mix(df: pd.DataFrame) -> pd.DataFrame:
     return grouped
 
 
-@st.cache_data(ttl=270)  # 270s so cache expires before the 5-min rerun fires
+@st.cache_data(ttl=CACHE_TTL_LIVE_SEC)  # expires just before the 5-min rerun fires
 def load_live_today_generation_mix(data_dir_str: str, file_mtime: float = 0.0, gcs_hash: str = "") -> pd.DataFrame:
     """Load the current day's CSV snapshot and aggregate it to region × technology × interval."""
     # gcs_hash is passed to ensure cache invalidation when the bucket file changes.
     data_dir = Path(data_dir_str)
-    today_csv = data_dir / "dispatch_scada_today.csv"
+    today_csv = data_dir / SCADA_TODAY_CSV
     
     scada = _read_scada_csv(today_csv)
     if scada.empty:
@@ -1163,7 +1180,7 @@ def load_live_today_generation_mix(data_dir_str: str, file_mtime: float = 0.0, g
     return _aggregate_to_generation_mix(_enrich(scada, data_dir))
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=CACHE_TTL_SEC)
 def load_generation_mix_from_duckdb(duckdb_cache_key: str = "") -> pd.DataFrame:
     """Load Gold interval generation mix from DuckDB for dashboard use."""
     try:
@@ -1191,7 +1208,7 @@ def load_generation_mix_from_duckdb(duckdb_cache_key: str = "") -> pd.DataFrame:
         return pd.DataFrame()
 
 
-@st.cache_data(ttl=270)  # 270s so cache expires before the 5-min rerun fires
+@st.cache_data(ttl=CACHE_TTL_LIVE_SEC)  # expires just before the 5-min rerun fires
 def load_full_history(
     data_dir_str: str,
     today_file_mtime: float = 0.0,
@@ -1245,15 +1262,15 @@ def load_full_history(
 
     frames = []
     # Primary "daily CSV only" source for today's data
-    today_csv = data_dir / "dispatch_scada_today.csv"
+    today_csv = data_dir / SCADA_TODAY_CSV
     if GCS_BUCKET:
         # Check if today_csv exists in GCS
         try:
             bucket = get_bucket()
-            if bucket and bucket.blob("dispatch_scada_today.csv").exists():
-                frames.append(_read_scada_csv(Path("dispatch_scada_today.csv")))
-        except Exception:
-            pass
+            if bucket and bucket.blob(SCADA_TODAY_CSV).exists():
+                frames.append(_read_scada_csv(Path(SCADA_TODAY_CSV)))
+        except Exception as e:
+            st.session_state["gcs_read_error"] = f"GCS today CSV check failed: {e}"
         for path in monthly_paths:
             frames.append(_read_scada_csv(Path(path)))
     else:
@@ -1283,14 +1300,14 @@ def load_scada_for_date(data_dir_str: str, date: datetime.date) -> pd.DataFrame:
     # FAST PATH: Loading today's live data
     # We use get_aemo_date() to verify if the requested date is the active AEMO day.
     if date == get_aemo_date():
-        today_csv = data_dir / "dispatch_scada_today.csv"
+        today_csv = data_dir / SCADA_TODAY_CSV
         mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
-        g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+        g_hash = get_gcs_file_hash(SCADA_TODAY_CSV)
         return load_live_today_generation_mix(data_dir_str, file_mtime=mtime, gcs_hash=g_hash)
 
     # HISTORICAL PATH
     mtime = 0.0
-    g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+    g_hash = get_gcs_file_hash(SCADA_TODAY_CSV)
     latest_archive_cache_key = get_latest_archive_cache_key(data_dir)
     duckdb_cache_key = get_duckdb_cache_key()
     df = load_full_history(
@@ -1344,13 +1361,13 @@ def aggregate_daily_metrics(df: pd.DataFrame) -> pd.DataFrame:
     return daily.sort_values(["date", "Region"]).reset_index(drop=True)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=CACHE_TTL_SEC)
 def load_historical_daily_metrics(data_dir_str: str, freshness_token: str = "") -> pd.DataFrame:
     """Aggregate all daily metrics continuously using the full history."""
     data_dir = Path(data_dir_str)
-    today_csv = data_dir / "dispatch_scada_today.csv"
+    today_csv = data_dir / SCADA_TODAY_CSV
     mtime = today_csv.stat().st_mtime if today_csv.exists() else 0.0
-    g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+    g_hash = get_gcs_file_hash(SCADA_TODAY_CSV)
     latest_archive_cache_key = get_latest_archive_cache_key(data_dir)
     duckdb_cache_key = get_duckdb_cache_key()
     history = load_full_history(
@@ -1363,7 +1380,7 @@ def load_historical_daily_metrics(data_dir_str: str, freshness_token: str = "") 
     return aggregate_daily_metrics(history)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=CACHE_TTL_SEC)
 def get_latest_available_data_date(data_dir_str: str, freshness_token: str = "") -> datetime.date:
     """Return the newest calendar date actually present in the loaded history."""
     daily_metrics = load_historical_daily_metrics(data_dir_str, freshness_token=freshness_token)
@@ -1372,7 +1389,7 @@ def get_latest_available_data_date(data_dir_str: str, freshness_token: str = "")
     return pd.Timestamp(daily_metrics["date"].max()).date()
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=CACHE_TTL_SEC)
 def load_today_daily_metrics(data_dir_str: str, freshness_token: str = "") -> pd.DataFrame:
     """Aggregate today's live file into daily metrics."""
     # Note: load_today was likely intended to be load_live_today_generation_mix
@@ -1380,7 +1397,7 @@ def load_today_daily_metrics(data_dir_str: str, freshness_token: str = "") -> pd
     return aggregate_daily_metrics(today_df)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=CACHE_TTL_SEC)
 def load_emissions_intensity_from_duckdb(duckdb_cache_key: str = "") -> pd.DataFrame:
     """Load regional emissions intensity from Gold layer (main_gold.fct_regional_emissions_intensity)."""
     try:
@@ -1406,7 +1423,7 @@ def load_emissions_intensity_from_duckdb(duckdb_cache_key: str = "") -> pd.DataF
         return pd.DataFrame()
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=CACHE_TTL_SEC)
 def load_dashboard_metadata(data_dir_str: str, freshness_token: str = "") -> dict:
     """Return available date bounds, regions, and archive status for the dashboard."""
     data_dir = Path(data_dir_str)
@@ -1440,8 +1457,8 @@ def load_dashboard_metadata(data_dir_str: str, freshness_token: str = "") -> dic
                 "regions": region_df["region"].dropna().tolist(),
                 "has_monthly_archives": has_monthly_archives,
             }
-    except Exception:
-        pass
+    except Exception as e:
+        st.session_state["duckdb_metadata_error"] = f"DuckDB metadata query failed: {e}"
 
     if monthly_files:
         earliest_month = Path(monthly_files[0]).stem[-7:]
@@ -1455,7 +1472,7 @@ def load_dashboard_metadata(data_dir_str: str, freshness_token: str = "") -> dic
     else:
         date_min = get_aemo_date()
 
-    lookup_df = read_csv_from_any(data_dir / "duid_lookup.csv")
+    lookup_df = read_csv_from_any(data_dir / DUID_LOOKUP_CSV)
     regions = sorted(lookup_df["Region"].dropna().unique().tolist())
 
     return {
@@ -1466,7 +1483,7 @@ def load_dashboard_metadata(data_dir_str: str, freshness_token: str = "") -> dic
     }
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=CACHE_TTL_SEC)
 def load_emissions_factor_reference(data_dir_str: str, freshness_token: str = "") -> pd.DataFrame:
     """Load emissions factors for reference tables, preferring Bronze/duckdb over raw CSV."""
     try:
@@ -1481,10 +1498,10 @@ def load_emissions_factor_reference(data_dir_str: str, freshness_token: str = ""
         conn.close()
         if not df.empty:
             return df
-    except Exception:
-        pass
+    except Exception as e:
+        st.session_state["duckdb_ef_error"] = f"DuckDB emissions factors query failed: {e}"
 
-    return read_csv_from_any(Path(data_dir_str) / "emissions_factors.csv")
+    return read_csv_from_any(Path(data_dir_str) / EMISSIONS_FACTORS_CSV)
 
 
 def combine_daily_metrics_for_regions(
@@ -1889,7 +1906,7 @@ except FileNotFoundError as e:
 
 
 # ── Calculate freshness tokens to bust Streamlit's @st.cache_data ──
-g_hash = get_gcs_file_hash("dispatch_scada_today.csv")
+g_hash = get_gcs_file_hash(SCADA_TODAY_CSV)
 arc_token = get_latest_archive_cache_key(DATA_DIR)
 db_token = get_duckdb_cache_key()
 # Combined token for functions that take it as a single arg
@@ -1923,10 +1940,8 @@ TECH_COLORS = {
     "Unknown":         "#6B7280",
 }
 
-RESOLUTIONS = {
-    "5 minutes":  "5min",
-    "1 hour": "1h",
-}
+RESOLUTION = "5min"
+RESOLUTION_LABEL = "5 minutes"
 ILLUSTRATIVE_CARBON_RATE = 75
 
 plotly_config = {
@@ -1971,8 +1986,8 @@ if selected_date < date_min:
 if selected_date > date_max:
     selected_date = date_max
     st.session_state.selected_date = date_max
-resolution_label = "5 minutes"
-resolution = RESOLUTIONS[resolution_label]
+resolution_label = RESOLUTION_LABEL
+resolution = RESOLUTION
 scope_choice = st.session_state.scope_choice
 sel_regions = [region for region in st.session_state.sel_regions if region in regions]
 st.session_state.sel_regions = sel_regions
@@ -2004,12 +2019,12 @@ with st.sidebar:
             )
     st.markdown("---")
 
-# ── Auto-refresh every 5 minutes when viewing today's live data ──
-import time as _time
-_now = _time.monotonic()
+# last_refresh: monotonic timer used to conditionally rerun when viewing today's live data.
+# Distinct from last_refresh_time (epoch float for display). Reset to 0 forces an immediate rerun.
+_now = time.monotonic()
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = _now
-elif is_live_today and (_now - st.session_state.last_refresh) >= 300:
+elif is_live_today and (_now - st.session_state.last_refresh) >= REFRESH_INTERVAL_SEC:
     st.session_state.last_refresh = _now
     st.rerun()
 
