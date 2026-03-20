@@ -5,3 +5,4 @@ nem.duckdb.wal
 target/
 dbt_packages/
 .venv/
+\n.gcloud_config/
