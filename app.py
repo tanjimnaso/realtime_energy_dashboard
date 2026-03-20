@@ -62,11 +62,16 @@ def get_gcs_client():
         if storage is None:
             raise RuntimeError("google-cloud-storage not installed but GCS_BUCKET set.")
         try:
-            # Try to initialize with default credentials; pass project if configured
-            _gcs_client = storage.Client(project=GCS_PROJECT)
+            # 1. Check for Streamlit Secrets (for Cloud Hosting)
+            if "gcp_service_account" in st.secrets:
+                _gcs_client = storage.Client.from_service_account_info(dict(st.secrets["gcp_service_account"]))
+            # 2. Check for local key file (for local development)
+            elif Path("gcp-key.json").exists():
+                _gcs_client = storage.Client.from_service_account_json("gcp-key.json")
+            # 3. Fallback to ADC
+            else:
+                _gcs_client = storage.Client(project=GCS_PROJECT)
         except Exception as e:
-            # If ADC fails (EnvironmentError), we store the error to show in the sidebar
-            # and allow the app to boot in local mode.
             st.session_state["gcs_error"] = str(e)
             return None
     return _gcs_client
@@ -261,7 +266,12 @@ def render_debug_sidebar(data_dir: Path):
             for s, t in schema_tables:
                 if t in ("fct_generation_mix_interval", "silver_dispatch_interval"):
                     row_count = conn.execute(f"SELECT count(*) FROM {s}.{t}").fetchone()[0]
-                    max_date = conn.execute(f"SELECT max(SETTLEMENTDATE) FROM {s}.{t}").fetchone()[0]
+                    # Check if column is SETTLEMENTDATE or settlement_date
+                    col_info = conn.execute(f"PRAGMA table_info('{s}.{t}')").fetchall()
+                    col_names = [c[1].lower() for c in col_info]
+                    date_col = "settlement_date" if "settlement_date" in col_names else "SETTLEMENTDATE"
+                    
+                    max_date = conn.execute(f"SELECT max({date_col}) FROM {s}.{t}").fetchone()[0]
                     st.sidebar.write(f"- {s}.{t}: {row_count:,} rows")
                     st.sidebar.write(f"  Max Date: {max_date}")
             conn.close()
