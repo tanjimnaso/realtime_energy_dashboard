@@ -49,35 +49,50 @@ def get_gcs_client():
     if _gcs_client is None:
         if storage is None:
             raise RuntimeError("google-cloud-storage not installed but GCS_BUCKET set.")
-        _gcs_client = storage.Client()
+        try:
+            # Try to initialize with default credentials
+            _gcs_client = storage.Client()
+        except Exception as e:
+            # If ADC fails (EnvironmentError), we store the error to show in the sidebar
+            # and allow the app to boot in local mode.
+            st.session_state["gcs_error"] = str(e)
+            return None
     return _gcs_client
 
+
 def get_bucket():
-    return get_gcs_client().bucket(GCS_BUCKET)
+    client = get_gcs_client()
+    if client is None:
+        return None
+    return client.bucket(GCS_BUCKET)
+
 
 def read_csv_from_any(path_or_name: str | Path, **kwargs) -> pd.DataFrame:
     if GCS_BUCKET:
         filename = Path(path_or_name).name
-        # Do NOT catch exceptions here — if GCS is configured as the data source
-        # we must never silently fall back to the local (stale) baked-in file.
-        blob = get_bucket().blob(filename)
-        blob.reload()  # Force fresh metadata; avoid stale client-side cache
-        text = blob.download_as_text()
-        return pd.read_csv(io.StringIO(text), **kwargs)
+        try:
+            bucket = get_bucket()
+            if bucket:
+                blob = bucket.blob(filename)
+                blob.reload()
+                text = blob.download_as_text()
+                return pd.read_csv(io.StringIO(text), **kwargs)
+        except Exception:
+            # If GCS fails during a read, fall back to local to at least show SOMETHING
+            pass
     return pd.read_csv(path_or_name, **kwargs)
 
 
 def get_gcs_file_hash(filename: str) -> str:
-    """Return the last updated timestamp of a GCS file to use as a cache key part.
-    
-    Using the updated timestamp reliably busts Streamlit's cache when
-    Cloud Run overwrites the CSV.
-    """
+    """Return the last updated timestamp of a GCS file to use as a cache key part."""
     if not GCS_BUCKET:
         return "local"
     try:
+        bucket = get_bucket()
+        if not bucket:
+            return "gcs-config-error"
         # get_blob forces a fresh API call for metadata
-        blob = get_bucket().get_blob(filename)
+        blob = bucket.get_blob(filename)
         if blob and blob.updated:
             return blob.updated.isoformat()
         return "missing"
@@ -183,7 +198,14 @@ def render_debug_sidebar(data_dir: Path):
         st.sidebar.error("❌ GCS_BUCKET secret not set! Running in Local mode.")
         st.sidebar.info("Add `GCS_BUCKET = 'your-name'` to Streamlit Secrets.")
     else:
-        st.sidebar.success(f"✅ GCS Connected: {GCS_BUCKET}")
+        client = get_gcs_client()
+        if client is None:
+            st.sidebar.error("❌ GCS Connection Failed!")
+            if "gcs_error" in st.session_state:
+                st.sidebar.code(st.session_state["gcs_error"], language="text")
+            st.sidebar.warning("Falling back to Local mode.")
+        else:
+            st.sidebar.success(f"✅ GCS Connected: {GCS_BUCKET}")
 
     # 1. Freshness Token
     token = get_combined_freshness_token(data_dir)
