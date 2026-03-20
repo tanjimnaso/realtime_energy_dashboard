@@ -76,10 +76,28 @@ def write_df_to_storage(df: pd.DataFrame, filename: str) -> None:
     if gcs_enabled():
         blob = get_bucket().blob(filename)
         blob.upload_from_string(csv_text, content_type="text/csv")
-        print(f"Written {filename} to gs://{GCS_BUCKET}/{filename}")
+        print(f"Written CSV {filename} to gs://{GCS_BUCKET}/{filename}")
     else:
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        (DATA_DIR / filename).write_text(csv_text)
+        full_path = DATA_DIR / filename
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(csv_text)
+        print(f"Written CSV {filename} to {full_path}")
+
+
+def write_parquet_to_storage(df: pd.DataFrame, filename: str) -> None:
+    """Write DataFrame as Parquet to storage (GCS or Local)."""
+    if gcs_enabled():
+        # Using a temporary buffer for Parquet conversion
+        buffer = io.BytesIO()
+        df.to_parquet(buffer, index=False, engine="pyarrow")
+        blob = get_bucket().blob(filename)
+        blob.upload_from_string(buffer.getvalue(), content_type="application/octet-stream")
+        print(f"Written Parquet {filename} to gs://{GCS_BUCKET}/{filename}")
+    else:
+        full_path = DATA_DIR / filename
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(full_path, index=False, engine="pyarrow")
+        print(f"Written Parquet {filename} to {full_path}")
 
 
 def parse_settlement_series(series: pd.Series) -> pd.Series:
@@ -268,6 +286,21 @@ def main():
     new_data.sort_values(["SETTLEMENTDATE", "DUID"], inplace=True)
     append_to_monthly_archive(new_data)
     rebuild_today_snapshot_from_archives()
+
+    # --- Medallion Sync ---
+    # Refresh the Bronze Parquet layer used by dbt
+    print("Refreshing Bronze Parquet layer...")
+    archive_names = list_monthly_archive_names()
+    if archive_names:
+        # For simplicity in this job, we'll just write the latest month + today to bronze.
+        # If full history is needed in bronze, we'd concat all archives.
+        latest_archive = read_csv_from_storage(archive_names[-1])
+        latest_archive["SETTLEMENTDATE"] = parse_settlement_series(latest_archive["SETTLEMENTDATE"])
+        
+        # We also need generator metadata and emissions factors in bronze for dbt
+        # But for now let's just ensure the main SCADA table is updated.
+        write_parquet_to_storage(latest_archive, "bronze/dispatch_scada.parquet")
+    # ----------------------
 
     print("=" * 60)
     print("Done!")

@@ -81,8 +81,9 @@ def get_gcs_file_hash(filename: str) -> str:
         if blob and blob.updated:
             return blob.updated.isoformat()
         return "missing"
-    except Exception:
-        return "error"
+    except Exception as e:
+        # If GCS fails (e.g. auth issue), return a unique-ish string to avoid collisions
+        return f"error-{datetime.datetime.now().strftime('%H%M')}"
 
 
 def get_latest_archive_cache_key(data_dir: Path) -> str:
@@ -177,6 +178,13 @@ def format_refresh_time():
 def render_debug_sidebar(data_dir: Path):
     st.sidebar.markdown("### 🛠️ Debug Info")
     
+    # 0. GCS Config Check
+    if not GCS_BUCKET:
+        st.sidebar.error("❌ GCS_BUCKET secret not set! Running in Local mode.")
+        st.sidebar.info("Add `GCS_BUCKET = 'your-name'` to Streamlit Secrets.")
+    else:
+        st.sidebar.success(f"✅ GCS Connected: {GCS_BUCKET}")
+
     # 1. Freshness Token
     token = get_combined_freshness_token(data_dir)
     st.sidebar.code(f"Token: {token}", language="text")
@@ -203,13 +211,15 @@ def render_debug_sidebar(data_dir: Path):
         st.sidebar.write(f"- Size: {stat.st_size / (1024*1024):.1f} MB")
         try:
             conn = duckdb.connect(str(db_path), read_only=True)
-            tables = conn.execute("SHOW TABLES").fetchall()
-            st.sidebar.write(f"- Tables: {[t[0] for t in tables]}")
-            if ("silver_dispatch_interval",) in tables or ("main_silver", "silver_dispatch_interval") in tables:
-                row_count = conn.execute("SELECT count(*) FROM silver_dispatch_interval").fetchone()[0]
-                max_date = conn.execute("SELECT max(SETTLEMENTDATE) FROM silver_dispatch_interval").fetchone()[0]
-                st.sidebar.write(f"- Rows (Silver): {row_count:,}")
-                st.sidebar.write(f"- Max Date (Silver): {max_date}")
+            # Check for tables across all schemas (gold, silver, bronze)
+            schema_tables = conn.execute("SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema NOT IN ('information_schema', 'pg_catalog')").fetchall()
+            st.sidebar.write(f"- Tables Found: {len(schema_tables)}")
+            for s, t in schema_tables:
+                if t in ("fct_generation_mix_interval", "silver_dispatch_interval"):
+                    row_count = conn.execute(f"SELECT count(*) FROM {s}.{t}").fetchone()[0]
+                    max_date = conn.execute(f"SELECT max(SETTLEMENTDATE) FROM {s}.{t}").fetchone()[0]
+                    st.sidebar.write(f"- {s}.{t}: {row_count:,} rows")
+                    st.sidebar.write(f"  Max Date: {max_date}")
             conn.close()
         except Exception as e:
             st.sidebar.error(f"DuckDB Query Error: {e}")
@@ -223,8 +233,9 @@ def render_debug_sidebar(data_dir: Path):
     
     # 5. Raw Data Check (Sample)
     try:
-        raw_df = read_csv_from_any("dispatch_scada_today.csv", nrows=5)
-        st.sidebar.write("**Raw CSV Preview**")
+        today_file = data_dir / "dispatch_scada_today.csv"
+        raw_df = read_csv_from_any(today_file, nrows=5)
+        st.sidebar.write(f"**Raw CSV Preview** ({today_file.name})")
         st.sidebar.dataframe(raw_df, height=150)
         st.sidebar.write(f"- Columns: {raw_df.columns.tolist()}")
     except Exception as e:
