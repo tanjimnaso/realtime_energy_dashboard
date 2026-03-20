@@ -110,9 +110,11 @@ def get_latest_archive_cache_key(data_dir: Path) -> str:
     latest_archive = monthly_archives[-1]
     if GCS_BUCKET:
         try:
-            blob = get_bucket().get_blob(latest_archive)
-            if blob and blob.updated:
-                return f"{latest_archive}:{blob.updated.isoformat()}"
+            bucket = get_bucket()
+            if bucket:
+                blob = bucket.get_blob(latest_archive)
+                if blob and blob.updated:
+                    return f"{latest_archive}:{blob.updated.isoformat()}"
             return f"{latest_archive}:missing"
         except Exception:
             return f"{latest_archive}:error"
@@ -143,12 +145,14 @@ def get_combined_freshness_token(data_dir: Path) -> str:
 
 def list_monthly_archives_from_any(data_dir: Path) -> list[str]:
     if GCS_BUCKET:
-        blobs = get_gcs_client().list_blobs(GCS_BUCKET, prefix="dispatch_scada_")
-        import re
-        return sorted(
-            blob.name for blob in blobs
-            if re.fullmatch(r"dispatch_scada_\d{4}-\d{2}\.csv", blob.name)
-        )
+        client = get_gcs_client()
+        if client:
+            blobs = client.list_blobs(GCS_BUCKET, prefix="dispatch_scada_")
+            import re
+            return sorted(
+                blob.name for blob in blobs
+                if re.fullmatch(r"dispatch_scada_\d{4}-\d{2}\.csv", blob.name)
+            )
     return sorted([str(p) for p in data_dir.glob("dispatch_scada_????-??.csv")])
 
 # ─────────────────────────────────────────────────────────────
